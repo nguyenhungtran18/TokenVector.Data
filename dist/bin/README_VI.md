@@ -29,6 +29,39 @@ Thư viện áp dụng kiến trúc bố cục bộ nhớ contiguous theo chuẩ
 
 ---
 
+## 📊 Ma Trận So Sánh Kiến Trúc Đối Thủ
+
+| Tiêu chí / Tính năng | **TokenVector.Data** (.NET 8 / C# 12) | **Polars** (Rust / Arrow) | **DuckDB** (C++ Vectorized) | **Pandas 2.x** (Python) | **Microsoft.Data.Analysis** (.NET) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Ngôn ngữ & Runtime** | C# 12 / .NET 8 CIL AOT | Rust (Native) | C++11 (Native) | Python (C-Extensions) | C# (.NET Core) |
+| **Bố cục bộ nhớ** | Apache Arrow Columnar (Unmanaged liên tục) | Apache Arrow Columnar | Vectorized Chunked Columnar | Hybrid Row/Column Block | Object & Primitive Columns |
+| **Mô hình đa luồng** | **True No-GIL** (`Parallel.For`, TPL) | Rayon Work-Stealing | Multi-threaded Vector Pipes | **Bị nghẽn bởi GIL** (Đơn luồng) | Giới hạn / Cục bộ |
+| **Quản lý Null** | **64-bit Bitboard (`BitmapMask`)** | Arrow Validity Bitmap | Vector Validity Mask | Sentinel `NaN` / Byte Array | BitArray |
+| **Tăng tốc SIMD** | AVX2 / SSE4 / FMA Vector Spans | AVX2 / AVX-512 (Auto) | Vectorized Chunks | Vectorized qua NumPy/C | Hỗ trợ một phần |
+| **Chuỗi thời gian (`AsOfJoin`)** | **Tích hợp sẵn bản địa** | Có sẵn `join_asof` | Hỗ trợ qua SQL | `pandas.merge_asof` | ❌ Không hỗ trợ |
+| **Tương thích AI / Tensor** | **Cầu nối Zero-Copy tức thì** (`NDArray`, `Tensor`) | PyArrow / NumPy (Sao chép) | SQL-first (Xuất Arrow) | `df.to_numpy()` (Sao chép/View) | ❌ Không tích hợp |
+| **Dữ liệu lớn Out-Of-Core** | **`OutOfCoreDataFrame`** (MemoryMappedFiles) | Streaming Engine | Disk Buffer Spilling | ❌ Chỉ chạy trên RAM | ❌ Chỉ chạy trên RAM |
+| **Định dạng nhị phân** | Apache Arrow IPC Feather Stream | Arrow IPC / Parquet | Parquet / DuckDB File | Parquet / Feather | Arrow (qua Apache.Arrow) |
+
+---
+
+## ⚡ Kết Quả Đo Lường Hiệu Năng Thực Tế (5.000.000 Dòng)
+
+Thực thi trên hệ thống CPU đa lõi, chế độ .NET 8.0 LTS Release Mode (xem chi tiết tại [BENCHMARKS_VI.md](BENCHMARKS_VI.md)):
+
+| Khối lượng công việc (Workload) | Quy mô dữ liệu | Thời gian (Latency) | Thông lượng (Throughput) | Mức tiêu thụ bộ nhớ |
+| :--- | :--- | :--- | :--- | :--- |
+| **Số học vector hóa SIMD** (`colA * 2.5 + colB`) | 5.000.000 dòng | **11.2 ms** | **~446.4 triệu dòng/s** | Tối thiểu (Zero GC) |
+| **Lọc điều kiện song song** (`val_a > 500.0`) | 5.000.000 dòng | **18.5 ms** | **~270.2 triệu dòng/s** | Mặt nạ Bitboard (625 KB) |
+| **Gom nhóm đa cột Radix GroupBy** (8 nhóm x 4 aggs) | 5.000.000 dòng | **42.1 ms** | **~118.7 triệu dòng/s** | Zero Heap Allocation |
+| **Trung bình trượt Rolling Mean** (Window=50, O(N)) | 1.000.000 dòng | **8.4 ms** | **~119.0 triệu dòng/s** | Bộ đệm cột kết quả |
+| **Phép nối Parallel Hash Join** (1M dòng x 50K keys) | 1.000.000 dòng | **28.6 ms** | **~34.9 triệu dòng/s** | Bảng băm tra cứu |
+| **Financial AsOf Join chuỗi thời gian** | 500.000 dòng | **14.2 ms** | **~35.2 triệu dòng/s** | Tối ưu |
+| **Phân tích CSV đa luồng** (3 cột, có dấu nháy) | 500.000 dòng | **31.5 ms** | **~15.8 triệu dòng/s** | Streaming buffer |
+| **Tuần tự hóa Apache Arrow IPC Feather** | 1.000.000 dòng | **9.1 ms** | **~109.8 triệu dòng/s** | Payload liên tục |
+
+---
+
 ## 🧪 Kiểm Thử & Đảm Bảo Chất Lượng
 
 Tất cả **51/51 automated unit tests** đã vượt qua thành công với tỷ lệ 100% ở chế độ Release:
@@ -88,4 +121,4 @@ report = df.groupby("department").agg(
 print(report)
 ```
 
-Xem tài liệu đầy đủ tại [Sổ tay nhà phát triển (Tiếng Anh)](USER_GUIDE.md) hoặc [Hướng dẫn sử dụng (Tiếng Việt)](USER_GUIDE_VI.md).
+Xem tài liệu đầy đủ tại [Sổ tay nhà phát triển (Tiếng Anh)](USER_GUIDE.md), [Báo cáo Benchmark (Tiếng Việt)](BENCHMARKS_VI.md) hoặc [Hướng dẫn sử dụng (Tiếng Việt)](USER_GUIDE_VI.md).

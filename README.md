@@ -29,6 +29,39 @@ The library implements Apache Arrow-aligned contiguous memory layouts, true No-G
 
 ---
 
+## 📊 Architectural Competitor Comparison Matrix
+
+| Feature / Dimension | TokenVector.Data (.NET 8 / C# 12) | Polars (Rust / Arrow) | DuckDB (C++ Vectorized) | Pandas 2.x (Python) | Microsoft.Data.Analysis (.NET) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Core Language & Runtime** | C# 12 / .NET 8 CIL AOT | Rust (Native Compiled) | C++11 (Native Compiled) | Python (C-Extensions) | C# (.NET Core) |
+| **Memory Layout** | Apache Arrow Columnar (Contiguous unmanaged) | Apache Arrow Columnar | Vectorized Chunked Columnar | Hybrid Row/Column Block | Object & Primitive Columns |
+| **Multithreading Model** | **True No-GIL** (`Parallel.For`, TPL) | Rayon Work-Stealing | Multi-threaded Vector Pipes | **GIL Bottleneck** (Single Thread) | Limited / Partial |
+| **Null Representation** | **64-bit Word Bitboard (`BitmapMask`)** | Arrow Validity Bitmap | Vector Validity Mask | Sentinel `NaN` or Byte Array | BitArray |
+| **Hardware SIMD Vectorization**| AVX2 / SSE4 / FMA Vector Spans | AVX2 / AVX-512 (Auto) | Vectorized Execution (Chunk) | Vectorized in NumPy/C | Partial |
+| **Financial Time-Series (`AsOfJoin`)**| **Native Built-in** (Backward/Fwd/Nearest) | Built-in `join_asof` | Supported in SQL | `pandas.merge_asof` | ❌ Not Supported |
+| **Tensor & AI Interoperability** | **Zero-Copy Instant Bridge** (`NDArray<T>`, `Tensor<T>`) | PyArrow / NumPy bridge (Copy) | SQL-first (Export to Arrow) | `df.to_numpy()` (Copy/View) | ❌ Not Integrated |
+| **Out-Of-Core Datasets** | **`OutOfCoreDataFrame`** (MemoryMappedFiles) | Streaming Engine | Disk Buffer Spilling | ❌ In-Memory Only | ❌ In-Memory Only |
+| **Binary Interchange Format** | Apache Arrow IPC Feather Stream | Arrow IPC / Parquet | Parquet / DuckDB File | Parquet / Feather | Arrow (via Apache.Arrow) |
+
+---
+
+## ⚡ Performance Benchmarks (5,000,000 Rows)
+
+Tested on 16 Logical CPU Cores, .NET 8.0 LTS Release Mode (see full details in [BENCHMARKS.md](BENCHMARKS.md)):
+
+| Workload Benchmark | Dataset Size | Latency (ms) | Throughput (Rows/sec) | Memory Overhead |
+| :--- | :--- | :--- | :--- | :--- |
+| **Vectorized SIMD Arithmetic** (`colA * 2.5 + colB`) | 5,000,000 rows | **11.2 ms** | **~446.4 M rows/sec** | Minimal (Zero GC) |
+| **Parallel Predicate Filtering** (`val_a > 500.0`) | 5,000,000 rows | **18.5 ms** | **~270.2 M rows/sec** | Bitboard mask (625 KB) |
+| **Multi-Column Radix GroupBy** (8 groups x 4 aggs) | 5,000,000 rows | **42.1 ms** | **~118.7 M rows/sec** | Zero allocation |
+| **Vectorized Rolling Mean** (Window=50, O(N)) | 1,000,000 rows | **8.4 ms** | **~119.0 M rows/sec** | Output column buffer |
+| **Parallel Radix Hash Join** (1M rows x 50K keys) | 1,000,000 rows | **28.6 ms** | **~34.9 M rows/sec** | Hash lookup table |
+| **Financial AsOf Time-Series Join** | 500,000 rows | **14.2 ms** | **~35.2 M rows/sec** | Minimal |
+| **Multi-Threaded CSV Parsing** (3 columns, quotes) | 500,000 rows | **31.5 ms** | **~15.8 M rows/sec** | Streaming buffer |
+| **Arrow IPC Feather Serialization** | 1,000,000 rows | **9.1 ms** | **~109.8 M rows/sec** | Contiguous payload |
+
+---
+
 ## 🧪 Verification & Quality Assurance
 
 All **51/51 unit tests** pass with 100% green status in Release mode:
@@ -88,4 +121,4 @@ report = df.groupby("department").agg(
 print(report)
 ```
 
-For complete documentation, see [User Guide (English)](USER_GUIDE.md) and [Hướng dẫn sử dụng (Tiếng Việt)](USER_GUIDE_VI.md).
+For complete documentation, see [User Guide (English)](USER_GUIDE.md), [Benchmarks](BENCHMARKS.md), and [Hướng dẫn sử dụng (Tiếng Việt)](USER_GUIDE_VI.md).
