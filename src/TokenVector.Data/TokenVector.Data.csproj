@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>TokenVector.Data</RootNamespace>
+    <AssemblyName>TokenVector.Data</AssemblyName>
+    <Version>1.0.0</Version>
+    <PackageId>TokenVector.Data</PackageId>
+    <Title>TokenVector.Data - High-Performance Columnar DataFrame &amp; Tabular Engine</Title>
+    <Authors>TokenVector Project Team</Authors>
+    <Company>TokenVector</Company>
+    <Description>Ultra-high-performance columnar DataFrame and tabular data processing library for the TokenVector ecosystem and .NET 8 CIL AOT.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>dataframe;columnar;arrow;feather;csv;json;timeseries;asofjoin;simd;tokenvector;data</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="D:\TokenVector Numerics\src\TokenVector.Numerics\TokenVector.Numerics.csproj" />
+  </ItemGroup>
+
+</Project>

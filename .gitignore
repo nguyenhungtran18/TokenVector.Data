@@ -1,0 +1,15 @@
+## .NET Build Artifacts
+**/bin/
+**/obj/
+!dist/bin/
+
+## Visual Studio & IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+## OS generated
+.DS_Store
+Thumbs.db

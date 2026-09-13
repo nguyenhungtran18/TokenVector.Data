@@ -1,0 +1,34 @@
+# TokenVector.Data Architecture Summary
+
+`TokenVector.Data` is a high-performance columnar DataFrame and tabular data processing library written in C# 12 / .NET 8 LTS for the TokenVector ecosystem.
+
+## Core Components
+- `TokenVector.Data.Common`:
+  - `DataType`: Physical columnar types (`Int8..64`, `UInt8..64`, `Float32/64`, `Boolean`, `String`, `DateTime64`).
+  - `BitmapMask`: 64-bit Bitboard null validity tracking with hardware POPCNT and SIMD bitwise operations.
+  - `Schema`: Named `Field` collection with type metadata and projection support.
+- `TokenVector.Data.Core`:
+  - `Column<T>`: Contiguous unmanaged array buffer with Bitboard validity mask.
+  - `StringColumn`: Apache Arrow variable-length UTF-8 binary format (continuous `byte[]` + `int[]` offset vector).
+  - `ChunkedArray`: Multi-chunk columnar container for streaming.
+  - `Series`: 1D named column with vectorized math, windowing, and statistics.
+  - `DataFrame`: 2D tabular container with columnar storage, selection, filtering, mutation, and relational operators.
+- `TokenVector.Data.Compute`:
+  - `VectorMath`: SIMD-accelerated element-wise arithmetic, transformations, and comparisons.
+  - `Aggregations`: Vectorized Sum, Mean, Min, Max, Variance, Std, Median, Quantile with null skipping.
+  - `FilterEngine`: Multi-threaded predicate filtering returning `BitmapMask`.
+  - `WindowFunctions`: Rolling statistics (Mean, Sum, Std), Shift (Lag/Lead), Diff, CumSum, Rank.
+- `TokenVector.Data.Relational`:
+  - `GroupByEngine`: Parallel hash-partitioned multi-column grouping and multi-expression aggregation.
+  - `JoinEngine`: Parallel Radix Hash Join (`Inner`, `Left`, `Right`, `FullOuter`, `Cross`) and high-frequency financial `AsOfJoin`.
+  - `ReshapeEngine`: `Pivot` (long-to-wide), `Melt` (wide-to-long), `ConcatVertical`, `ConcatHorizontal`.
+- `TokenVector.Data.IO`:
+  - `FastCsvReader`: Multi-threaded chunk CSV parser with SIMD delimiter scanner and automatic schema inference.
+  - `FastCsvWriter`: High-throughput buffered CSV stream writer.
+  - `FastJsonReader`: Streaming NDJSON and JSON tabular reader.
+  - `ArrowIpcEngine`: Apache Arrow IPC Feather streaming serialization and deserialization.
+  - `OutOfCoreDataFrame`: Memory-mapped tabular storage for datasets larger than RAM.
+- `TokenVector.Data.Interop`:
+  - `NumericsInterop`: Zero-copy bridge to `TokenVector.Numerics.Core.NDArray<T>` and `TokenVector.Numerics.Autograd.Tensor<T>`.
+- `tv_data.tkv`:
+  - Native TokenVector language standard library module for pure TokenVector code (`import tv.data as td`).

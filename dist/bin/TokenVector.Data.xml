@@ -1,0 +1,715 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TokenVector.Data</name>
+    </assembly>
+    <members>
+        <member name="T:TokenVector.Data.Common.BitmapMask">
+            <summary>
+            Ultra-fast 64-bit word aligned bitboard mask for zero-allocation boolean tracking and null masks.
+            Accelerates bitwise SIMD logic and hardware POPCNT.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.BitmapMask.Length">
+            <summary>
+            Total number of tracked bits.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.BitmapMask.WordCount">
+            <summary>
+            Total number of 64-bit ulong words in the backing buffer.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.BitmapMask.Words">
+            <summary>
+            Direct read-only span access to underlying 64-bit bitboard words.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.AsSpan">
+            <summary>
+            Direct mutable span access to underlying 64-bit bitboard words.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.#ctor(System.Int32,System.Boolean)">
+            <summary>
+            Initializes a new bitmap mask of given bit length, defaulted to all false or all true.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.#ctor(System.Int32,System.UInt64[])">
+            <summary>
+            Initializes a bitmap mask by wrapping or cloning existing word buffer.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.Get(System.Int32)">
+            <summary>
+            Gets the boolean value at the specified bit index.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.Set(System.Int32,System.Boolean)">
+            <summary>
+            Sets the boolean value at the specified bit index.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.BitmapMask.Item(System.Int32)">
+            <summary>
+            Fast indexer for bit lookup.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.SetAll(System.Boolean)">
+            <summary>
+            Sets all bits in the mask to either true or false.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.PopCount">
+            <summary>
+            Counts total number of set bits (true values) using hardware POPCNT.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.All">
+            <summary>
+            Returns true if all bits are set.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.Any">
+            <summary>
+            Returns true if any bit is set.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.BitwiseAnd(TokenVector.Data.Common.BitmapMask)">
+            <summary>
+            Computes bitwise AND with another mask.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.BitwiseOr(TokenVector.Data.Common.BitmapMask)">
+            <summary>
+            Computes bitwise OR with another mask.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.BitwiseNot">
+            <summary>
+            Computes bitwise NOT of this mask.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.BitwiseXor(TokenVector.Data.Common.BitmapMask)">
+            <summary>
+            Computes bitwise XOR with another mask.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.ToIndices">
+            <summary>
+            Extracts integer indices of all true bits in $O(N)$ with bit-skipping (TrailedZeros).
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.FromIndices(System.Int32,System.ReadOnlySpan{System.Int32})">
+            <summary>
+            Creates a BitmapMask from a list of set indices.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.Slice(System.Int32,System.Int32)">
+            <summary>
+            Slices the bitmap mask to a new range.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.BitmapMask.Clone">
+            <summary>
+            Deep-clones this bitmap mask.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Common.DataType">
+            <summary>
+            Supported primitive and structured data types in TokenVector.Data.
+            Aligned with Apache Arrow physical type representations.
+            </summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Int8">
+            <summary>8-bit signed integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Int16">
+            <summary>16-bit signed integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Int32">
+            <summary>32-bit signed integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Int64">
+            <summary>64-bit signed integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.UInt8">
+            <summary>8-bit unsigned integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.UInt16">
+            <summary>16-bit unsigned integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.UInt32">
+            <summary>32-bit unsigned integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.UInt64">
+            <summary>64-bit unsigned integer</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Float32">
+            <summary>32-bit IEEE 754 floating point</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Float64">
+            <summary>64-bit IEEE 754 floating point</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.Boolean">
+            <summary>Boolean (1 byte or bit-packed)</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.String">
+            <summary>UTF-8 variable-length binary string</summary>
+        </member>
+        <member name="F:TokenVector.Data.Common.DataType.DateTime64">
+            <summary>64-bit timestamp in nanoseconds since Unix Epoch</summary>
+        </member>
+        <member name="T:TokenVector.Data.Common.DataTypeHelper">
+            <summary>
+            Helper utilities and type conversions for <see cref="T:TokenVector.Data.Common.DataType"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.DataTypeHelper.FromClrType(System.Type)">
+            <summary>
+            Maps a CLR type to its corresponding <see cref="T:TokenVector.Data.Common.DataType"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.DataTypeHelper.ToClrType(TokenVector.Data.Common.DataType)">
+            <summary>
+            Maps a <see cref="T:TokenVector.Data.Common.DataType"/> to its native unmanaged or CLR type.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.DataTypeHelper.GetByteSize(TokenVector.Data.Common.DataType)">
+            <summary>
+            Gets the fixed byte size for fixed-width data types, or 0 for variable-length types.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.DataTypeHelper.IsNumeric(TokenVector.Data.Common.DataType)">
+            <summary>
+            Checks if the data type is a numeric type.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.DataTypeHelper.IsFloatingPoint(TokenVector.Data.Common.DataType)">
+            <summary>
+            Checks if the data type is a floating point type.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Common.Field">
+            <summary>
+            Represents a named field in a DataFrame or Columnar table.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.Field.Name">
+            <summary>Name of the column/field.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.Field.Type">
+            <summary>Logical data type of the field.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.Field.IsNullable">
+            <summary>Indicates whether values in this field can be null.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.Field.Metadata">
+            <summary>Optional custom metadata key-value dictionary.</summary>
+        </member>
+        <member name="T:TokenVector.Data.Common.Schema">
+            <summary>
+            Represents the complete metadata schema of a DataFrame or record batch.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Common.Schema.Count">
+            <summary>
+            Total number of columns/fields in the schema.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.GetIndex(System.String)">
+            <summary>
+            Gets the zero-based column index for a field name.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.TryGetIndex(System.String,System.Int32@)">
+            <summary>
+            Attempts to get column index for a field name.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.Contains(System.String)">
+            <summary>
+            Checks if a field with the specified name exists.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.Select(System.String[])">
+            <summary>
+            Creates a new sub-schema selecting only specified column names.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.Project(System.Int32[])">
+            <summary>
+            Creates a new sub-schema selecting only specified column indices.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Common.Schema.Append(TokenVector.Data.Common.Field[])">
+            <summary>
+            Appends fields to create an extended schema.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Compute.Aggregations">
+            <summary>
+            High-throughput vectorized SIMD aggregation routines with zero-allocation null skipping.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Sum(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Computes the sum of non-null values in a numeric column.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Mean(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Computes the arithmetic mean of non-null elements.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Min(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Finds the minimum value in a numeric column.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Max(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Finds the maximum value in a numeric column.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Variance(TokenVector.Data.Core.IColumn,System.Int32)">
+            <summary>
+            Computes sample variance (degrees of freedom = 1).
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Std(TokenVector.Data.Core.IColumn,System.Int32)">
+            <summary>
+            Computes sample standard deviation.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Median(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Computes sample median.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.Aggregations.Quantile(TokenVector.Data.Core.IColumn,System.Double)">
+            <summary>
+            Computes sample quantile (q in [0.0, 1.0]) using linear interpolation.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Compute.FilterEngine">
+            <summary>
+            Multi-threaded predicate filtering engine returning bitboard masks.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.FilterEngine.EvaluatePredicate(System.Int32,System.Func{System.Int32,System.Boolean})">
+            <summary>
+            Evaluates a row predicate function in parallel across all rows.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.FilterEngine.And(TokenVector.Data.Common.BitmapMask[])">
+            <summary>
+            Combines multiple filter masks with logical AND.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.FilterEngine.Or(TokenVector.Data.Common.BitmapMask[])">
+            <summary>
+            Combines multiple filter masks with logical OR.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Compute.VectorMath">
+            <summary>
+            Hardware SIMD vector math engine for element-wise column arithmetic, transformations, and comparisons.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Compute.WindowFunctions">
+            <summary>
+            Vectorized window and analytical functions including Rolling statistics, Lag, Lead, Diff, CumSum, and Rank.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingMean(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">
+            <summary>
+            Computes moving (rolling) arithmetic mean over a sliding window.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingSum(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">
+            <summary>
+            Computes moving (rolling) sum over a sliding window.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingStd(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">
+            <summary>
+            Computes moving (rolling) sample standard deviation over a sliding window.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.Shift(TokenVector.Data.Core.IColumn,System.Int32)">
+            <summary>
+            Shifts values by given periods (positive shifts forward = Lag, negative shifts backward = Lead).
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.Diff(TokenVector.Data.Core.IColumn,System.Int32)">
+            <summary>
+            Computes first or n-th order discrete differences: $y_t = x_t - x_{t - periods}$.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.CumSum(TokenVector.Data.Core.IColumn)">
+            <summary>
+            Computes cumulative sum over the column.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Compute.WindowFunctions.Rank(TokenVector.Data.Core.IColumn,System.Boolean)">
+            <summary>
+            Computes numerical ranks of elements (1-based ranking).
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.ChunkedArray">
+            <summary>
+            Multi-chunk columnar container for streaming data ingestion, out-of-core batches, and zero-allocation chunk concatenation.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.ChunkedArray.GetBoxed(System.Int32)">
+            <summary>
+            Gets element at the given global linear index.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.ChunkedArray.Flatten">
+            <summary>
+            Flattens all chunks into a single contiguous <see cref="T:TokenVector.Data.Core.IColumn"/>.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.Column`1">
+            <summary>
+            Contiguous typed columnar memory buffer for unmanaged types with 64-bit Bitboard validity tracking.
+            </summary>
+            <typeparam name="T">Unmanaged primitive type.</typeparam>
+        </member>
+        <member name="M:TokenVector.Data.Core.Column`1.AsSpan">
+            <summary>
+            Direct mutable span access to contiguous unmanaged memory.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.Column`1.AsReadOnlySpan">
+            <summary>
+            Direct read-only span access to contiguous unmanaged memory.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.Column`1.RawData">
+            <summary>
+            Raw underlying data array.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.DataFrame">
+            <summary>
+            Ultra-high-performance 2D Columnar Tabular container aligned with Apache Arrow memory layout.
+            Provides vectorized math, parallel filtering, grouped aggregations, relational joins, and zero-copy tensor bridge.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.IColumn">
+            <summary>
+            Core abstraction for high-performance columnar data storage.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.IColumn.DataType">
+            <summary>Physical data type stored in this column.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.IColumn.Length">
+            <summary>Total number of elements/rows in this column.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.IColumn.NullCount">
+            <summary>Total count of null entries.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.IColumn.NullMask">
+            <summary>Bitboard null mask where true indicates valid (non-null) or false indicates null.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.IsNull(System.Int32)">
+            <summary>Checks if element at given index is null.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.GetBoxed(System.Int32)">
+            <summary>Gets boxed value for generic access.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.Slice(System.Int32,System.Int32)">
+            <summary>Slices column to sub-range with zero-copy or minimal copy.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.Take(System.ReadOnlySpan{System.Int32})">
+            <summary>Gathers rows by an array of indices.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.Filter(TokenVector.Data.Common.BitmapMask)">
+            <summary>Filters rows where mask bit is true.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.Clone">
+            <summary>Creates a deep clone of this column.</summary>
+        </member>
+        <member name="M:TokenVector.Data.Core.IColumn.Cast(TokenVector.Data.Common.DataType)">
+            <summary>Casts column to another compatible DataType.</summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.Series">
+            <summary>
+            1D Named Column container with vectorized SIMD mathematics, window transformations, and statistical aggregations.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Core.StringColumn">
+            <summary>
+            Apache Arrow-aligned Variable-Length UTF-8 binary string column.
+            Combines a contiguous byte buffer with a monotonically increasing int32 offset array.
+            Eliminates GC heap fragmentation and provides fast vector search.
+            </summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.StringColumn.BufferSpan">
+            <summary>Direct access to contiguous UTF-8 data bytes.</summary>
+        </member>
+        <member name="P:TokenVector.Data.Core.StringColumn.OffsetsSpan">
+            <summary>Direct access to Arrow offset vector.</summary>
+        </member>
+        <member name="T:TokenVector.Data.Interop.NumericsInterop">
+            <summary>
+            High-performance Zero-Copy and Low-Overhead bridge between TokenVector.Data and TokenVector.Numerics.
+            Facilitates seamless interoperability between DataFrames/Series and NDArray/Tensor autograd engines.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.ToNDArray``1(TokenVector.Data.Core.Series)">
+            <summary>
+            Converts a 1D <see cref="T:TokenVector.Data.Core.Series"/> directly to a 1D <see cref="T:TokenVector.Numerics.Core.NDArray`1"/>.
+            Performs a Zero-Copy wrap of the underlying memory buffer when types match and no null values exist.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.ToTensor``1(TokenVector.Data.Core.Series,System.Boolean)">
+            <summary>
+            Converts a 1D <see cref="T:TokenVector.Data.Core.Series"/> to an Autograd <see cref="T:TokenVector.Numerics.Autograd.Tensor`1"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.ToNDArray``1(TokenVector.Data.Core.DataFrame,System.String[])">
+            <summary>
+            Converts selected numeric columns of a <see cref="T:TokenVector.Data.Core.DataFrame"/> to a 2D C-contiguous <see cref="T:TokenVector.Numerics.Core.NDArray`1"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.ToTensor``1(TokenVector.Data.Core.DataFrame,System.String[],System.Boolean)">
+            <summary>
+            Converts a <see cref="T:TokenVector.Data.Core.DataFrame"/> to a 2D differentiable <see cref="T:TokenVector.Numerics.Autograd.Tensor`1"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.FromNDArray``1(TokenVector.Numerics.Core.NDArray{``0},System.String[])">
+            <summary>
+            Wraps or converts a 2D or 1D <see cref="T:TokenVector.Numerics.Core.NDArray`1"/> into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Interop.NumericsInterop.FromTensor``1(TokenVector.Numerics.Autograd.Tensor{``0},System.String[])">
+            <summary>
+            Wraps or converts a <see cref="T:TokenVector.Numerics.Autograd.Tensor`1"/> into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.ArrowIpcEngine">
+            <summary>
+            High-performance Apache Arrow IPC Stream &amp; Feather record batch serialization and deserialization engine.
+            Provides zero-copy buffer layouts for cross-process, cross-language DataFrame transmission.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.WriteFile(TokenVector.Data.Core.DataFrame,System.String)">
+            <summary>
+            Writes a DataFrame in Arrow IPC Feather stream format to a file.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.ReadFile(System.String)">
+            <summary>
+            Reads an Arrow IPC Feather file into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.WriteToBytes(TokenVector.Data.Core.DataFrame)">
+            <summary>
+            Serializes a DataFrame into an Arrow IPC byte array.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.ReadFromBytes(System.Byte[])">
+            <summary>
+            Deserializes a DataFrame from an Arrow IPC byte array.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.WriteStream(TokenVector.Data.Core.DataFrame,System.IO.Stream)">
+            <summary>
+            Writes a DataFrame to an Arrow IPC stream.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.ArrowIpcEngine.ReadStream(System.IO.Stream)">
+            <summary>
+            Reads a DataFrame from an Arrow IPC stream.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.CsvReadOptions">
+            <summary>
+            Options for configuring CSV parsing and schema inference.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.FastCsvReader">
+            <summary>
+            Multi-threaded SIMD-accelerated delimiter CSV reader with automatic schema inference.
+            Handles RFC 4180 escaped quotes, multiline fields, and parallel chunk processing.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvReader.ReadFile(System.String,TokenVector.Data.IO.CsvReadOptions)">
+            <summary>
+            Reads a CSV file into a high-performance <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvReader.ReadString(System.String,TokenVector.Data.IO.CsvReadOptions)">
+            <summary>
+            Reads a CSV from an in-memory string.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvReader.ReadStream(System.IO.Stream,TokenVector.Data.IO.CsvReadOptions)">
+            <summary>
+            Reads a CSV from any readable Stream.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.CsvWriteOptions">
+            <summary>
+            Options for configuring CSV serialization.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.FastCsvWriter">
+            <summary>
+            High-throughput buffered CSV stream writer.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvWriter.WriteFile(TokenVector.Data.Core.DataFrame,System.String,TokenVector.Data.IO.CsvWriteOptions)">
+            <summary>
+            Writes a DataFrame to a CSV file.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvWriter.WriteStream(TokenVector.Data.Core.DataFrame,System.IO.Stream,TokenVector.Data.IO.CsvWriteOptions)">
+            <summary>
+            Writes a DataFrame to a writable Stream.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastCsvWriter.WriteToString(TokenVector.Data.Core.DataFrame,TokenVector.Data.IO.CsvWriteOptions)">
+            <summary>
+            Serializes a DataFrame to an in-memory CSV string.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.FastJsonReader">
+            <summary>
+            High-throughput streaming NDJSON (JSON Lines) and JSON tabular reader.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastJsonReader.ReadNdJsonFile(System.String)">
+            <summary>
+            Reads an NDJSON (Newline Delimited JSON) file into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastJsonReader.ReadNdJsonString(System.String)">
+            <summary>
+            Reads an NDJSON string into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastJsonReader.ReadNdJsonStream(System.IO.Stream)">
+            <summary>
+            Reads an NDJSON stream into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.FastJsonReader.ReadJsonArrayString(System.String)">
+            <summary>
+            Reads a standard JSON array of objects into a <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.IO.OutOfCoreDataFrame">
+            <summary>
+            Out-Of-Core Tabular storage engine backed by Memory-Mapped Files (MMF).
+            Allows querying, scanning, and processing massive datasets exceeding physical RAM capacity.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.OutOfCoreDataFrame.Persist(TokenVector.Data.Core.DataFrame,System.String)">
+            <summary>
+            Persists an in-memory DataFrame to a memory-mapped binary file.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.OutOfCoreDataFrame.Open(System.String)">
+            <summary>
+            Opens a memory-mapped Out-Of-Core DataFrame file.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.IO.OutOfCoreDataFrame.ReadBatch(System.Int32,System.Int32)">
+            <summary>
+            Reads a batch/slice of rows into an in-memory <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.AggregationType">
+            <summary>
+            Aggregation type for GroupBy expressions.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.AggregationExpr">
+            <summary>
+            Defines an aggregation expression on a target column.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.Agg">
+            <summary>
+            Static builder for aggregation expressions.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.GroupByContext">
+            <summary>
+            High-throughput parallel Radix/Hash GroupBy engine.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.GroupByContext.Agg(TokenVector.Data.Relational.AggregationExpr[])">
+            <summary>
+            Executes parallel grouped aggregations and returns a new aggregated <see cref="T:TokenVector.Data.Core.DataFrame"/>.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.JoinType">
+            <summary>
+            Supported join types in TokenVector.Data.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.AsOfDirection">
+            <summary>
+            Search direction for AsOf time-series joins.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.JoinEngine">
+            <summary>
+            High-throughput parallel Hash Join and AsOf time-series join engine.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.JoinEngine.Join(TokenVector.Data.Core.DataFrame,TokenVector.Data.Core.DataFrame,System.String,System.String,TokenVector.Data.Relational.JoinType,System.String,System.String)">
+            <summary>
+            Executes a parallel hash join on two DataFrames with given key columns.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.JoinEngine.JoinMulti(TokenVector.Data.Core.DataFrame,TokenVector.Data.Core.DataFrame,System.String[],System.String[],TokenVector.Data.Relational.JoinType,System.String,System.String)">
+            <summary>
+            Executes a parallel hash join with multiple join keys.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.JoinEngine.CrossJoin(TokenVector.Data.Core.DataFrame,TokenVector.Data.Core.DataFrame,System.String,System.String)">
+            <summary>
+            Computes Cartesian product (Cross Join) between two DataFrames.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.JoinEngine.AsOfJoin(TokenVector.Data.Core.DataFrame,TokenVector.Data.Core.DataFrame,System.String,System.String,System.String,TokenVector.Data.Relational.AsOfDirection,System.Nullable{System.Double},System.String,System.String)">
+            <summary>
+            High-frequency financial time-series AsOf Join.
+            Matches left rows with the most recent, earliest, or nearest right rows based on timestamp tolerance.
+            </summary>
+        </member>
+        <member name="T:TokenVector.Data.Relational.ReshapeEngine">
+            <summary>
+            Tabular reshaping engine providing Pivot, Melt, Stack, Unstack, and Concat operations.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.ReshapeEngine.ConcatVertical(TokenVector.Data.Core.DataFrame[])">
+            <summary>
+            Concatenates multiple DataFrames vertically (row-wise).
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.ReshapeEngine.ConcatHorizontal(TokenVector.Data.Core.DataFrame[])">
+            <summary>
+            Concatenates multiple DataFrames horizontally (column-wise).
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.ReshapeEngine.Melt(TokenVector.Data.Core.DataFrame,System.String[],System.String[],System.String,System.String)">
+            <summary>
+            Melts (unpivots) a DataFrame from wide format to long format.
+            </summary>
+        </member>
+        <member name="M:TokenVector.Data.Relational.ReshapeEngine.Pivot(TokenVector.Data.Core.DataFrame,System.String,System.String,System.String)">
+            <summary>
+            Pivots a DataFrame from long format to wide format.
+            </summary>
+        </member>
+    </members>
+</doc>

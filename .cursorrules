@@ -1,0 +1,9 @@
+# TokenVector.Data - AI Developer Rules & Guidelines
+
+- **Target Framework:** C# 12 / .NET 8 LTS (`net8.0`).
+- **Memory Standards:** Columnar contiguous buffers, 64-bit Bitboard `BitmapMask`, Arrow UTF-8 binary format. Zero unneeded heap allocations.
+- **Threading:** True No-GIL parallelism using `Parallel.For` and Task Parallel Library.
+- **Safety & Quality:** Unsafe code restricted to hot memory spans and SIMD intrinsics. `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`.
+- **Ecosystem Interop:** Seamless Zero-Copy bridge with `TokenVector.Numerics.NDArray<T>` and `TokenVector.Numerics.Autograd.Tensor<T>`.
+- **Native Syntax:** Provide and maintain native TokenVector syntax specs (`TOKENVECTOR_SYNTAX_SPEC.md` / `_VI.md`) and wrapper module (`src/TokenVector.Data/tv_data.tkv`).
+- **No Placeholder Code:** Every method, algorithm, and test must be fully implemented, compiled, and verified green.
