@@ -8,17 +8,17 @@ This report presents comprehensive benchmark results and architectural compariso
 
 ## 1. Architectural Competitor Matrix
 
-| Feature / Dimension | TokenVector.Data (.NET 8 / C# 12) | Polars (Rust / Arrow) | DuckDB (C++ Vectorized) | Pandas 2.x (Python) | Microsoft.Data.Analysis (.NET) |
+| Feature | TokenVector.Data | Polars | DuckDB | Pandas 2.x | MS.Data.Analysis |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Core Language & Runtime** | C# 12 / .NET 8 CIL AOT | Rust (Native Compiled) | C++11 (Native Compiled) | Python (C-Extensions) | C# (.NET Core) |
-| **Memory Layout** | Apache Arrow Columnar (Contiguous unmanaged) | Apache Arrow Columnar | Vectorized Chunked Columnar | Hybrid Row/Column Block | Object & Primitive Columns |
-| **Multithreading Model** | **True No-GIL** (`Parallel.For`, TPL) | Rayon Work-Stealing | Multi-threaded Vector Pipes | **GIL Bottleneck** (Single Thread) | Limited / Partial |
-| **Null Representation** | **64-bit Word Bitboard (`BitmapMask`)** | Arrow Validity Bitmap | Vector Validity Mask | Sentinel `NaN` or Byte Array | BitArray |
-| **Hardware SIMD Vectorization**| AVX2 / SSE4 / FMA Vector Spans | AVX2 / AVX-512 (Auto) | Vectorized Execution (Chunk) | Vectorized in NumPy/C | Partial |
-| **Financial Time-Series (`AsOfJoin`)**| **Native Built-in** (Backward/Fwd/Nearest) | Built-in `join_asof` | Supported in SQL | `pandas.merge_asof` | ❌ Not Supported |
-| **Tensor & AI Interoperability** | **Zero-Copy Instant Bridge** (`NDArray<T>`, `Tensor<T>`) | PyArrow / NumPy bridge (Copy) | SQL-first (Export to Arrow) | `df.to_numpy()` (Copy/View) | ❌ Not Integrated |
-| **Out-Of-Core Datasets** | **`OutOfCoreDataFrame`** (MemoryMappedFiles) | Streaming Engine | Disk Buffer Spilling | ❌ In-Memory Only | ❌ In-Memory Only |
-| **Binary Interchange Format** | Apache Arrow IPC Feather Stream | Arrow IPC / Parquet | Parquet / DuckDB File | Parquet / Feather | Arrow (via Apache.Arrow) |
+| **Language** | C# 12 / .NET 8 AOT | Rust Native | C++11 Native | Python / C | C# (.NET Core) |
+| **Memory** | Arrow Columnar | Arrow Columnar | Vector Chunked | Row/Col Block | Object / Array |
+| **Threads** | **No-GIL (100% Cores)** | Rayon Stealing | Vector Pipes | **GIL (1 Core)** | Limited |
+| **Null Mask** | **64-bit Bitboard** | Arrow Validity | Validity Mask | `NaN` / Byte Mask | BitArray |
+| **SIMD** | AVX2 / SSE4 / FMA | AVX2 / AVX-512 | Vector Chunks | NumPy / C | Partial |
+| **AsOf Join** | **Native Built-in** | `join_asof` | SQL Engine | `merge_asof` | ❌ No |
+| **Tensor/AI** | **Zero-Copy Bridge** | FFI Copy | Arrow Export | Copy / View | ❌ No |
+| **Out-Of-Core** | **MemoryMappedFiles** | Streaming | Disk Spilling | ❌ No | ❌ No |
+| **Binary I/O** | Arrow IPC Feather | Arrow / Parquet | Parquet / DuckDB | Feather / Parquet | Arrow |
 
 ---
 

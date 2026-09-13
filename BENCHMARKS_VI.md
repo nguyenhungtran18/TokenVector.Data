@@ -8,17 +8,17 @@ Báo cáo này trình bày kết quả đo kiểm hiệu năng thực tế (Benc
 
 ## 1. Ma Trận So Sánh Kiến Trúc Đối Thủ
 
-| Tính năng / Tiêu chí | TokenVector.Data (.NET 8 / C# 12) | Polars (Rust / Arrow) | DuckDB (C++ Vectorized) | Pandas 2.x (Python) | Microsoft.Data.Analysis (.NET) |
+| Tiêu chí | TokenVector.Data | Polars | DuckDB | Pandas 2.x | MS.Data.Analysis |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Ngôn ngữ & Runtime** | C# 12 / .NET 8 CIL AOT | Rust (Biên dịch Native) | C++11 (Biên dịch Native) | Python (C-Extensions) | C# (.NET Core) |
-| **Bố cục bộ nhớ** | Apache Arrow Columnar (Unmanaged liên tục) | Apache Arrow Columnar | Vectorized Chunked Columnar | Hybrid Row/Column Block | Object & Primitive Columns |
-| **Mô hình đa luồng** | **True No-GIL** (`Parallel.For`, TPL) | Rayon Work-Stealing | Multi-threaded Vector Pipes | **Bị nghẽn bởi GIL** (Đơn luồng) | Giới hạn / Cục bộ |
-| **Quản lý giá trị Null** | **64-bit Bitboard (`BitmapMask`)** | Arrow Validity Bitmap | Vector Validity Mask | Sentinel `NaN` hoặc Mảng Byte | BitArray |
-| **Tăng tốc phần cứng SIMD**| AVX2 / SSE4 / FMA Vector Spans | AVX2 / AVX-512 (Tự động) | Vectorized Execution (Chunk) | Vectorized qua NumPy/C | Hỗ trợ một phần |
-| **Chuỗi thời gian (`AsOfJoin`)**| **Tích hợp sẵn bản địa** (Backward/Fwd/Nearest) | Có sẵn `join_asof` | Hỗ trợ qua SQL | `pandas.merge_asof` | ❌ Không hỗ trợ |
-| **Tương thích AI / Tensor** | **Cầu nối Zero-Copy tức thì** (`NDArray<T>`, `Tensor<T>`) | Cầu nối PyArrow / NumPy (Copy) | SQL-first (Xuất Arrow) | `df.to_numpy()` (Copy/View) | ❌ Không tích hợp |
-| **Dữ liệu lớn Out-Of-Core** | **`OutOfCoreDataFrame`** (MemoryMappedFiles) | Streaming Engine | Disk Buffer Spilling | ❌ Chỉ chạy trên RAM | ❌ Chỉ chạy trên RAM |
-| **Định dạng nhị phân** | Apache Arrow IPC Feather Stream | Arrow IPC / Parquet | Parquet / DuckDB File | Parquet / Feather | Arrow (qua Apache.Arrow) |
+| **Ngôn ngữ** | C# 12 / .NET 8 AOT | Rust Native | C++11 Native | Python / C | C# (.NET Core) |
+| **Bộ nhớ** | Arrow Columnar | Arrow Columnar | Vector Chunked | Row/Col Block | Object / Array |
+| **Đa luồng** | **No-GIL (100% Cores)** | Rayon Stealing | Vector Pipes | **Bị nghẽn bởi GIL**| Giới hạn |
+| **Quản lý Null**| **64-bit Bitboard** | Arrow Validity | Validity Mask | `NaN` / Byte Mask | BitArray |
+| **SIMD** | AVX2 / SSE4 / FMA | AVX2 / AVX-512 | Vector Chunks | NumPy / C | Một phần |
+| **AsOf Join** | **Tích hợp sẵn** | `join_asof` | Qua SQL | `merge_asof` | ❌ Không |
+| **AI / Tensor** | **Zero-Copy Bridge** | FFI Copy | Arrow Export | Copy / View | ❌ Không |
+| **Out-Of-Core** | **MemoryMappedFiles** | Streaming | Disk Spilling | ❌ Không | ❌ Không |
+| **Binary I/O** | Arrow IPC Feather | Arrow / Parquet | Parquet / DuckDB | Feather / Parquet | Arrow |
 
 ---
 
