@@ -13,7 +13,7 @@ namespace TokenVector.Data.Compute;
 public static class WindowFunctions
 {
     /// <summary>
-    /// Computes moving (rolling) arithmetic mean over a sliding window.
+    /// Computes moving (rolling) arithmetic mean over a sliding window in O(N).
     /// </summary>
     public static Column<double> RollingMean(IColumn column, int windowSize, int minPeriods = 1)
     {
@@ -24,24 +24,29 @@ public static class WindowFunctions
         var result = new double[len];
         var mask = new BitmapMask(len);
 
+        double runningSum = 0.0;
+        int validCount = 0;
+
         for (int i = 0; i < len; i++)
         {
-            int start = Math.Max(0, i - windowSize + 1);
-            int count = 0;
-            double sum = 0.0;
-
-            for (int j = start; j <= i; j++)
+            // Add new element entering window
+            if (!column.IsNull(i))
             {
-                if (!column.IsNull(j))
-                {
-                    sum += Convert.ToDouble(column.GetBoxed(j));
-                    count++;
-                }
+                runningSum += Convert.ToDouble(column.GetBoxed(i));
+                validCount++;
             }
 
-            if (count >= minPeriods)
+            // Subtract element leaving window
+            int leavingIdx = i - windowSize;
+            if (leavingIdx >= 0 && !column.IsNull(leavingIdx))
             {
-                result[i] = sum / count;
+                runningSum -= Convert.ToDouble(column.GetBoxed(leavingIdx));
+                validCount--;
+            }
+
+            if (validCount >= minPeriods)
+            {
+                result[i] = runningSum / validCount;
                 mask.Set(i, true);
             }
         }
@@ -50,7 +55,7 @@ public static class WindowFunctions
     }
 
     /// <summary>
-    /// Computes moving (rolling) sum over a sliding window.
+    /// Computes moving (rolling) sum over a sliding window in O(N).
     /// </summary>
     public static Column<double> RollingSum(IColumn column, int windowSize, int minPeriods = 1)
     {
@@ -61,24 +66,29 @@ public static class WindowFunctions
         var result = new double[len];
         var mask = new BitmapMask(len);
 
+        double runningSum = 0.0;
+        int validCount = 0;
+
         for (int i = 0; i < len; i++)
         {
-            int start = Math.Max(0, i - windowSize + 1);
-            int count = 0;
-            double sum = 0.0;
-
-            for (int j = start; j <= i; j++)
+            // Add new element entering window
+            if (!column.IsNull(i))
             {
-                if (!column.IsNull(j))
-                {
-                    sum += Convert.ToDouble(column.GetBoxed(j));
-                    count++;
-                }
+                runningSum += Convert.ToDouble(column.GetBoxed(i));
+                validCount++;
             }
 
-            if (count >= minPeriods)
+            // Subtract element leaving window
+            int leavingIdx = i - windowSize;
+            if (leavingIdx >= 0 && !column.IsNull(leavingIdx))
             {
-                result[i] = sum;
+                runningSum -= Convert.ToDouble(column.GetBoxed(leavingIdx));
+                validCount--;
+            }
+
+            if (validCount >= minPeriods)
+            {
+                result[i] = runningSum;
                 mask.Set(i, true);
             }
         }

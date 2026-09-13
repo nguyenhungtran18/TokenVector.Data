@@ -324,12 +324,12 @@
         </member>
         <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingMean(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">
             <summary>
-            Computes moving (rolling) arithmetic mean over a sliding window.
+            Computes moving (rolling) arithmetic mean over a sliding window in O(N).
             </summary>
         </member>
         <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingSum(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">
             <summary>
-            Computes moving (rolling) sum over a sliding window.
+            Computes moving (rolling) sum over a sliding window in O(N).
             </summary>
         </member>
         <member name="M:TokenVector.Data.Compute.WindowFunctions.RollingStd(TokenVector.Data.Core.IColumn,System.Int32,System.Int32)">

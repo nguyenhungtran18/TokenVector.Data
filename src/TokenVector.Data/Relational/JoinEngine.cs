@@ -175,6 +175,14 @@ public static class JoinEngine
 
         var matchedPairs = new List<(int leftRow, int? rightRow)>(left.RowCount);
 
+        // Pre-extract right timestamps for fast search
+        int rightCount = right.RowCount;
+        var rightTimes = new double[rightCount];
+        for (int r = 0; r < rightCount; r++)
+        {
+            rightTimes[r] = rightTimeCol.IsNull(r) ? double.NaN : Convert.ToDouble(rightTimeCol[r]);
+        }
+
         for (int l = 0; l < left.RowCount; l++)
         {
             if (leftTimeCol.IsNull(l))
@@ -189,9 +197,11 @@ public static class JoinEngine
             int bestRightIdx = -1;
             double bestDiff = double.MaxValue;
 
-            for (int r = 0; r < right.RowCount; r++)
+            // Search in right timestamps
+            for (int r = 0; r < rightCount; r++)
             {
-                if (rightTimeCol.IsNull(r)) continue;
+                double rightTime = rightTimes[r];
+                if (double.IsNaN(rightTime)) continue;
 
                 if (by is not null)
                 {
@@ -199,7 +209,6 @@ public static class JoinEngine
                     if (!Equals(leftGroupVal, rightGroupVal)) continue;
                 }
 
-                double rightTime = Convert.ToDouble(rightTimeCol[r]);
                 double diff = leftTime - rightTime;
 
                 switch (direction)
