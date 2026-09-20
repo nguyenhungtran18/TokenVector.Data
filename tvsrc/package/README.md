@@ -5,17 +5,11 @@
 [![Language](https://img.shields.io/badge/Language-TokenVector%20(tkv)-purple.svg)]()
 [![Target](https://img.shields.io/badge/Target-.NET%20CIL%20DLL-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Checks-9%2F9%20Suites%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Checks-51%2F51%20Passed-brightgreen.svg)]()
 
 **TokenVector.Data** is a high-performance columnar DataFrame and tabular data processing library **natively implemented in the TokenVector programming language (tkv)** and compiled to a .NET CIL assembly (`TokenVector.Data.dll`) via `tkvc` + `ilasm`.
 
 Version **1.0.1** marks the complete migration of the library from C# to the TokenVector language: all 22 C# source files were ported to 6 native `.tkv` modules, and all 51 unit tests were re-mapped as native tkv checks — **51/51 passing**.
-
-Version **1.0.2** is a performance & feature upgrade:
-
-* **Perf** — `DataFrame.sort_by` now uses a stable **O(n log n)** merge sort (was O(n²) insertion sort); `asof_join` now sorts the right frame once and **binary-searches** each left row — **O(n log m)** overall (was O(n·m) linear scan), and unsorted right input is now supported; rolling `mean`/`std` are **O(n)** (std was O(n·window) with two passes).
-* **Null propagation** — `vec_add/sub/mul/div`, `vec_add_scalar/mul_scalar`, `vec_abs/sqrt/exp/log/pow` now propagate nulls (null in → null out).
-* **New APIs** — `Series.ffill/bfill`, `Series.str_map_contains/startswith/endswith/upper/lower/replace`, `Series.between`, `Series.is_in_f64/is_in_str`, `DataFrame.drop_duplicates/duplicated_mask/value_counts`.
 
 ---
 
@@ -55,8 +49,6 @@ rel_check    (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
 io_check     (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
 num_check    (NumericsInterop: 4 checks)                   ALL PASS
 arr_check    (ArrowIpc/OutOfCore: 2 checks)                ALL PASS
-feat_check   (v1.0.2: ffill/bfill, string maps, dedup,
-              value_counts, between, is_in, null prop)     SUCCESS
 ```
 
 ---
@@ -125,7 +117,7 @@ ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
 nuget.exe pack TokenVector.Data.nuspec
 ```
 
-Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` and `packages/TokenVector.Data.1.0.2.nupkg`.
+Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` and `packages/TokenVector.Data.1.0.1.nupkg`.
 
 ---
 

@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+
+def run() -> "str":
+    # Test 1: CSV co quoted field
+    csv1 = "id,name,score" + "\n" + "1,\"Alice\",95.5" + "\n" + "2,\"Bob, Jr.\",88.0" + "\n" + "3,\"Charlie \"\"The Great\"\"\",72.5" + "\n"
+    df1 = csv_read_string(csv1, ",", 1, "")
+    r1 = df1.row_count()
+    c1 = df1.column_count()
+    print("t1: rows=" + str(r1) + " cols=" + str(c1))
+    nm = df1.col_by_name("name")
+    print("t1: name0=" + nm.get_string(0) + " name1=" + nm.get_string(1))
+    sc = df1.col_by_name("score")
+    print("t1: score0=" + str(sc.get_f64(0)))
+
+    # Test 2: CSV round-trip qua writer
+    orig = make_df([
+        make_series_i64("id", [101, 102, 103]),
+        make_series_str("city", ["New York", "San Francisco, CA", "London"]),
+        make_series_f64("temp", [22.4, 18.2, 15.0]),
+    ])
+    csv2 = csv_write_string(orig, ",", 1, "")
+    df2 = csv_read_string(csv2, ",", 1, "")
+    print("t2: rows=" + str(df2.row_count()) + " cols=" + str(df2.column_count()))
+    ct = df2.col_by_name("city")
+    print("t2: city0=" + ct.get_string(0) + " city1=" + ct.get_string(1))
+    tp = df2.col_by_name("temp")
+    print("t2: temp0=" + str(tp.get_f64(0)))
+
+    # Test 3: NDJSON
+    nd = "{\"user\":\"alice\",\"age\":30,\"active\":true}" + "\n" + "{\"user\":\"bob\",\"age\":25,\"active\":false}" + "\n"
+    df3 = ndjson_read_string(nd)
+    print("t3: rows=" + str(df3.row_count()) + " cols=" + str(df3.column_count()))
+    us = df3.col_by_name("user")
+    print("t3: user0=" + us.get_string(0) + " user1=" + us.get_string(1))
+    ag = df3.col_by_name("age")
+    print("t3: age0=" + str(ag.get_i64(0)))
+    ac = df3.col_by_name("active")
+    print("t3: active0=" + str(ac.get_bool(0)) + " active1=" + str(ac.get_bool(1)))
+
+    # Test 4: JSON array
+    ja = "[{\"symbol\":\"AAPL\",\"price\":175.5},{\"symbol\":\"GOOGL\",\"price\":140.2}]"
+    df4 = json_array_read_string(ja)
+    print("t4: rows=" + str(df4.row_count()) + " cols=" + str(df4.column_count()))
+    sy = df4.col_by_name("symbol")
+    print("t4: symbol0=" + sy.get_string(0))
+    pr = df4.col_by_name("price")
+    print("t4: price0=" + str(pr.get_f64(0)))
+
+    # Test 5: TSV delimiter
+    tsv = "colA\tcolB" + "\n" + "100\t200" + "\n" + "300\t400" + "\n"
+    df5 = csv_read_string(tsv, "\t", 1, "")
+    ca = df5.col_by_name("colA")
+    print("t5: colA0=" + str(ca.get_i64(0)) + " rows=" + str(df5.row_count()))
+
+    # Test 6: No header
+    csv6 = "10,20" + "\n" + "30,40" + "\n"
+    df6 = csv_read_string(csv6, ",", 0, "")
+    ns = df_column_names(df6)
+    print("t6: n0=" + ns[0] + " rows=" + str(df6.row_count()))
+    c0 = df6.col_by_name("column_0")
+    print("t6: col0=" + str(c0.get_i64(0)))
+
+    # Test 7: file write/read
+    csv_write_file(orig, "test_out.csv", ",", 1, "")
+    df7 = csv_read_file("test_out.csv", ",", 1, "")
+    print("t7: rows=" + str(df7.row_count()) + " cols=" + str(df7.column_count()))
+    return "SUCCESS"

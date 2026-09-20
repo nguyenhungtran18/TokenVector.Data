@@ -1,0 +1,73 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+
+def _ms(t1, t2) -> "f64":
+    d = t2 - t1
+    ticks = datetime_ticks(d)
+    return float(ticks) / 10000.0
+
+
+def main() -> "i32":
+    fails = 0
+    # 1: i64 + null
+    t = "id,score\n1,10\n2,\n3,30\n"
+    df = csv_read_string(t, ",", 1, "")
+    dts = df_schema_dtypes(df)
+    print("t1 dtypes=" + str(dts[0]) + "," + str(dts[1]) + " rows=" + str(df.row_count()))
+    c1 = df.col_by_name("id")
+    c2 = df.col_by_name("score")
+    if dts[0] != 4 or dts[1] != 4:
+        fails = fails + 1
+        print("FAIL t1 dtype")
+    if c1.get_i64(2) != 3 or c2.is_null(1) != 1 or c2.get_i64(2) != 30:
+        fails = fails + 1
+        print("FAIL t1 values")
+    # 2: float + quoted str voi delimiter ben trong
+    tx2 = "name,price,note\n\"alpha, inc\",1.5,ok\nbeta,,\"say \"\"hi\"\"\"\n"
+    df2 = csv_read_string(tx2, ",", 1, "")
+    dts2 = df_schema_dtypes(df2)
+    print("t2 dtypes=" + str(dts2[0]) + "," + str(dts2[1]) + "," + str(dts2[2]))
+    cn = df2.col_by_name("name")
+    cp = df2.col_by_name("price")
+    if dts2[1] != 10 or cn.get_string(0) != "alpha, inc" or cp.is_null(1) != 1:
+        fails = fails + 1
+        print("FAIL t2 values name0=" + cn.get_string(0))
+    # 3: bool
+    t3 = "flag,n\ntrue,1\nfalse,2\n"
+    df3 = csv_read_string(t3, ",", 1, "")
+    dts3 = df_schema_dtypes(df3)
+    print("t3 dtypes=" + str(dts3[0]) + "," + str(dts3[1]))
+    if dts3[0] != 11:
+        fails = fails + 1
+        print("FAIL t3 bool dtype")
+    # 4: khong header + CRLF
+    t4 = "a,b\r\n1,2\r\n3,4\r\n"
+    df4 = csv_read_string(t4, ",", 0, "")
+    print("t4 rows=" + str(df4.row_count()) + " cols=" + str(df4.column_count()))
+    if df4.row_count() != 3 or df4.column_count() != 2:
+        fails = fails + 1
+        print("FAIL t4 shape")
+    # 5: perf 100k rows (giong B5 bench: id i64, g str, val f64)
+    N = 100000
+    parts = []
+    for i in range(N):
+        g = "A"
+        if i % 3 == 1:
+            g = "B"
+        elif i % 3 == 2:
+            g = "C"
+        parts.append(str(i) + "," + g + "," + str(i * 2) + ".5")
+    body = parts[0]
+    for k in range(1, len(parts)):
+        body = body + "\n" + parts[k]
+    csvtext = "id,g,val\n" + body + "\n"
+    t1 = datetime()
+    df5 = csv_read_string(csvtext, ",", 1, "")
+    t2 = datetime()
+    print("t5 perf rows=" + str(df5.row_count()) + " ms=" + str(_ms(t1, t2)))
+    if fails == 0:
+        print("ALL CSV TESTS PASS")
+    else:
+        print("FAILS=" + str(fails))
+    return 0
+

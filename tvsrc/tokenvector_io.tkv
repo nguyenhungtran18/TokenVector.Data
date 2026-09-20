@@ -1,0 +1,948 @@
+# -*- coding: utf-8 -*-
+# tokenvector_io.tkv - port tu C# TokenVector.Data/IO
+
+Q = "\""
+
+
+# ------------------------------ CSV parsing -----------------------------------
+def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+    fields = []
+    cur = ""
+    in_quotes = 0
+    i = 0
+    ln = len(line)
+    while i < ln:
+        ch = line[i]
+        if ch == quote:
+            if in_quotes == 1:
+                if i + 1 < ln:
+                    nxt = line[i + 1]
+                    if nxt == quote:
+                        cur = cur + quote
+                        i = i + 1
+                    else:
+                        in_quotes = 0
+                else:
+                    in_quotes = 0
+            else:
+                in_quotes = 1
+        elif ch == delimiter and in_quotes == 0:
+            fields.append(cur)
+            cur = ""
+        else:
+            cur = cur + ch
+        i = i + 1
+    fields.append(cur)
+    return fields
+
+
+def csv_parse_rows(text: "str", delimiter: "str", quote: "str") -> "list[str]":
+    # Moi row tra ve la chuoi ghep cac field bang ky tu US
+    rows = []
+    lines = text.split("\n")
+    n_lines = len(lines)
+    i = 0
+    while i < n_lines:
+        raw = lines[i]
+        line = raw.replace("\r", "")
+        if line == "" and i == n_lines - 1:
+            break
+        if line.find(quote) == 0 - 1:
+            # fast path: khong co quote trong dong -> dung builtin split
+            fields = line.split(delimiter)
+        else:
+            fields = _split_csv_line(line, delimiter, quote)
+        joined = fields[0]
+        for f in range(1, len(fields)):
+            joined = joined + "" + fields[f]
+        rows.append(joined)
+        i = i + 1
+    return rows
+
+
+def _row_fields(joined: "str") -> "list[str]":
+    if joined == "":
+        return [""]
+    return joined.split("")
+
+
+def _try_parse_i64(s: "str") -> "i64":
+    neg = 1
+    t = s.strip()
+    if len(t) == 0:
+        return 0
+    if t[0] == "-":
+        neg = 0 - 1
+        t = t[1:]
+    elif t[0] == "+":
+        t = t[1:]
+    if len(t) == 0:
+        return 0
+    total = 0
+    for i in range(len(t)):
+        ch = t[i]
+        if ch < "0" or ch > "9":
+            return 0
+        d = 0
+        if ch == "0":
+            d = 0
+        elif ch == "1":
+            d = 1
+        elif ch == "2":
+            d = 2
+        elif ch == "3":
+            d = 3
+        elif ch == "4":
+            d = 4
+        elif ch == "5":
+            d = 5
+        elif ch == "6":
+            d = 6
+        elif ch == "7":
+            d = 7
+        elif ch == "8":
+            d = 8
+        elif ch == "9":
+            d = 9
+        total = total * 10 + d
+    return total * neg
+
+
+def _is_int(s: "str") -> "i32":
+    t = s.strip()
+    if len(t) == 0:
+        return 0
+    if t[0] == "-" or t[0] == "+":
+        t = t[1:]
+    if len(t) == 0:
+        return 0
+    for i in range(len(t)):
+        ch = t[i]
+        if ch < "0" or ch > "9":
+            return 0
+    return 1
+
+
+def _is_float(s: "str") -> "i32":
+    t = s.strip()
+    if len(t) == 0:
+        return 0
+    has_digit = 0
+    has_dot = 0
+    for i in range(len(t)):
+        ch = t[i]
+        if ch >= "0" and ch <= "9":
+            has_digit = 1
+        elif ch == "." and has_dot == 0:
+            has_dot = 1
+        elif (ch == "-" or ch == "+") and i == 0:
+            has_digit = has_digit
+        elif (ch == "e" or ch == "E") and has_digit == 1:
+            has_digit = has_digit
+        else:
+            return 0
+    if has_digit == 0:
+        return 0
+    return 1
+
+
+def _is_bool(s: "str") -> "i32":
+    t = s.strip().lower()
+    if t == "true" or t == "false":
+        return 1
+    return 0
+
+
+def csv_infer_dtypes(rows: "list[str]", data_start: "i32", n_cols: "i32", null_value: "str") -> "list[i32]":
+    n_rows = len(rows)
+    dtypes = []
+    for c in range(n_cols):
+        is_int = 1
+        is_float = 1
+        is_bool = 1
+        tested = 0
+        for r in range(data_start, n_rows):
+            fields = _row_fields(rows[r])
+            if c >= len(fields):
+                continue
+            val = fields[c].strip()
+            if val == "" or val == null_value:
+                continue
+            tested = tested + 1
+            if is_int == 1 and _is_int(val) == 0:
+                is_int = 0
+                if _is_float(val) == 0:
+                    is_float = 0
+                if _is_bool(val) == 0:
+                    is_bool = 0
+            elif is_int == 1:
+                # cell pure-digit: float chac chan pass, bool chac chan fail
+                is_bool = 0
+        if tested == 0:
+            dtypes.append(DT_STR)
+        elif is_bool == 1:
+            dtypes.append(DT_BOOL)
+        elif is_int == 1:
+            dtypes.append(DT_I64)
+        elif is_float == 1:
+            dtypes.append(DT_F64)
+        else:
+            dtypes.append(DT_STR)
+    return dtypes
+
+
+def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null_value: "str") -> "list[i32]":
+    dtypes = []
+    for c in range(n_cols):
+        is_int = 1
+        is_float = 1
+        is_bool = 1
+        tested = 0
+        for r in range(total_data):
+            val = grid[r * n_cols + c].strip()
+            if val == "" or val == null_value:
+                continue
+            tested = tested + 1
+            if is_int == 1 and _is_int(val) == 0:
+                is_int = 0
+                if _is_float(val) == 0:
+                    is_float = 0
+                if _is_bool(val) == 0:
+                    is_bool = 0
+            elif is_int == 1:
+                # cell pure-digit: float chac chan pass, bool chac chan fail
+                is_bool = 0
+        if tested == 0:
+            dtypes.append(DT_STR)
+        elif is_bool == 1:
+            dtypes.append(DT_BOOL)
+        elif is_int == 1:
+            dtypes.append(DT_I64)
+        elif is_float == 1:
+            dtypes.append(DT_F64)
+        else:
+            dtypes.append(DT_STR)
+    return dtypes
+
+
+def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    # Single-pass v2: split moi dong DUY NHAT 1 lan thang vao grid (khong qua
+    # csv_parse_rows -> bo join US + split US quay lai); infer 1 pass short-circuit;
+    # parse truc tiep theo dtype da biet (khong re-validate).
+    if csv_text == "":
+        return empty_df()
+    lines = csv_text.split("\n")
+    n_lines = len(lines)
+    column_names = []
+    data_start = 0
+    if has_header == 1:
+        header_line = lines[0]
+        hl = len(header_line)
+        if hl > 0 and header_line[hl - 1] == "\r":
+            header_line = header_line[0:hl - 1]
+        header_fields = _split_csv_line(header_line, delimiter, "\"")
+        for f in range(len(header_fields)):
+            column_names.append(header_fields[f])
+        data_start = 1
+    else:
+        if n_lines > 0:
+            first_line = lines[0]
+            fl = len(first_line)
+            if fl > 0 and first_line[fl - 1] == "\r":
+                first_line = first_line[0:fl - 1]
+            first_fields = _split_csv_line(first_line, delimiter, "\"")
+            n_first = len(first_fields)
+            for i in range(n_first):
+                column_names.append("column_" + str(i))
+        else:
+            column_names.append("column_0")
+    n_cols = len(column_names)
+    if data_start >= n_lines:
+        result_cols = []
+        for c in range(n_cols):
+            result_cols.append(make_series_str(column_names[c], []))
+        return make_df(result_cols)
+    grid = []
+    total_data = 0
+    for i in range(data_start, n_lines):
+        line = lines[i]
+        ln = len(line)
+        if ln > 0 and line[ln - 1] == "\r":
+            line = line[0:ln - 1]
+        if line == "" and i == n_lines - 1:
+            break
+        if line.find("\"") == 0 - 1:
+            fields = line.split(delimiter)
+        else:
+            fields = _split_csv_line(line, delimiter, "\"")
+        nf = len(fields)
+        for c in range(n_cols):
+            if c < nf:
+                grid.append(fields[c])
+            else:
+                grid.append("")
+        total_data = total_data + 1
+    if total_data == 0:
+        result_cols = []
+        for c in range(n_cols):
+            result_cols.append(make_series_str(column_names[c], []))
+        return make_df(result_cols)
+    dtypes = _infer_dtypes_grid(grid, n_cols, total_data, null_value)
+    result_cols = []
+    for c in range(n_cols):
+        col_name = column_names[c]
+        dt = dtypes[c]
+        if dt == DT_I64:
+            ivals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if raw == "" or raw == null_value:
+                    ivals.append(0)
+                    vm.set(i, 0)
+                else:
+                    # infer da dam bao pure-int; int() nhanh hon manual per-char
+                    ivals.append(int(raw))
+            c2 = make_col_i64_with_mask(ivals, vm)
+            result_cols.append(make_series(col_name, c2))
+        elif dt == DT_BOOL:
+            bvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip().lower()
+                if raw == "true":
+                    bvals.append(1)
+                elif raw == "false":
+                    bvals.append(0)
+                else:
+                    bvals.append(0)
+                    vm.set(i, 0)
+            c2 = make_col_bool_with_mask(bvals, vm)
+            result_cols.append(make_series(col_name, c2))
+        elif dt == DT_F64:
+            fvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if raw == "" or raw == null_value:
+                    fvals.append(0.0)
+                    vm.set(i, 0)
+                else:
+                    fvals.append(float(raw))
+            c2 = make_col_f64_with_mask(fvals, vm)
+            result_cols.append(make_series(col_name, c2))
+        else:
+            strs = []
+            for i in range(total_data):
+                val = grid[i * n_cols + c]
+                if val == null_value:
+                    strs.append(None)
+                else:
+                    strs.append(val)
+            result_cols.append(make_series_str(col_name, strs))
+    return make_df(result_cols)
+
+
+def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    text = read_file(file_path)
+    return csv_read_string(text, delimiter, has_header, null_value)
+
+
+# ------------------------------ CSV writing -----------------------------------
+def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
+    if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
+        out = quote
+        for i in range(len(value)):
+            ch = value[i]
+            if ch == quote:
+                out = out + quote + quote
+            else:
+                out = out + ch
+        return out + quote
+    return value
+
+
+def csv_write_string(df: "DataFrame", delimiter: "str", include_header: "i32", null_value: "str") -> "str":
+    n_cols = df.column_count()
+    n_rows = df.row_count()
+    names = df_column_names(df)
+    lines = []
+
+    if include_header == 1:
+        header = ""
+        for c in range(n_cols):
+            if c > 0:
+                header = header + delimiter
+            header = header + _csv_escape(names[c], delimiter, "\"")
+        lines.append(header)
+
+    for r in range(n_rows):
+        line = ""
+        for c in range(n_cols):
+            if c > 0:
+                line = line + delimiter
+            col = df.col_at(c)
+            if col.is_null(r) == 1:
+                line = line + null_value
+            else:
+                val = col.get_string(r)
+                line = line + _csv_escape(val, delimiter, "\"")
+        lines.append(line)
+
+    out = ""
+    for i in range(len(lines)):
+        if i > 0:
+            out = out + "\n"
+        out = out + lines[i]
+    return out + "\n"
+
+
+def csv_write_file(df: "DataFrame", file_path: "str", delimiter: "str", include_header: "i32", null_value: "str") -> "i32":
+    text = csv_write_string(df, delimiter, include_header, null_value)
+    write_file(file_path, text)
+    return 0
+
+
+# ------------------------------ JSON parsing ----------------------------------
+def _json_skip_ws(s: "str", i: "i32") -> "i32":
+    n = len(s)
+    while i < n:
+        ch = s[i]
+        if ch == " " or ch == "\t" or ch == "\n" or ch == "\r":
+            i = i + 1
+        else:
+            break
+    return i
+
+
+def _hex_digit(ch: "str") -> "i32":
+    if ch >= "0" and ch <= "9":
+        if ch == "0":
+            return 0
+        if ch == "1":
+            return 1
+        if ch == "2":
+            return 2
+        if ch == "3":
+            return 3
+        if ch == "4":
+            return 4
+        if ch == "5":
+            return 5
+        if ch == "6":
+            return 6
+        if ch == "7":
+            return 7
+        if ch == "8":
+            return 8
+        return 9
+    t = ch.lower()
+    if t == "a":
+        return 10
+    if t == "b":
+        return 11
+    if t == "c":
+        return 12
+    if t == "d":
+        return 13
+    if t == "e":
+        return 14
+    if t == "f":
+        return 15
+    return 0
+
+
+def _hex4(s: "str") -> "i32":
+    v = _hex_digit(s[0]) * 4096 + _hex_digit(s[1]) * 256 + _hex_digit(s[2]) * 16 + _hex_digit(s[3])
+    return v
+
+
+def _str_before_sep(s: "str") -> "str":
+    p = s.find("")
+    if p < 0:
+        return s
+    return s[0:p]
+
+
+def _str_after_sep(s: "str") -> "str":
+    p = s.find("")
+    if p < 0:
+        return ""
+    q = p + 1
+    return s[q:len(s)]
+
+
+def _json_parse_string(s: "str", i: "i32") -> "str":
+    # s[i] == '"'; tra ve (value, next_i)
+    out = ""
+    i = i + 1
+    n = len(s)
+    while i < n:
+        ch = s[i]
+        if ch == "\\" and i + 1 < n:
+            esc = s[i + 1]
+            if esc == "n":
+                out = out + "\n"
+            elif esc == "t":
+                out = out + "\t"
+            elif esc == "r":
+                out = out + "\r"
+            elif esc == "u" and i + 5 < n:
+                # uXXXX escape bo qua
+                i = i + 4
+            else:
+                out = out + esc
+            i = i + 2
+        elif ch == Q:
+            return str(i + 1) + "" + out
+        else:
+            out = out + ch
+            i = i + 1
+    return str(i) + "" + out
+
+
+def _json_parse_number(s: "str", i: "i32") -> "str":
+    # tra ve "next_iUSkindUSvalue": kind 3=i64, 4=f64
+    n = len(s)
+    j = i
+    is_float = 0
+    while j < n:
+        ch = s[j]
+        if (ch >= "0" and ch <= "9") or ch == "-" or ch == "+":
+            j = j + 1
+        elif ch == "." or ch == "e" or ch == "E":
+            is_float = 1
+            j = j + 1
+        else:
+            break
+    raw = s[i:j]
+    if is_float == 1:
+        return str(j) + "4" + str(float(raw))
+    return str(j) + "3" + str(_try_parse_i64(raw))
+
+
+def _json_parse_value(s: "str", i: "i32") -> "str":
+    # tra ve "next_iUSkindUSvalue": 0=str, 3=i64, 4=f64, 5=bool, 6=null
+    i = _json_skip_ws(s, i)
+    n = len(s)
+    if i >= n:
+        return str(i) + "6"
+    ch = s[i]
+    if ch == Q:
+        pair = _json_parse_string(s, i)
+        return _str_before_sep(pair) + "0" + _str_after_sep(pair)
+    if ch == "t" and s.find("true", i) == i:
+        return str(i + 4) + "5" + "True"
+    if ch == "f" and s.find("false", i) == i:
+        return str(i + 5) + "5" + "False"
+    if ch == "n" and s.find("null", i) == i:
+        return str(i + 4) + "6"
+    return _json_parse_number(s, i)
+
+
+def _json_find_matching(s: "str", i: "i32", open_ch: "str", close_ch: "str") -> "i32":
+    depth = 0
+    n = len(s)
+    j = i
+    while j < n:
+        cj = s[j]
+        if cj == Q:
+            pair = _json_parse_string(s, j)
+            j = int(_str_before_sep(pair))
+            continue
+        if cj == open_ch:
+            depth = depth + 1
+        elif cj == close_ch:
+            depth = depth - 1
+            if depth == 0:
+                return j
+        j = j + 1
+    return 0 - 1
+
+
+# kind codes dung trong luu tru row
+def _parse_json_object_kv(obj_text: "str", all_keys: "list[str]") -> "str":
+    # obj_text dang "{...}"; tra ve row_text: cac cap "keyUSkind_tagUSvalue" ghep RS
+    inner = obj_text[1:len(obj_text) - 1]
+    n = len(inner)
+    i = 0
+    chunks = ["<seed>"]
+    while i < n:
+        i = _json_skip_ws(inner, i)
+        if i >= n:
+            break
+        if inner[i] == ",":
+            i = i + 1
+            continue
+        if inner[i] == Q:
+            kp = _json_parse_string(inner, i)
+            key = _str_after_sep(kp)
+            i = int(_str_before_sep(kp))
+            i = _json_skip_ws(inner, i)
+            if i < n and inner[i] == ":":
+                i = i + 1
+            vp = _json_parse_value(inner, i)
+            vparts = vp.split("")
+            i = int(vparts[0])
+            kind = int(vparts[1])
+            val = vparts[2]
+            if kind == 6:
+                tag = "<N>"
+                sval = ""
+            elif kind == 5:
+                tag = "<B>"
+                sval = str(val)
+            elif kind == 3 or kind == 4:
+                tag = "<#>"
+                sval = str(val)
+            else:
+                tag = "<S>"
+                sval = val
+            chunks.append(key + "" + tag + "" + sval)
+            seen = 0
+            for k in range(len(all_keys)):
+                if all_keys[k] == key:
+                    seen = 1
+                    break
+            if seen == 0:
+                all_keys.append(key)
+        else:
+            i = i + 1
+    row_text = ""
+    for c in range(len(chunks)):
+        if c > 0:
+            row_text = row_text + ""
+        row_text = row_text + chunks[c]
+    return row_text
+
+
+def _row_get_tag(row_text: "str", key: "str") -> "str":
+    if row_text == "":
+        return ""
+    items = row_text.split("")
+    for it in range(len(items)):
+        item1 = items[it]
+        parts = item1.split("")
+        if parts[0] == key:
+            return parts[1]
+    return ""
+
+
+def _row_get_val(row_text: "str", key: "str") -> "str":
+    if row_text == "":
+        return ""
+    items = row_text.split("")
+    for it in range(len(items)):
+        item2 = items[it]
+        parts = item2.split("")
+        if parts[0] == key:
+            return parts[2]
+    return ""
+
+
+def _ndjson_rows(ndjson_text: "str", all_keys: "list[str]") -> "list[str]":
+    lines = ndjson_text.split("\n")
+    row_texts = []
+    n_lines = len(lines)
+    for li in range(n_lines):
+        line = lines[li].strip()
+        if line == "":
+            continue
+        row_texts.append(_parse_json_object_kv(line, all_keys))
+    return row_texts
+
+
+def ndjson_read_string(ndjson_text: "str") -> "DataFrame":
+    all_keys = []
+    row_texts = _ndjson_rows(ndjson_text, all_keys)
+    if len(row_texts) == 0 or len(all_keys) == 0:
+        return empty_df()
+
+    n_rows = len(row_texts)
+    result_cols = []
+    for k in range(len(all_keys)):
+        key = all_keys[k]
+        is_num = 1
+        is_bool = 1
+        non_null = 0
+        for r in range(n_rows):
+            tag = _row_get_tag(row_texts[r], key)
+            if tag != "":
+                non_null = non_null + 1
+                if tag != "<#>":
+                    is_num = 0
+                if tag != "<B>":
+                    is_bool = 0
+        if is_bool == 1 and non_null > 0:
+            bvals = []
+            vm = make_mask(n_rows, 1)
+            for r in range(n_rows):
+                val = _row_get_val(row_texts[r], key)
+                if val == "True" or val == "true" or val == "1":
+                    bvals.append(1)
+                elif val == "False" or val == "false" or val == "0":
+                    bvals.append(0)
+                else:
+                    bvals.append(0)
+                    vm.set(r, 0)
+            c2 = make_col_bool_with_mask(bvals, vm)
+            result_cols.append(make_series(key, c2))
+        elif is_num == 1 and non_null > 0:
+            is_all_int = 1
+            for r in range(n_rows):
+                val = _row_get_val(row_texts[r], key)
+                if val != "" and val.find(".") >= 0:
+                    is_all_int = 0
+                    break
+            if is_all_int == 1:
+                ivals = []
+                vm = make_mask(n_rows, 1)
+                for r in range(n_rows):
+                    val = _row_get_val(row_texts[r], key)
+                    if val != "":
+                        ivals.append(_try_parse_i64(val))
+                    else:
+                        ivals.append(0)
+                        vm.set(r, 0)
+                c2 = make_col_i64_with_mask(ivals, vm)
+                result_cols.append(make_series(key, c2))
+            else:
+                fvals = []
+                vm = make_mask(n_rows, 1)
+                for r in range(n_rows):
+                    val = _row_get_val(row_texts[r], key)
+                    if val != "":
+                        fvals.append(float(val))
+                    else:
+                        fvals.append(0.0)
+                        vm.set(r, 0)
+                c2 = make_col_f64_with_mask(fvals, vm)
+                result_cols.append(make_series(key, c2))
+        else:
+            strs = []
+            vm = make_mask(n_rows, 1)
+            for r in range(n_rows):
+                val = _row_get_val(row_texts[r], key)
+                if val != "":
+                    strs.append(val)
+                else:
+                    strs.append(None)
+                    vm.set(r, 0)
+            result_cols.append(make_series_str_with_mask(key, strs, vm))
+    return make_df(result_cols)
+
+
+def json_array_read_string(json_text: "str") -> "DataFrame":
+    start = json_text.find("[")
+    end = _json_find_matching(json_text, start, "[", "]")
+    if start < 0 or end < 0:
+        raise ValueError("Root element must be a JSON array.")
+    sb = start + 1
+    body = json_text[sb:end]
+    objs = []
+    n = len(body)
+    i = 0
+    while i < n:
+        i = _json_skip_ws(body, i)
+        if i < n and body[i] == "{":
+            close = _json_find_matching(body, i, "{", "}")
+            ce = close + 1
+            seg = body[i:ce]
+            objs.append(seg)
+            i = close + 1
+        else:
+            i = i + 1
+    ndjson = ""
+    for li in range(len(objs)):
+        if li > 0:
+            ndjson = ndjson + "\n"
+        ndjson = ndjson + objs[li]
+    return ndjson_read_string(ndjson)
+
+
+def ndjson_read_file(file_path: "str") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    return ndjson_read_string(read_file(file_path))
+
+# ==============================================================================
+# TOKENVECTOR.DATA - NUMERICS INTEROP MODULE (port tu NumericsInterop.cs)
+# Bridge giua Series/DataFrame va NDArray/Tensor cua TokenVector.Numerics.
+# Trong tkv, NDArray/Tensor duoc mo hinh hoa bang record Mat:
+#   Mat = { rank, rows, cols, f64s: list[f64], requires_grad }
+#   - ToNDArray<T>/ToTensor<T> (Series)     -> series_to_mat / series_to_mat_grad
+#   - ToNDArray<T>/ToTensor<T> (DataFrame)  -> df_to_mat_2d / df_to_mat_2d_grad
+#   - FromNDArray/FromTensor                -> mat_to_df / mat_to_df_from_tensor
+# ==============================================================================
+
+# NDArray 1D hoac 2D f64 (mo hinh hoa NDArray<T>/Tensor<T>)
+class Mat:
+    rank: "i32"
+    rows: "i32"
+    cols: "i32"
+    f64s: "list[f64]"
+    requires_grad: "i32"
+
+def make_mat_1d(vals: "list[f64]") -> "Mat":
+    n = len(vals)
+    m = Mat(n, n, 1, 0)
+    m.f64s = vals
+    return m
+
+def make_mat_2d(rows: "i32", cols: "i32", flat: "list[f64]") -> "Mat":
+    m = Mat(2, rows, cols, 0)
+    m.f64s = flat
+    return m
+
+def mat_total_length(m: "Mat") -> "i32":
+    if m.rank == 1:
+        n1 = len(m.f64s)
+        return n1
+    return m.rows * m.cols
+
+def mat_at(m: "Mat", r: "i32", c: "i32") -> "f64":
+    # 1D: chi dung r; 2D: r*cols+c (C-contiguous, giong flatData[r*colCount+c])
+    if m.rank == 1:
+        v1 = m.f64s[r]
+        return v1
+    idx = r * m.cols + c
+    return m.f64s[idx]
+
+def mat_set(m: "Mat", r: "i32", c: "i32", val: "f64") -> "i32":
+    if m.rank == 1:
+        m.f64s[r] = val
+        return 0
+    idx = r * m.cols + c
+    m.f64s[idx] = val
+    return 0
+
+# ---------------- Series -> Mat (ToNDArray / ToTensor) ----------------
+
+def series_to_mat(s: "Series") -> "Mat":
+    # zero-copy khi dtype f64 va khong co null (giong C#: wrap truc tiep f64s)
+    vm = s.valid
+    n = vm.n
+    any_null = 0
+    for i in range(n):
+        if vm.get(i) == 0:
+            any_null = 1
+            break
+    if s.dtype == DT_F64 and any_null == 0:
+        mz = Mat(1, n, 1, 0)
+        mz.f64s = s.f64s
+        return mz
+    # materialize copy voi dtype conversion (null -> 0.0)
+    out = []
+    for i in range(n):
+        if vm.get(i) == 1:
+            if s.dtype == DT_F64:
+                v = s.f64s[i]
+                out.append(v)
+            elif s.dtype == DT_I64:
+                v2 = s.i64s[i]
+                out.append(float(v2))
+            else:
+                out.append(0.0)
+        else:
+            out.append(0.0)
+    mc = Mat(1, n, 1, 0)
+    mc.f64s = out
+    return mc
+
+def series_to_mat_grad(s: "Series", requires_grad: "i32") -> "Mat":
+    # ToTensor<T>(series, requiresGrad)
+    m = series_to_mat(s)
+    m.requires_grad = requires_grad
+    return m
+
+# ---------------- DataFrame -> Mat 2D (ToNDArray / ToTensor) ----------------
+
+def df_to_mat_2d(df: "DataFrame") -> "Mat":
+    # gom tat ca cot so (i64/f64/bool) theo thu tu cot, row-major
+    nc = df.column_count()
+    nr = df.row_count()
+    numeric_dtypes = []
+    for c in range(nc):
+        s = df.col_at(c)
+        if s.dtype == DT_I64 or s.dtype == DT_F64 or s.dtype == DT_BOOL:
+            numeric_dtypes.append(s.dtype)
+        else:
+            numeric_dtypes.append(0 - 1)
+    cnum = 0
+    for c in range(nc):
+        if numeric_dtypes[c] >= 0:
+            cnum = cnum + 1
+    if cnum == 0:
+        me = Mat(2, 0, 0, 0)
+        me.f64s = []
+        return me
+    flat = []
+    for r in range(nr):
+        for c in range(nc):
+            dt = numeric_dtypes[c]
+            if dt < 0:
+                continue
+            sc = df.col_at(c)
+            if dt == DT_F64:
+                v = sc.f64s[r]
+                flat.append(v)
+            elif dt == DT_I64:
+                v2 = sc.i64s[r]
+                flat.append(float(v2))
+            else:
+                v3 = sc.bools[r]
+                flat.append(float(v3))
+    m2 = Mat(2, nr, cnum, 0)
+    m2.f64s = flat
+    return m2
+
+def df_to_mat_2d_grad(df: "DataFrame", requires_grad: "i32") -> "Mat":
+    # ToTensor<T>(df, columns, requiresGrad)
+    m = df_to_mat_2d(df)
+    m.requires_grad = requires_grad
+    return m
+
+# ---------------- Mat -> DataFrame (FromNDArray / FromTensor) ----------------
+
+def mat_to_df(m: "Mat", names: "list[str]") -> "DataFrame":
+    result_cols = []
+    if m.rank == 1:
+        col_name = "col_0"
+        if len(names) > 0:
+            col_name = names[0]
+        sv = []
+        for i in range(len(m.f64s)):
+            vv = m.f64s[i]
+            sv.append(vv)
+        result_cols.append(make_series_f64(col_name, sv))
+        return make_df(result_cols)
+    if m.rank != 2:
+        return empty_df()
+    for c in range(m.cols):
+        col_data = []
+        for r in range(m.rows):
+            v = m.f64s[r * m.cols + c]
+            col_data.append(v)
+        cname = "col_" + str(c)
+        if c < len(names):
+            cname = names[c]
+        result_cols.append(make_series_f64(cname, col_data))
+    return make_df(result_cols)
+
+def mat_to_df_from_tensor(m: "Mat", names: "list[str]") -> "DataFrame":
+    # FromTensor<T> = FromNDArray(tensor.Data)
+    return mat_to_df(m, names)
+
+def mat_square_sum(m: "Mat") -> "Mat":
+    # y = x * x (autograd forward cua test thu 3)
+    n = len(m.f64s)
+    out = []
+    for i in range(n):
+        v = m.f64s[i]
+        out.append(v * v)
+    mr = Mat(m.rank, m.rows, m.cols, 0)
+    mr.f64s = out
+    return mr
+

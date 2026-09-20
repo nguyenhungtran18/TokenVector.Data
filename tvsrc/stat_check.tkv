@@ -1,0 +1,102 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational"]
+
+FAILS: "i32" = 0
+
+def chk(name: "str", ok: "i32") -> "i32":
+    if ok == 0:
+        print("FAIL " + name)
+    return 0
+
+def _eqf(a: "f64", b: "f64") -> "i32":
+    d = a - b
+    if d < 0.0:
+        d = 0.0 - d
+    if d < 0.000000001:
+        return 1
+    return 0
+
+def main() -> "str":
+    FAILS = 0
+    # series_sum / mean / min / max tren f64 all-valid
+    c = make_col_f64([1.0, 2.0, 3.0, 4.0])
+    s = make_series("x", c)
+    chk("sum_f64", _eqf(series_sum(s), 10.0))
+    chk("mean_f64", _eqf(series_mean(s), 2.5))
+    chk("min_f64", _eqf(series_min(s), 1.0))
+    chk("max_f64", _eqf(series_max(s), 4.0))
+    chk("var_f64_ddof1", _eqf(series_variance(s, 1), 1.6666666666666667))
+    chk("var_f64_ddof0", _eqf(series_variance(s, 0), 1.25))
+    # i64
+    ci = make_col_i64([1, 2, 3, 4])
+    si = make_series("xi", ci)
+    chk("sum_i64", _eqf(series_sum(si), 10.0))
+    chk("mean_i64", _eqf(series_mean(si), 2.5))
+    chk("var_i64", _eqf(series_variance(si, 1), 1.6666666666666667))
+    # bool
+    cb = make_col_bool([1, 0, 1, 1])
+    sb2 = make_series("xb", cb)
+    chk("sum_bool", _eqf(series_sum(sb2), 3.0))
+    chk("min_bool", _eqf(series_min(sb2), 0.0))
+    chk("max_bool", _eqf(series_max(sb2), 1.0))
+    # co null: giu nghia null in -> bo qua
+    cn = make_col_f64([1.0, 2.0, 0.0, 4.0])
+    vm = make_mask(4, 1)
+    vm.set(2, 0)
+    cn.valid = vm
+    sn = make_series("xn", cn)
+    chk("sum_null", _eqf(series_sum(sn), 7.0))
+    chk("mean_null", _eqf(series_mean(sn), 2.3333333333333335))
+    chk("var_null", _eqf(series_variance(sn, 1), 2.3333333333333335))
+    # per-element parity Welford vs cong thuc 2-pass tren du lieu lon co null le
+    c2 = make_col_f64([])
+    vm2 = make_mask(1000, 1)
+    for i in range(1000):
+        c2.f64s.append(float(i % 23) * 0.5)
+        if i % 97 == 5:
+            vm2.set(i, 0)
+    c2.valid = vm2
+    s2 = make_series("x2", c2)
+    vw = series_variance(s2, 1)
+    # 2-pass thu cong (dung fcnt ne bug float(loop_var) cua codegen)
+    cnt = 0
+    fcnt = 0.0
+    tot = 0.0
+    for i in range(1000):
+        if s2.is_null(i) == 0:
+            tot = tot + s2.get_f64(i)
+            cnt = cnt + 1
+            fcnt = fcnt + 1.0
+    one = 1.0
+    mu = tot / fcnt
+    sq = 0.0
+    for i in range(1000):
+        if s2.is_null(i) == 0:
+            d = s2.get_f64(i) - mu
+            sq = sq + d * d
+    denom = fcnt - one
+    v2p = sq / denom
+    chk("welford_parity", _eqf(vw, v2p))
+    # agg_variance / agg_std (compute) parity
+    chk("agg_var", _eqf(agg_variance(c2, 1), v2p))
+    chk("agg_std_sqrt", _eqf(agg_std(c2, 1) * agg_std(c2, 1), v2p))
+    # describe van chay duoc
+    df = DataFrame()
+    df = df.with_column("a", make_series("a", make_col_f64([1.0, 2.0, 3.0])))
+    df = df.with_column("b", make_series("b", make_col_f64([4.0, 5.0, 6.0])))
+    desc = df.describe()
+    chk("describe_shape", desc.row_count() * 100 + desc.column_count() == 803)
+    # groupby STD duong that
+    gdf = DataFrame()
+    gk = make_col_i64([1, 1, 1, 1, 2, 2, 2, 2])
+    gv = make_col_f64([1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0])
+    gdf = gdf.with_column("k", make_series("k", gk))
+    gdf = gdf.with_column("v", make_series("v", gv))
+    exprs = [make_agg("v", AGG_STD, "sd"), make_agg("v", AGG_MEAN, "mn")]
+    gres = groupby_agg(gdf, ["k"], exprs)
+    chk("groupby_rows", gres.row_count() == 2)
+    sdcol = gres.col_by_name("sd")
+    chk("groupby_std_g1", _eqf(sdcol.get_f64(0), 1.2909944487358056))
+    chk("groupby_std_g2", _eqf(sdcol.get_f64(1), 12.909944487358056))
+    print("FAILS=", FAILS)
+    return "ok"

@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+# BENCHMARK TokenVector.Data (tkv) - doi chieu voi BENCHMARK.md cua ban C# cu
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io", "tokenvector_arrow"]
+
+def _ms(t1, t2) -> "f64":
+    d = t2 - t1
+    ticks = datetime_ticks(d)
+    return float(ticks) / 10000.0
+
+def run() -> "i32":
+    N = 500000
+    NJ = 100000
+
+    # ---------- tao du lieu chung ----------
+    ids = []
+    vals = []
+    groups = []
+    for i in range(N):
+        ids.append(i)
+        vals.append(float(i % 10000) * 0.001)
+        if i % 3 == 0:
+            groups.append("A")
+        elif i % 3 == 1:
+            groups.append("B")
+        else:
+            groups.append("C")
+
+    # ---------- B1: Vectorized arithmetic (colA * 2.5 + colB) ----------
+    a = make_series_f64("a", vals)
+    b = make_series_f64("b", vals)
+    acol = make_col_f64(vals)
+    bcol = make_col_f64(vals)
+    t1 = datetime()
+    s1 = vec_add_scalar(acol, 2.5)
+    s2 = vec_mul(s1, bcol)
+    t2 = datetime()
+    s2f = s2.f64s
+    print("B1 vec_arith n=" + str(N) + " time_ms=" + str(_ms(t1, t2)) + " chk=" + str(s2f[10]))
+
+    # ---------- B2: Filter (val > 5.0) ----------
+    fdf = make_df([a])
+    t1 = datetime()
+    fmask = vec_gt_scalar(acol, 5.0)
+    res = fdf.filter(fmask)
+    t2 = datetime()
+    print("B2 filter n=" + str(N) + " time_ms=" + str(_ms(t1, t2)) + " kept=" + str(res.row_count()))
+
+    # ---------- B3: GroupBy 3 nhom x 3 agg ----------
+    gdf = make_df([make_series_str("g", groups), make_series_i64("id", ids), a, b])
+    exprs = [make_agg("a", AGG_COUNT, "cnt"), make_agg("a", AGG_MEAN, "avg"), make_agg("b", AGG_SUM, "total")]
+    t1 = datetime()
+    gres = groupby_agg(gdf, ["g"], exprs)
+    t2 = datetime()
+    print("B3 groupby n=" + str(N) + " time_ms=" + str(_ms(t1, t2)) + " groups=" + str(gres.row_count()))
+
+    # ---------- B4: Hash join inner (N x NJ keys) ----------
+    lvals = []
+    lkeys = []
+    rkeys = []
+    rvals = []
+    for i in range(NJ):
+        lkeys.append(i % 1000)
+        lvals.append(float(i))
+        rkeys.append(i % 997)
+        rvals.append(float(i) * 2.0)
+    ldf = make_df([make_series_i64("k", lkeys), make_series_f64("lv", lvals)])
+    rdf = make_df([make_series_i64("k", rkeys), make_series_f64("rv", rvals)])
+    t1 = datetime()
+    jres = join_frames(ldf, rdf, "k", "k", JOIN_INNER, "_l", "_r")
+    t2 = datetime()
+    print("B4 join l=" + str(NJ) + " r=" + str(NJ) + " time_ms=" + str(_ms(t1, t2)) + " out=" + str(jres.row_count()))
+
+    # ---------- B5: CSV parse (ho rong) ----------
+    t1 = datetime()
+    lines = []
+    lines.append("id,val,grp")
+    for i in range(100000):
+        lines.append(str(i) + "," + str(vals[i]) + "," + groups[i])
+    csv_text = ""
+    for li in range(len(lines)):
+        csv_text = csv_text + lines[li]
+        if li < len(lines) - 1:
+            csv_text = csv_text + "\n"
+    t_build = datetime()
+    bms = _ms(t1, t_build)
+    cdf = csv_read_string(csv_text, ",", 1, "")
+    t2 = datetime()
+    print("B5 csv build100k_ms=" + str(bms) + " parse_ms=" + str(_ms(t_build, t2)) + " rows=" + str(cdf.row_count()))
+
+    # ---------- B6: Arrow round-trip ----------
+    t1 = datetime()
+    payload = arrow_write_string(cdf)
+    back = arrow_read_string(payload)
+    t2 = datetime()
+    print("B6 arrow_write+read_ms=" + str(_ms(t1, t2)) + " rows=" + str(back.row_count()))
+
+    # ---------- B7: sort_by (v1.0.2 merge sort) ----------
+    sa = []
+    for i in range(100000):
+        sa.append(float((i * 7919) % 100000))
+    sdf = make_df([make_series_f64("a", sa)])
+    t1 = datetime()
+    ssorted = sdf.sort_by("a", 1)
+    t2 = datetime()
+    sac = ssorted.col_by_name("a")
+    print("B7 sort_by n=100000 time_ms=" + str(_ms(t1, t2)) + " first=" + str(sac.get_f64(0)))
+
+    print("BENCH DONE")
+    return 0

@@ -1,0 +1,2004 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Native TokenVector port
+# Module goc: DataTypes + Schema + BitmapMask + Column + StringColumn
+# (port tu: DataTypes.cs, Schema.cs, BitmapMask.cs, Column.cs,
+#  StringColumn.cs - dang ky chuc nang tuong duong, hien thich theo nang luc
+#  ngon ngu TokenVector:
+#   - mask list[i32] 0/1 thay bitboard 64-bit (tkvc khong co bitwise ops)
+#   - Col doc lap thay generic Column<T> (tkvc khong co generics)
+#   - StrCol list[str] thay Arrow byte buffer + offsets
+#   - flag boolean bieu dien bang i32 0/1 (tkvc khong co dtype bool)
+# =============================================================================
+
+# ----------------------------- DataTypes (enum) ------------------------------
+DT_I8 = 1
+DT_I16 = 2
+DT_I32 = 3
+DT_I64 = 4
+DT_U8 = 5
+DT_U16 = 6
+DT_U32 = 7
+DT_U64 = 8
+DT_F32 = 9
+DT_F64 = 10
+DT_BOOL = 11
+DT_STR = 12
+DT_DT64 = 13
+
+
+def dt_name(dt: "i32") -> "str":
+    if dt == DT_I8:
+        return "Int8"
+    if dt == DT_I16:
+        return "Int16"
+    if dt == DT_I32:
+        return "Int32"
+    if dt == DT_I64:
+        return "Int64"
+    if dt == DT_U8:
+        return "UInt8"
+    if dt == DT_U16:
+        return "UInt16"
+    if dt == DT_U32:
+        return "UInt32"
+    if dt == DT_U64:
+        return "UInt64"
+    if dt == DT_F32:
+        return "Float32"
+    if dt == DT_F64:
+        return "Float64"
+    if dt == DT_BOOL:
+        return "Boolean"
+    if dt == DT_STR:
+        return "String"
+    if dt == DT_DT64:
+        return "DateTime64"
+    return "Unknown"
+
+
+def dt_is_numeric(dt: "i32") -> "i32":
+    if dt >= DT_I8 and dt <= DT_F64:
+        return 1
+    return 0
+
+
+def dt_is_float(dt: "i32") -> "i32":
+    if dt == DT_F32 or dt == DT_F64:
+        return 1
+    return 0
+
+
+def dt_byte_size(dt: "i32") -> "i32":
+    if dt == DT_I8 or dt == DT_U8 or dt == DT_BOOL:
+        return 1
+    if dt == DT_I16 or dt == DT_U16:
+        return 2
+    if dt == DT_I32 or dt == DT_U32 or dt == DT_F32:
+        return 4
+    if dt == DT_I64 or dt == DT_U64 or dt == DT_F64 or dt == DT_DT64:
+        return 8
+    return 0
+
+
+# ------------------------------- Schema / Field ------------------------------
+class Field:
+    name: "str"
+    dtype: "i32"
+    is_nullable: "i32"
+
+    def equals_field(self, other: "Field") -> "i32":
+        n1 = self.name.lower()
+        n2 = other.name.lower()
+        if n1 == n2 and self.dtype == other.dtype and self.is_nullable == other.is_nullable:
+            return 1
+        return 0
+
+
+def make_field(name: "str", dtype: "i32", is_nullable: "i32") -> "Field":
+    return Field(name, dtype, is_nullable)
+
+
+class Schema:
+    fields: "list[Field]"
+    names: "list[str]"
+
+    def get_index(self, name: "str") -> "i32":
+        key = name.lower()
+        for i in range(len(self.names)):
+            nm = self.names[i]
+            if nm.lower() == key:
+                return i
+        raise KeyError("Field '" + name + "' does not exist in schema")
+
+    def contains(self, name: "str") -> "i32":
+        key = name.lower()
+        for i in range(len(self.names)):
+            nm = self.names[i]
+            if nm.lower() == key:
+                return 1
+        return 0
+
+    def try_get_index(self, name: "str") -> "i32":
+        key = name.lower()
+        for i in range(len(self.names)):
+            nm = self.names[i]
+            if nm.lower() == key:
+                return i
+        return -1
+
+    def field_at(self, i: "i32") -> "Field":
+        return self.fields[i]
+
+
+def make_schema(names: "list[str]", dtypes: "list[i32]") -> "Schema":
+    sch = Schema()
+    sch.fields = []
+    sch.names = []
+    if len(names) != len(dtypes):
+        raise ValueError("Schema names/dtypes length mismatch")
+    for i in range(len(names)):
+        if sch.contains(names[i]) == 1:
+            raise ValueError("Duplicate field name '" + names[i] + "' in schema")
+        sch.fields.append(make_field(names[i], dtypes[i], 1))
+        sch.names.append(names[i])
+    return sch
+
+
+# ---------------------------- Mask (thay BitmapMask) -------------------------
+class Mask:
+    n: "i32"
+    bits: "list[i32]"
+    pc: "i32"
+
+    def get(self, i: "i32") -> "i32":
+        if i < 0 or i >= self.n:
+            raise IndexError("Mask index out of range: " + str(i) + " / " + str(self.n))
+        return self.bits[i]
+
+    def set(self, i: "i32", v: "i32"):
+        if i < 0 or i >= self.n:
+            raise IndexError("Mask index out of range: " + str(i) + " / " + str(self.n))
+        self.bits[i] = v
+        self.pc = 0 - 1
+
+    def set_all(self, v: "i32"):
+        for i in range(self.n):
+            self.bits[i] = v
+        self.pc = 0 - 1
+
+    def pop_count(self) -> "i32":
+        if self.pc >= 0:
+            return self.pc
+        c = 0
+        for i in range(self.n):
+            if self.bits[i] == 1:
+                c = c + 1
+        self.pc = c
+        return c
+
+    def all(self) -> "i32":
+        if self.pop_count() == self.n:
+            return 1
+        return 0
+
+    def any(self) -> "i32":
+        for i in range(self.n):
+            if self.bits[i] == 1:
+                return 1
+        return 0
+
+    def all1(self) -> "i32":
+        # Fast-path helper: 1 neu TAT CA bit la 1. Neu pc da duoc cache
+        # (pop_count da chay, bits chua doi tu luc do) thi tra O(1), khong
+        # phai quet 5M phan tu. Nguoc lai quet truc tiep, som thoat khi gap 0.
+        if self.pc >= 0:
+            if self.pc == self.n:
+                return 1
+            return 0
+        for i in range(self.n):
+            if self.bits[i] != 1:
+                return 0
+        # Quet thanh cong -> cache luon de cac lan goi sau la O(1)
+        # (an toan: set()/set_all() dat pc = -1 lam vo hieu cache)
+        self.pc = self.n
+        return 1
+
+    def mask_and(self, other: "Mask") -> "Mask":
+        if self.n != other.n:
+            raise ValueError("Mask lengths must match: " + str(self.n) + " vs " + str(other.n))
+        r = Mask(self.n, 0 - 1)
+        r.bits = []
+        for i in range(self.n):
+            if self.bits[i] == 1 and other.bits[i] == 1:
+                r.bits.append(1)
+            else:
+                r.bits.append(0)
+        return r
+
+    def mask_or(self, other: "Mask") -> "Mask":
+        if self.n != other.n:
+            raise ValueError("Mask lengths must match: " + str(self.n) + " vs " + str(other.n))
+        r = Mask(self.n, 0 - 1)
+        r.bits = []
+        for i in range(self.n):
+            if self.bits[i] == 1 or other.bits[i] == 1:
+                r.bits.append(1)
+            else:
+                r.bits.append(0)
+        return r
+
+    def mask_not(self) -> "Mask":
+        r = Mask(self.n, 0 - 1)
+        r.bits = []
+        for i in range(self.n):
+            if self.bits[i] == 1:
+                r.bits.append(0)
+            else:
+                r.bits.append(1)
+        return r
+
+    def mask_xor(self, other: "Mask") -> "Mask":
+        if self.n != other.n:
+            raise ValueError("Mask lengths must match: " + str(self.n) + " vs " + str(other.n))
+        r = Mask(self.n, 0 - 1)
+        r.bits = []
+        for i in range(self.n):
+            if self.bits[i] != other.bits[i]:
+                r.bits.append(1)
+            else:
+                r.bits.append(0)
+        return r
+
+    def to_indices(self) -> "list[i32]":
+        return mask_to_indices(self)
+
+    def slice_mask(self, offset: "i32", length: "i32") -> "Mask":
+        if offset < 0 or length < 0 or offset + length > self.n:
+            raise IndexError("Invalid slice bounds")
+        r = Mask(length, 0 - 1)
+        r.bits = []
+        for i in range(length):
+            r.bits.append(self.bits[offset + i])
+        return r
+
+    def clone_mask(self) -> "Mask":
+        r = Mask(self.n, 0 - 1)
+        r.bits = []
+        for i in range(self.n):
+            r.bits.append(self.bits[i])
+        return r
+
+    def equals_mask(self, other: "Mask") -> "i32":
+        if self.n != other.n:
+            return 0
+        for i in range(self.n):
+            if self.bits[i] != other.bits[i]:
+                return 0
+        return 1
+
+
+def make_mask(n: "i32", initial: "i32") -> "Mask":
+    if n < 0:
+        raise ValueError("Mask length must be non-negative")
+    m = Mask(n, 0 - 1)
+    m.bits = []
+    for i in range(n):
+        m.bits.append(initial)
+    return m
+
+
+def mask_from_indices(n: "i32", indices: "list[i32]") -> "Mask":
+    m = make_mask(n, 0)
+    for i in range(len(indices)):
+        m.set(indices[i], 1)
+    return m
+
+
+# ------------------------- Col (thay generic Column<T>) ----------------------
+def mask_to_indices(m: "Mask") -> "list[i32]":
+    idx_out = []
+    n_m = m.n
+    for i in range(n_m):
+        b = m.bits[i]
+        if b == 1:
+            idx_out.append(i)
+    return idx_out
+
+
+class Col:
+    name_hint: "str"
+    dtype: "i32"
+    valid: "Mask"
+    f64s: "list[f64]"
+    i64s: "list[i64]"
+    bools: "list[i32]"
+
+    def length(self) -> "i32":
+        if self.dtype == DT_I64:
+            return len(self.i64s)
+        if self.dtype == DT_BOOL:
+            return len(self.bools)
+        return len(self.f64s)
+
+    def null_count(self) -> "i32":
+        vm = self.valid
+        return self.length() - vm.pop_count()
+
+    def is_null(self, i: "i32") -> "i32":
+        vm = self.valid
+        if vm.get(i) == 0:
+            return 1
+        return 0
+
+    def get_f64(self, i: "i32") -> "f64":
+        return self.f64s[i]
+
+    def get_i64(self, i: "i32") -> "i64":
+        return self.i64s[i]
+
+    def get_bool(self, i: "i32") -> "i32":
+        return self.bools[i]
+
+    def set_f64(self, i: "i32", v: "f64"):
+        self.f64s[i] = v
+        vm = self.valid
+        vm.set(i, 1)
+
+    def set_i64(self, i: "i32", v: "i64"):
+        self.i64s[i] = v
+        vm = self.valid
+        vm.set(i, 1)
+
+    def set_bool(self, i: "i32", v: "i32"):
+        self.bools[i] = v
+        vm = self.valid
+        vm.set(i, 1)
+
+    def set_null(self, i: "i32"):
+        vm = self.valid
+        vm.set(i, 0)
+
+    def slice_col(self, offset: "i32", length: "i32") -> "Col":
+        n = self.length()
+        if offset < 0 or length < 0 or offset + length > n:
+            raise IndexError("Invalid slice parameters")
+        vm = self.valid
+        r = Col("", self.dtype, vm.slice_mask(offset, length))
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        for i in range(length):
+            if self.dtype == DT_I64:
+                r.i64s.append(self.i64s[offset + i])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[offset + i])
+            else:
+                r.f64s.append(self.f64s[offset + i])
+        return r
+
+    def take(self, indices: "list[i32]") -> "Col":
+        cnt = len(indices)
+        vm = self.valid
+        r = Col("", self.dtype, make_mask(cnt, 0))
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        for i in range(cnt):
+            src = indices[i]
+            if self.dtype == DT_I64:
+                r.i64s.append(self.i64s[src])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[src])
+            else:
+                r.f64s.append(self.f64s[src])
+            rv = r.valid
+            rv.set(i, vm.get(src))
+        return r
+
+    def filter_col(self, mask: "Mask") -> "Col":
+        idx = mask_to_indices(mask)
+        return self.take(idx)
+
+    def clone_col(self) -> "Col":
+        vm = self.valid
+        r = Col("", self.dtype, vm.clone_mask())
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        for i in range(self.length()):
+            if self.dtype == DT_I64:
+                r.i64s.append(self.i64s[i])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[i])
+            else:
+                r.f64s.append(self.f64s[i])
+        return r
+
+    def to_string_col(self) -> "StrCol":
+        strings = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 1:
+                strings.append(None)
+            elif self.dtype == DT_I64:
+                strings.append(str(self.i64s[i]))
+            elif self.dtype == DT_BOOL:
+                if self.bools[i] == 1:
+                    strings.append("True")
+                else:
+                    strings.append("False")
+            else:
+                strings.append(_f64_repr(self.f64s[i]))
+        return make_str_col(strings)
+
+
+def make_col_f64(vals: "list[f64]") -> "Col":
+    c = Col("", DT_F64, make_mask(0, 1))
+    c.f64s = []
+    c.i64s = []
+    c.bools = []
+    for i in range(len(vals)):
+        c.f64s.append(vals[i])
+    c.valid = make_mask(len(vals), 1)
+    return c
+
+
+def make_col_f64_with_mask(vals: "list[f64]", valid: "Mask") -> "Col":
+    c = make_col_f64(vals)
+    c.valid = valid
+    return c
+
+
+def make_col_i64(vals: "list[i64]") -> "Col":
+    c = Col("", DT_I64, make_mask(0, 1))
+    c.f64s = []
+    c.i64s = []
+    c.bools = []
+    for i in range(len(vals)):
+        c.i64s.append(vals[i])
+    c.valid = make_mask(len(vals), 1)
+    return c
+
+
+def make_col_i64_with_mask(vals: "list[i64]", valid: "Mask") -> "Col":
+    c = make_col_i64(vals)
+    c.valid = valid
+    return c
+
+
+def make_col_bool(vals: "list[i32]") -> "Col":
+    c = Col("", DT_BOOL, make_mask(0, 1))
+    c.f64s = []
+    c.i64s = []
+    c.bools = []
+    for i in range(len(vals)):
+        c.bools.append(vals[i])
+    c.valid = make_mask(len(vals), 1)
+    return c
+
+
+def make_col_bool_with_mask(vals: "list[i32]", valid: "Mask") -> "Col":
+    c = make_col_bool(vals)
+    c.valid = valid
+    return c
+
+
+# --------------------- StrCol (thay StringColumn Arrow) ----------------------
+class StrCol:
+    strings: "list[str]"
+    valid: "Mask"
+
+    def length(self) -> "i32":
+        return len(self.strings)
+
+    def null_count(self) -> "i32":
+        vm = self.valid
+        return self.length() - vm.pop_count()
+
+    def is_null(self, i: "i32") -> "i32":
+        vm = self.valid
+        if vm.get(i) == 0:
+            return 1
+        return 0
+
+    def get_string(self, i: "i32") -> "str":
+        return self.strings[i]
+
+    def set_null(self, i: "i32"):
+        vm = self.valid
+        vm.set(i, 0)
+
+    def slice_str(self, offset: "i32", length: "i32") -> "StrCol":
+        n = self.length()
+        if offset < 0 or length < 0 or offset + length > n:
+            raise IndexError("Invalid slice parameters")
+        vm = self.valid
+        r = StrCol(vm.slice_mask(offset, length))
+        r.strings = []
+        for i in range(length):
+            r.strings.append(self.strings[offset + i])
+        return r
+
+    def take(self, indices: "list[i32]") -> "StrCol":
+        cnt = len(indices)
+        vm = self.valid
+        r = StrCol(make_mask(cnt, 0))
+        r.strings = []
+        for i in range(cnt):
+            src = indices[i]
+            r.strings.append(self.strings[src])
+            rv = r.valid
+            rv.set(i, vm.get(src))
+        return r
+
+    def clone_str(self) -> "StrCol":
+        vm = self.valid
+        r = StrCol(vm.clone_mask())
+        r.strings = []
+        for i in range(self.length()):
+            r.strings.append(self.strings[i])
+        return r
+
+
+def make_str_col(strings: "list[str]") -> "StrCol":
+    c = StrCol(make_mask(0, 1))
+    c.strings = []
+    c.valid = make_mask(len(strings), 1)
+    for i in range(len(strings)):
+        s = strings[i]
+        if s == None:
+            c.strings.append("")
+            c.valid.set(i, 0)
+        else:
+            c.strings.append(s)
+    return c
+
+
+# ------------------------ StrCol with explicit mask ---------------------------
+def make_str_col_with_mask(strings: "list[str]", valid: "Mask") -> "StrCol":
+    c = make_str_col(strings)
+    c.valid = valid
+    return c
+
+
+def make_series_f64_with_mask(nm: "str", vals: "list[f64]", valid: "Mask") -> "Series":
+    c = make_col_f64_with_mask(vals, valid)
+    vm = c.valid
+    r = Series(nm, DT_F64, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.f64s.append(vals[i])
+    return r
+
+def make_series_i64_with_mask(nm: "str", vals: "list[i64]", valid: "Mask") -> "Series":
+    c = make_col_i64_with_mask(vals, valid)
+    vm = c.valid
+    r = Series(nm, DT_I64, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.i64s.append(vals[i])
+    return r
+
+def make_series_bool_with_mask(nm: "str", vals: "list[i32]", valid: "Mask") -> "Series":
+    c = make_col_bool_with_mask(vals, valid)
+    vm = c.valid
+    r = Series(nm, DT_BOOL, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.bools.append(vals[i])
+    return r
+
+def make_series_str_with_mask(nm: "str", vals: "list[str]", valid: "Mask") -> "Series":
+    c = make_str_col_with_mask(vals, valid)
+    vm = c.valid
+    r = Series(nm, DT_STR, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        s = vals[i]
+        if s == None:
+            r.strings.append("")
+        else:
+            r.strings.append(s)
+    return r
+
+
+# --------------------------- Helper: in gia tri f64 --------------------------
+def _f64_repr(v: "f64") -> "str":
+    iv = int(v)
+    if v == iv:
+        return str(iv) + ".0"
+    return str(v)
+
+
+# =============================================================================
+# MODULE CORE (Series + DataFrame + ChunkedArray) - gop chung vi field cua
+# record khong the tham chieu class tu file khac (gioi han tkvc).
+# =============================================================================
+
+# ------------------------------- Series --------------------------------------
+# Series luu tru inline (flat) - xem ghi chu "luu tru phang" o dau file
+class Series:
+    name: "str"
+    dtype: "i32"
+    valid: "Mask"
+    f64s: "list[f64]"
+    i64s: "list[i64]"
+    bools: "list[i32]"
+    strings: "list[str]"
+
+    def length(self) -> "i32":
+        if self.dtype == DT_STR:
+            return len(self.strings)
+        if self.dtype == DT_I64:
+            return len(self.i64s)
+        if self.dtype == DT_BOOL:
+            return len(self.bools)
+        return len(self.f64s)
+
+    def null_count(self) -> "i32":
+        vm = self.valid
+        return self.length() - vm.pop_count()
+
+    def is_null(self, i: "i32") -> "i32":
+        vm = self.valid
+        if vm.get(i) == 0:
+            return 1
+        return 0
+
+    def get_f64(self, i: "i32") -> "f64":
+        if self.dtype == DT_I64:
+            return float(self.i64s[i])
+        if self.dtype == DT_BOOL:
+            if self.bools[i] == 1:
+                return 1.0
+            return 0.0
+        return self.f64s[i]
+
+    def get_i64(self, i: "i32") -> "i64":
+        return self.i64s[i]
+
+    def get_bool(self, i: "i32") -> "i32":
+        return self.bools[i]
+
+    def get_string(self, i: "i32") -> "str":
+        if self.dtype == DT_STR:
+            return self.strings[i]
+        if self.dtype == DT_I64:
+            return str(self.i64s[i])
+        if self.dtype == DT_BOOL:
+            if self.bools[i] == 1:
+                return "True"
+            return "False"
+        return _f64_repr(self.f64s[i])
+
+    def set_f64(self, i: "i32", v: "f64"):
+        if self.dtype == DT_I64:
+            self.i64s[i] = int(v)
+        elif self.dtype == DT_BOOL:
+            if v != 0.0:
+                self.bools[i] = 1
+            else:
+                self.bools[i] = 0
+        else:
+            self.f64s[i] = v
+        vm = self.valid
+        vm.set(i, 1)
+
+    def slice_series(self, offset: "i32", ln: "i32") -> "Series":
+        n = self.length()
+        if offset < 0 or ln < 0 or offset + ln > n:
+            raise IndexError("Invalid slice parameters")
+        vm = self.valid
+        r = Series(self.name, self.dtype, vm.slice_mask(offset, ln))
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        r.strings = []
+        for i in range(ln):
+            if self.dtype == DT_STR:
+                r.strings.append(self.strings[offset + i])
+            elif self.dtype == DT_I64:
+                r.i64s.append(self.i64s[offset + i])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[offset + i])
+            else:
+                r.f64s.append(self.f64s[offset + i])
+        return r
+
+    def take(self, indices: "list[i32]") -> "Series":
+        cnt = len(indices)
+        vm = self.valid
+        r = Series(self.name, self.dtype, make_mask(cnt, 0))
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        r.strings = []
+        for i in range(cnt):
+            src_idx = indices[i]
+            if self.dtype == DT_STR:
+                r.strings.append(self.strings[src_idx])
+            elif self.dtype == DT_I64:
+                r.i64s.append(self.i64s[src_idx])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[src_idx])
+            else:
+                r.f64s.append(self.f64s[src_idx])
+            rv = r.valid
+            rv.set(i, vm.get(src_idx))
+        return r
+
+    def clone_series(self) -> "Series":
+        vm = self.valid
+        r = Series(self.name, self.dtype, vm.clone_mask())
+        r.f64s = []
+        r.i64s = []
+        r.bools = []
+        r.strings = []
+        for i in range(self.length()):
+            if self.dtype == DT_STR:
+                r.strings.append(self.strings[i])
+            elif self.dtype == DT_I64:
+                r.i64s.append(self.i64s[i])
+            elif self.dtype == DT_BOOL:
+                r.bools.append(self.bools[i])
+            else:
+                r.f64s.append(self.f64s[i])
+        return r
+
+    def rename(self, new_name: "str") -> "Series":
+        r = self.clone_series()
+        r.name = new_name
+        return r
+
+    def drop_null(self) -> "Series":
+        vm = self.valid
+        idx = mask_to_indices(vm)
+        return self.take(idx)
+
+    def fill_null_str(self, fill: "str") -> "Series":
+        if self.dtype != DT_STR:
+            return self.clone_series()
+        vals = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 1:
+                vals.append(fill)
+            else:
+                vals.append(self.strings[i])
+        r = make_series_str(self.name, vals)
+        return r
+
+    def fill_null_f64(self, fill: "f64") -> "Series":
+        if self.dtype == DT_STR:
+            return self.clone_series()
+        if self.dtype == DT_I64:
+            vi = []
+            n = self.length()
+            for i in range(n):
+                if self.is_null(i) == 1:
+                    vi.append(int(fill))
+                else:
+                    vi.append(self.i64s[i])
+            return make_series_i64(self.name, vi)
+        if self.dtype == DT_BOOL:
+            vb = []
+            n = self.length()
+            for i in range(n):
+                if self.is_null(i) == 1:
+                    if fill != 0.0:
+                        vb.append(1)
+                    else:
+                        vb.append(0)
+                else:
+                    vb.append(self.bools[i])
+            return make_series_bool(self.name, vb)
+        vals = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 1:
+                vals.append(fill)
+            else:
+                vals.append(self.f64s[i])
+        return make_series_f64(self.name, vals)
+
+    def non_null_count(self) -> "i32":
+        return self.length() - self.null_count()
+
+    def _copy_value_from(self, src: "Series", src_i: "i32", dst_i: "i32"):
+        # Copy gia tri giua 2 Series CUNG KIEU (dung boi ffill/bfill)
+        if self.dtype == DT_STR:
+            self.strings[dst_i] = src.strings[src_i]
+        elif self.dtype == DT_I64:
+            self.i64s[dst_i] = src.i64s[src_i]
+        elif self.dtype == DT_BOOL:
+            self.bools[dst_i] = src.bools[src_i]
+        else:
+            self.f64s[dst_i] = src.f64s[src_i]
+
+    def ffill(self) -> "Series":
+        # Dien null bang gia tri hop le gan nhat PHIA TRUOC; null dau day giu nguyen
+        n = self.length()
+        r = self.clone_series()
+        rv = r.valid
+        last_valid = 0 - 1
+        for i in range(n):
+            if self.is_null(i) == 0:
+                last_valid = i
+            else:
+                if last_valid >= 0:
+                    r._copy_value_from(self, last_valid, i)
+                    rv.set(i, 1)
+        return r
+
+    def bfill(self) -> "Series":
+        # Dien null bang gia tri hop le gan nhat PHIA SAU; null cuoi day giu nguyen
+        n = self.length()
+        r = self.clone_series()
+        rv = r.valid
+        next_valid = 0 - 1
+        i = n - 1
+        while i >= 0:
+            if self.is_null(i) == 0:
+                next_valid = i
+            else:
+                if next_valid >= 0:
+                    r._copy_value_from(self, next_valid, i)
+                    rv.set(i, 1)
+            i = i - 1
+        return r
+
+    def str_map_contains(self, needle: "str") -> "Series":
+        # Mask boolean (Series DT_BOOL): gia tri chua chuoi con
+        out = []
+        n = self.length()
+        for i in range(n):
+            ok = 0
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                if sv.find(needle) >= 0:
+                    ok = 1
+            if ok == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+    def str_map_startswith(self, prefix: "str") -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            ok = 0
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                if str_startswith(sv, prefix) == 1:
+                    ok = 1
+            if ok == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+    def str_map_endswith(self, suffix: "str") -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            ok = 0
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                if str_endswith(sv, suffix) == 1:
+                    ok = 1
+            if ok == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+    def str_map_upper(self) -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                out.append(sv.upper())
+            else:
+                out.append("")
+        r = make_series_str(self.name, out)
+        r.valid = self.valid.clone_mask()
+        return r
+
+    def str_map_lower(self) -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                out.append(sv.lower())
+            else:
+                out.append("")
+        r = make_series_str(self.name, out)
+        r.valid = self.valid.clone_mask()
+        return r
+
+    def str_map_replace(self, old: "str", new: "str") -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                out.append(sv.replace(old, new))
+            else:
+                out.append("")
+        r = make_series_str(self.name, out)
+        r.valid = self.valid.clone_mask()
+        return r
+
+    def between(self, lo: "f64", hi: "f64", inclusive: "i32") -> "Series":
+        # 1 neu lo <= x <= hi (inclusive == 1) hoac lo < x < hi (inclusive == 0); null -> 0
+        out = []
+        n = self.length()
+        for i in range(n):
+            ok = 0
+            if self.is_null(i) == 0:
+                x = self.get_f64(i)
+                if inclusive == 1:
+                    if x >= lo:
+                        if x <= hi:
+                            ok = 1
+                else:
+                    if x > lo:
+                        if x < hi:
+                            ok = 1
+            if ok == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+    def is_in_f64(self, candidates: "list[f64]") -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            hit = 0
+            if self.is_null(i) == 0:
+                x = self.get_f64(i)
+                for k in range(len(candidates)):
+                    if candidates[k] == x:
+                        hit = 1
+                        break
+            if hit == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+    def is_in_str(self, candidates: "list[str]") -> "Series":
+        out = []
+        n = self.length()
+        for i in range(n):
+            hit = 0
+            if self.is_null(i) == 0:
+                sv = self.get_string(i)
+                for k in range(len(candidates)):
+                    if candidates[k] == sv:
+                        hit = 1
+                        break
+            if hit == 1:
+                out.append(1)
+            else:
+                out.append(0)
+        return make_series_bool(self.name, out)
+
+
+def make_series_f64(nm: "str", vals: "list[f64]") -> "Series":
+    c = make_col_f64(vals)
+    vm = c.valid
+    r = Series(nm, DT_F64, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.f64s.append(vals[i])
+    return r
+
+
+def make_series_i64(nm: "str", vals: "list[i64]") -> "Series":
+    c = make_col_i64(vals)
+    vm = c.valid
+    r = Series(nm, DT_I64, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.i64s.append(vals[i])
+    return r
+
+
+def make_series_bool(nm: "str", vals: "list[i32]") -> "Series":
+    c = make_col_bool(vals)
+    vm = c.valid
+    r = Series(nm, DT_BOOL, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        r.bools.append(vals[i])
+    return r
+
+
+def make_series_str(nm: "str", vals: "list[str]") -> "Series":
+    c = make_str_col(vals)
+    vm = c.valid
+    r = Series(nm, DT_STR, vm)
+    r.f64s = []
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    for i in range(len(vals)):
+        s = vals[i]
+        if s == None:
+            r.strings.append("")
+        else:
+            r.strings.append(s)
+    return r
+
+
+def make_series(nm: "str", col: "Col") -> "Series":
+    # Bao toan null-mask cua Col khi boc thanh Series (truoc day mask bi mat
+    # -> moi cot doc tu CSV/JSON tro thanh all-valid du co null).
+    vm = col.valid
+    if vm != None and vm.pop_count() < vm.n:
+        if col.dtype == DT_I64:
+            return make_series_i64_with_mask(nm, col.i64s, vm)
+        if col.dtype == DT_BOOL:
+            return make_series_bool_with_mask(nm, col.bools, vm)
+        if col.dtype == DT_F64:
+            return make_series_f64_with_mask(nm, col.f64s, vm)
+    if col.dtype == DT_I64:
+        return make_series_i64(nm, col.i64s)
+    if col.dtype == DT_BOOL:
+        return make_series_bool(nm, col.bools)
+    return make_series_f64(nm, col.f64s)
+
+
+# ------------------------------ DataFrame ------------------------------------
+class DataFrame:
+    cols: "list[Series]"
+
+    def row_count(self) -> "i32":
+        if len(self.cols) == 0:
+            return 0
+        c0 = self.cols[0]
+        return c0.length()
+
+    def column_count(self) -> "i32":
+        return len(self.cols)
+
+    def col_index(self, name: "str") -> "i32":
+        key = name.lower()
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            cn = c.name
+            if cn.lower() == key:
+                return i
+        raise KeyError("Column '" + name + "' not found")
+
+    def has_col(self, name: "str") -> "i32":
+        key = name.lower()
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            cn = c.name
+            if cn.lower() == key:
+                return 1
+        return 0
+
+    def col_by_name(self, name: "str") -> "Series":
+        idx = self.col_index(name)
+        return self.cols[idx]
+
+    def col_at(self, i: "i32") -> "Series":
+        return self.cols[i]
+
+    def column_names(self) -> "list[str]":
+        return df_column_names(self)
+
+    def schema_names(self) -> "list[str]":
+        n_sn = self.column_count()
+        names_out = []
+        for i in range(n_sn):
+            c = self.cols[i]
+            names_out.append(c.name)
+        return names_out
+
+    def schema_dtypes(self) -> "list[i32]":
+        return df_schema_dtypes(self)
+
+    def select(self, names: "list[str]") -> "DataFrame":
+        picked = []
+        for i in range(len(names)):
+            s = self.col_by_name(names[i])
+            picked.append(s.clone_series())
+        df = DataFrame()
+        df.cols = picked
+        return df
+
+    def drop(self, names: "list[str]") -> "DataFrame":
+        kept = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            found = 0
+            for k in range(len(names)):
+                nk = names[k]
+                nl = nk.lower()
+                cl = c.name
+                if cl.lower() == nl:
+                    found = 1
+            if found == 0:
+                kept.append(c.clone_series())
+        df = DataFrame()
+        df.cols = kept
+        return df
+
+    def with_column(self, name: "str", s: "Series") -> "DataFrame":
+        if s.length() != self.row_count() and self.row_count() != 0:
+            raise ValueError("Series length does not match DataFrame row count")
+        ns = s.rename(name)
+        new_cols = []
+        replaced = 0
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            cl = c.name
+            nl = name
+            if cl.lower() == nl.lower():
+                new_cols.append(ns)
+                replaced = 1
+            else:
+                new_cols.append(c.clone_series())
+        if replaced == 0:
+            new_cols.append(ns)
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def with_column_renamed(self, old_name: "str", new_name: "str") -> "DataFrame":
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            cl = c.name
+            ol = old_name
+            if cl.lower() == ol.lower():
+                new_cols.append(c.rename(new_name))
+            else:
+                new_cols.append(c.clone_series())
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def filter(self, mask: "Mask") -> "DataFrame":
+        indices = mask_to_indices(mask)
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            new_cols.append(c.take(indices))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def filter_truth(self, truth: "list[i32]") -> "DataFrame":
+        indices = make_idx([])
+        for i in range(self.row_count()):
+            if truth[i] == 1:
+                indices.append(i)
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            new_cols.append(c.take(indices))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def slice_df(self, offset: "i32", ln: "i32") -> "DataFrame":
+        n = self.row_count()
+        if offset < 0 or ln < 0 or offset + ln > n:
+            raise IndexError("Invalid slice range")
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            new_cols.append(c.slice_series(offset, ln))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def head(self, n: "i32") -> "DataFrame":
+        cnt = n
+        if cnt > self.row_count():
+            cnt = self.row_count()
+        return self.slice_df(0, cnt)
+
+    def tail(self, n: "i32") -> "DataFrame":
+        cnt = n
+        if cnt > self.row_count():
+            cnt = self.row_count()
+        return self.slice_df(self.row_count() - cnt, cnt)
+
+    def clone_df(self) -> "DataFrame":
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            new_cols.append(c.clone_series())
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def sort_by(self, name: "str", ascending: "i32") -> "DataFrame":
+        # Merge sort O(n log n) qua sort_rows/_ms_rows (so sanh inline field,
+        # khong call per-compare); null ve CUOI, stable.
+        sort_col = self.col_by_name(name)
+        n = self.row_count()
+        vals = []
+        for i in range(n):
+            if sort_col.is_null(i) == 1:
+                vals.append(RowKey(0.0, i, 1))
+            else:
+                vals.append(RowKey(sort_col.get_f64(i), i, 0))
+        sorted_pairs = sort_rows(vals, ascending)
+        row_indices = []
+        for i in range(n):
+            rk = sorted_pairs[i]
+            row_indices.append(rk.idx)
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            new_cols.append(c.take(row_indices))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def drop_null_rows(self, subset: "list[str]") -> "DataFrame":
+        n = self.row_count()
+        check = []
+        if subset != None and len(subset) > 0:
+            for k in range(len(subset)):
+                check.append(self.col_by_name(subset[k]))
+        else:
+            for i in range(len(self.cols)):
+                check.append(self.cols[i])
+        truth = make_idx([])
+        for i in range(n):
+            ok = 1
+            for k in range(len(check)):
+                c = check[k]
+                if c.is_null(i) == 1:
+                    ok = 0
+            truth.append(ok)
+        return self.filter_truth(truth)
+
+    def fill_null_all(self, value_f64: "f64", value_str: "str", subset: "list[str]") -> "DataFrame":
+        new_cols = []
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            target = 1
+            if subset != None and len(subset) > 0:
+                target = 0
+                for k in range(len(subset)):
+                    sk = subset[k]
+                    sl = sk.lower()
+                    cl = c.name
+                    if cl.lower() == sl:
+                        target = 1
+            if target == 0:
+                new_cols.append(c.clone_series())
+            elif c.dtype == DT_STR:
+                new_cols.append(c.fill_null_str(value_str))
+            else:
+                new_cols.append(c.fill_null_f64(value_f64))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def describe(self) -> "DataFrame":
+        stats_names = ["count", "mean", "std", "min", "25%", "50%", "75%", "max"]
+        result_cols = [make_series_str("statistic", stats_names)]
+        for i in range(len(self.cols)):
+            c = self.cols[i]
+            if dt_is_numeric(c.dtype) == 1:
+                vals = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                vals[0] = c.non_null_count()
+                vals[1] = series_mean(c)
+                vals[2] = series_std(c, 1)
+                vals[3] = series_min(c)
+                vals[4] = series_quantile(c, 0.25)
+                vals[5] = series_quantile(c, 0.5)
+                vals[6] = series_quantile(c, 0.75)
+                vals[7] = series_max(c)
+                result_cols.append(make_series(c.name, make_col_f64(vals)))
+        df = DataFrame()
+        df.cols = result_cols
+        return df
+
+    def drop_duplicates(self, subset: "list[str]") -> "DataFrame":
+        # Gia lai cac dong DAU TIEN theo tung nhom khoa; giu nguyen thu tu dong.
+        # subset rong/None -> dung toan bo cac cot.
+        n = self.row_count()
+        if subset != None and len(subset) > 0:
+            key_cols = []
+            for k in range(len(subset)):
+                key_cols.append(self.col_by_name(subset[k]))
+        else:
+            key_cols = []
+            for k in range(len(self.cols)):
+                key_cols.append(self.col_at(k))
+        nk = len(key_cols)
+        keys = []
+        seen = {}
+        keep = []
+        for i in range(n):
+            kparts = []
+            for k in range(nk):
+                kc = key_cols[k]
+                sv = kc.get_string(i)
+                kparts.append(sv)
+            key = kparts[0]
+            for k in range(1, nk):
+                key = key + "\x01" + kparts[k]
+            if key in seen:
+                keep.append(0)
+            else:
+                seen[key] = 1
+                keep.append(1)
+        row_indices = []
+        for i in range(n):
+            if keep[i] == 1:
+                row_indices.append(i)
+        new_cols = []
+        for k in range(len(self.cols)):
+            c = self.cols[k]
+            new_cols.append(c.take(row_indices))
+        df = DataFrame()
+        df.cols = new_cols
+        return df
+
+    def duplicated_mask(self, subset: "list[str]") -> "Series":
+        # Series DT_BOOL: 1 neu dong DA TRUNG (da thay key o dong truoc), giu thu tu dong.
+        n = self.row_count()
+        if subset != None and len(subset) > 0:
+            key_cols = []
+            for k in range(len(subset)):
+                key_cols.append(self.col_by_name(subset[k]))
+        else:
+            key_cols = []
+            for k in range(len(self.cols)):
+                key_cols.append(self.col_at(k))
+        nk = len(key_cols)
+        seen = {}
+        out = []
+        for i in range(n):
+            kparts = []
+            for k in range(nk):
+                kc = key_cols[k]
+                sv = kc.get_string(i)
+                kparts.append(sv)
+            key = kparts[0]
+            for k in range(1, nk):
+                key = key + "\x01" + kparts[k]
+            if key in seen:
+                out.append(1)
+            else:
+                seen[key] = 1
+                out.append(0)
+        return make_series_bool("__duplicated__", out)
+
+    def value_counts(self, name: "str") -> "DataFrame":
+        # Dem tan suat gia tri phan biet cua 1 cot; output: cot name + cot "count" (i64).
+        # Ket qua sap giam dan theo count (stable); null duoc bo qua.
+        c = self.col_by_name(name)
+        n = c.length()
+        counts = {}
+        order = []
+        for i in range(n):
+            if c.is_null(i) == 0:
+                v = c.get_string(i)
+                if v in counts:
+                    counts[v] = counts[v] + 1
+                else:
+                    counts[v] = 1
+                    order.append(v)
+        # merge sort theo count giam dan, stable theo thu tu xuat hien
+        cnt_items = []
+        for k in range(len(order)):
+            v = order[k]
+            cnt_items.append(_VcItem(v, counts[v], k))
+        sorted_items = _ms_vc(cnt_items)
+        out_vals = []
+        out_cnts = []
+        for k in range(len(sorted_items)):
+            it = sorted_items[k]
+            out_vals.append(it.val)
+            out_cnts.append(it.cnt)
+        df = DataFrame()
+        df.cols = [make_series_str(name, out_vals), make_series_i64("count", out_cnts)]
+        return df
+
+
+class RowKey:
+    val: "f64"
+    idx: "i32"
+    is_null: "i32"
+
+
+class _VcItem:
+    val: "str"
+    cnt: "i64"
+    ord: "i32"
+
+
+def _vc_before(a: "_VcItem", b: "_VcItem") -> "i32":
+    # 1 neu a nen dung truoc b: count giam dan; bang count -> ord tang dan (stable)
+    if a.cnt > b.cnt:
+        return 1
+    if a.cnt == b.cnt and a.ord <= b.ord:
+        return 1
+    return 0
+
+
+def _ms_vc(items: "list[_VcItem]") -> "list[_VcItem]":
+    n = len(items)
+    if n <= 1:
+        return items
+    mid = n // 2
+    left = []
+    right = []
+    for i in range(mid):
+        left.append(items[i])
+    for i in range(mid, n):
+        right.append(items[i])
+    ls = _ms_vc(left)
+    rs = _ms_vc(right)
+    out = []
+    li = 0
+    ri = 0
+    nl = len(ls)
+    nr = len(rs)
+    while li < nl and ri < nr:
+        if _vc_before(ls[li], rs[ri]) == 1:
+            out.append(ls[li])
+            li = li + 1
+        else:
+            out.append(rs[ri])
+            ri = ri + 1
+    while li < nl:
+        out.append(ls[li])
+        li = li + 1
+    while ri < nr:
+        out.append(rs[ri])
+        ri = ri + 1
+    return out
+
+
+# --------- string helpers (dua tren builtin str, ASCII/Unicode-safe) ---------
+def str_startswith(s: "str", prefix: "str") -> "i32":
+    lp = len(prefix)
+    if lp == 0:
+        return 1
+    if lp > len(s):
+        return 0
+    if s[0:lp] == prefix:
+        return 1
+    return 0
+
+
+def str_endswith(s: "str", suffix: "str") -> "i32":
+    ls = len(suffix)
+    if ls == 0:
+        return 1
+    n = len(s)
+    if ls > n:
+        return 0
+    if s[n - ls:n] == suffix:
+        return 1
+    return 0
+
+
+def _rk_before(a: "RowKey", b: "RowKey", ascending: "i32") -> "i32":
+    # 1 neu a nen dung TRUOC b (equal -> 1 de giu tinh stable); null di ve CUOI
+    if a.is_null == 1 and b.is_null == 1:
+        return 1
+    if a.is_null == 1:
+        return 0
+    if b.is_null == 1:
+        return 1
+    if ascending == 1:
+        if a.val <= b.val:
+            return 1
+        return 0
+    if a.val >= b.val:
+        return 1
+    return 0
+
+
+def _ms_rows(items: "list[RowKey]", ascending: "i32") -> "list[RowKey]":
+    # Merge sort O(n log n), stable; so sanh inline qua field (khong call _rk_before)
+    n = len(items)
+    if n <= 1:
+        return items
+    mid = n // 2
+    left = []
+    right = []
+    for i in range(mid):
+        left.append(items[i])
+    for i in range(mid, n):
+        right.append(items[i])
+    ls = _ms_rows(left, ascending)
+    rs = _ms_rows(right, ascending)
+    out = []
+    li = 0
+    ri = 0
+    nl = len(ls)
+    nr = len(rs)
+    while li < nl and ri < nr:
+        a = ls[li]
+        b = rs[ri]
+        take_left = 0
+        if b.is_null == 1:
+            take_left = 1
+        elif a.is_null == 1:
+            take_left = 0
+        elif ascending == 1:
+            if a.val <= b.val:
+                take_left = 1
+        else:
+            if a.val >= b.val:
+                take_left = 1
+        if take_left == 1:
+            out.append(a)
+            li = li + 1
+        else:
+            out.append(b)
+            ri = ri + 1
+    while li < nl:
+        out.append(ls[li])
+        li = li + 1
+    while ri < nr:
+        out.append(rs[ri])
+        ri = ri + 1
+    return out
+
+
+def sort_rows(items: "list[RowKey]", ascending: "i32") -> "list[RowKey]":
+    # Merge sort O(n log n), stable; null di ve CUOI (moi thu tu)
+    return _ms_rows(items, ascending)
+
+
+def make_df(cols: "list[Series]") -> "DataFrame":
+    if len(cols) > 0:
+        c0 = cols[0]
+        n0 = c0.length()
+        for i in range(len(cols)):
+            c = cols[i]
+            if c.length() != n0:
+                raise ValueError("Column length does not match DataFrame row count")
+    df = DataFrame()
+    df.cols = cols
+    return df
+
+
+def empty_df() -> "DataFrame":
+    df = DataFrame()
+    df.cols = []
+    return df
+
+
+# ---------------------- Statistical helpers tren Series ----------------------
+def series_sum(s: "Series") -> "f64":
+    # 1 pass: doc truc tiep buffer, null-check bang bits (ne mask pop_count cache)
+    n = s.length()
+    svalid = s.valid
+    sb = svalid.bits
+    dt = s.dtype
+    total = 0.0
+    if dt == DT_I64:
+        ib = s.i64s
+        if svalid.pop_count() == n:
+            for i in range(n):
+                total = total + float(ib[i])
+            return total
+        for i in range(n):
+            if sb[i] == 1:
+                total = total + float(ib[i])
+        return total
+    if dt == DT_BOOL:
+        bb = s.bools
+        for i in range(n):
+            if sb[i] == 1 and bb[i] == 1:
+                total = total + 1.0
+        return total
+    fb = s.f64s
+    if svalid.pop_count() == n:
+        for i in range(n):
+            total = total + fb[i]
+        return total
+    for i in range(n):
+        if sb[i] == 1:
+            total = total + fb[i]
+    return total
+
+
+def series_mean(s: "Series") -> "f64":
+    # O(1): non-null count = pop_count cua mask (co cache)
+    pc = s.valid.pop_count()
+    if pc == 0:
+        return float("nan")
+    return series_sum(s) / float(pc)
+
+
+def series_min(s: "Series") -> "f64":
+    # 1 pass, khong call is_null/get_f64 per element
+    n = s.length()
+    svalid = s.valid
+    sb = svalid.bits
+    pc = svalid.pop_count()
+    if pc == 0:
+        return float("nan")
+    dt = s.dtype
+    best = float("inf")
+    if dt == DT_I64:
+        ib = s.i64s
+        if pc == n:
+            for i in range(n):
+                v = float(ib[i])
+                if v < best:
+                    best = v
+            return best
+        for i in range(n):
+            if sb[i] == 1:
+                v = float(ib[i])
+                if v < best:
+                    best = v
+        return best
+    if dt == DT_BOOL:
+        bb = s.bools
+        for i in range(n):
+            if sb[i] == 1 and bb[i] == 0:
+                return 0.0
+        return 1.0
+    fb = s.f64s
+    if pc == n:
+        for i in range(n):
+            v = fb[i]
+            if v < best:
+                best = v
+        return best
+    for i in range(n):
+        if sb[i] == 1:
+            v = fb[i]
+            if v < best:
+                best = v
+    return best
+
+
+def series_max(s: "Series") -> "f64":
+    n = s.length()
+    svalid = s.valid
+    sb = svalid.bits
+    pc = svalid.pop_count()
+    if pc == 0:
+        return float("nan")
+    dt = s.dtype
+    best = float("-inf")
+    if dt == DT_I64:
+        ib = s.i64s
+        if pc == n:
+            for i in range(n):
+                v = float(ib[i])
+                if v > best:
+                    best = v
+            return best
+        for i in range(n):
+            if sb[i] == 1:
+                v = float(ib[i])
+                if v > best:
+                    best = v
+        return best
+    if dt == DT_BOOL:
+        bb = s.bools
+        for i in range(n):
+            if sb[i] == 1 and bb[i] == 1:
+                return 1.0
+        return 0.0
+    fb = s.f64s
+    if pc == n:
+        for i in range(n):
+            v = fb[i]
+            if v > best:
+                best = v
+        return best
+    for i in range(n):
+        if sb[i] == 1:
+            v = fb[i]
+            if v > best:
+                best = v
+    return best
+
+
+def series_variance(s: "Series", ddof: "i32") -> "f64":
+    # Welford 1 pass: bo pass mean (cu la 2 pass), fast-path all-valid
+    n = s.length()
+    svalid = s.valid
+    sb = svalid.bits
+    pc = svalid.pop_count()
+    dt = s.dtype
+    cnt = 0
+    fcnt = 0.0
+    mean = 0.0
+    m2 = 0.0
+    if dt == DT_I64:
+        ib = s.i64s
+        if pc == n:
+            for i in range(n):
+                x = float(ib[i])
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+        else:
+            for i in range(n):
+                if sb[i] == 1:
+                    x = float(ib[i])
+                    cnt = cnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - mean
+                    mean = mean + d / fcnt
+                    m2 = m2 + d * (x - mean)
+    elif dt == DT_BOOL:
+        bb = s.bools
+        for i in range(n):
+            if sb[i] == 1:
+                if bb[i] == 1:
+                    x = 1.0
+                else:
+                    x = 0.0
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+    else:
+        fb = s.f64s
+        if pc == n:
+            for i in range(n):
+                x = fb[i]
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+        else:
+            for i in range(n):
+                if sb[i] == 1:
+                    x = fb[i]
+                    cnt = cnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - mean
+                    mean = mean + d / fcnt
+                    m2 = m2 + d * (x - mean)
+    if cnt <= ddof:
+        return float("nan")
+    if ddof == 0:
+        return m2 / fcnt
+    one = 1.0
+    denom = fcnt - one
+    return m2 / denom
+
+
+def series_std(s: "Series", ddof: "i32") -> "f64":
+    v = series_variance(s, ddof)
+    if v != v:
+        return float("nan")
+    return v ** 0.5
+
+
+def series_quantile(s: "Series", q: "f64") -> "f64":
+    if q < 0.0 or q > 1.0:
+        raise ValueError("Quantile q must be between 0.0 and 1.0")
+    vals = []
+    for i in range(s.length()):
+        if s.is_null(i) == 0:
+            vals.append(s.get_f64(i))
+    n = len(vals)
+    if n == 0:
+        return float("nan")
+    if n == 1:
+        return vals[0]
+    svals = sorted(vals)
+    pos = q * (n - 1)
+    low = int(pos)
+    high = int(pos + 0.5)
+    if high < low:
+        high = low
+    frac = pos - low
+    if low == high:
+        return svals[low]
+    return svals[low] * (1.0 - frac) + svals[high] * frac
+
+
+# ----------------------------- ChunkedArray ----------------------------------
+class ChunkedArray:
+    dtype: "i32"
+    chunks_num: "list[Col]"
+    chunks_str: "list[StrCol]"
+
+    def length(self) -> "i32":
+        total = 0
+        if self.dtype == DT_STR:
+            for i in range(len(self.chunks_str)):
+                c = self.chunks_str[i]
+                total = total + c.length()
+        else:
+            for i in range(len(self.chunks_num)):
+                c = self.chunks_num[i]
+                total = total + c.length()
+        return total
+
+    def chunk_count(self) -> "i32":
+        if self.dtype == DT_STR:
+            return len(self.chunks_str)
+        return len(self.chunks_num)
+
+    def null_count_total(self) -> "i32":
+        total = 0
+        if self.dtype == DT_STR:
+            for i in range(len(self.chunks_str)):
+                c = self.chunks_str[i]
+                total = total + c.null_count()
+        else:
+            for i in range(len(self.chunks_num)):
+                c = self.chunks_num[i]
+                total = total + c.null_count()
+        return total
+
+    def flatten_ca(self) -> "Series":
+        if self.chunk_count() == 1:
+            if self.dtype == DT_STR:
+                cs0 = self.chunks_str[0]
+                vals = []
+                for j in range(cs0.length()):
+                    vals.append(cs0.strings[j])
+                return make_series_str("", vals)
+            cn0 = self.chunks_num[0]
+            if self.dtype == DT_I64:
+                vals = []
+                for j in range(cn0.length()):
+                    vals.append(cn0.i64s[j])
+                return make_series_i64("", vals)
+            vals = []
+            for j in range(cn0.length()):
+                vals.append(cn0.f64s[j])
+            return make_series_f64("", vals)
+        if self.dtype == DT_STR:
+            all_strings = []
+            for i in range(len(self.chunks_str)):
+                cstr = self.chunks_str[i]
+                for j in range(cstr.length()):
+                    all_strings.append(cstr.strings[j])
+            return make_series_str("", all_strings)
+        if self.dtype == DT_I64:
+            all_i = []
+            for i in range(len(self.chunks_num)):
+                cnum = self.chunks_num[i]
+                for j in range(cnum.length()):
+                    all_i.append(cnum.i64s[j])
+            return make_series_i64("", all_i)
+        all_v = []
+        for i in range(len(self.chunks_num)):
+            cnum2 = self.chunks_num[i]
+            for j in range(cnum2.length()):
+                all_v.append(cnum2.f64s[j])
+        return make_series_f64("", all_v)
+
+
+def make_chunked_num(cols: "list[Col]") -> "ChunkedArray":
+    if len(cols) == 0:
+        raise ValueError("ChunkedArray requires at least one chunk")
+    c0 = cols[0]
+    ca = ChunkedArray(c0.dtype)
+    ca.chunks_num = []
+    ca.chunks_str = []
+    for i in range(len(cols)):
+        c = cols[i]
+        if c.dtype != ca.dtype:
+            raise ValueError("Mismatched chunk data types")
+        ca.chunks_num.append(c)
+    return ca
+
+
+def make_chunked_str(cols: "list[StrCol]") -> "ChunkedArray":
+    if len(cols) == 0:
+        raise ValueError("ChunkedArray requires at least one chunk")
+    ca = ChunkedArray(DT_STR)
+    ca.chunks_num = []
+    ca.chunks_str = []
+    for i in range(len(cols)):
+        ca.chunks_str.append(cols[i])
+    return ca
+
+
+# -------- typed index list helper (an toan cho take/filter) --------
+def make_idx(indices: "list[i32]") -> "list[i32]":
+    r = []
+    for i in range(len(indices)):
+        r.append(indices[i])
+    return r
+
+
+# --------------------- Relational: agg/join/asof constants --------------------
+AGG_SUM = 1
+AGG_MEAN = 2
+AGG_MIN = 3
+AGG_MAX = 4
+AGG_COUNT = 5
+AGG_STD = 6
+AGG_FIRST = 7
+AGG_LAST = 8
+
+JOIN_INNER = 1
+JOIN_LEFT = 2
+JOIN_RIGHT = 3
+JOIN_FULL = 4
+JOIN_CROSS = 5
+
+ASOF_BACKWARD = 1
+ASOF_FORWARD = 2
+ASOF_NEAREST = 3
+
+
+class AggExpr:
+    target: "str"
+    agg_type: "i32"
+    output: "str"
+
+
+# ---- DataFrame utilities bo sung cho Relational/IO (clone + value get/set) ----
+
+
+def df_schema_dtypes(df: "DataFrame") -> "list[i32]":
+    dtypes_out = []
+    n_sd = df.column_count()
+    for i in range(n_sd):
+        c = df.col_at(i)
+        dtypes_out.append(c.dtype)
+    return dtypes_out
+
+
+def df_column_names(df: "DataFrame") -> "list[str]":
+    names_out = []
+    nc = df.column_count()
+    for i in range(nc):
+        c = df.col_at(i)
+        names_out.append(c.name)
+    return names_out
+
+
+def df_clone(df: "DataFrame") -> "DataFrame":
+    cols = []
+    for i in range(len(df.cols)):
+        c = df.cols[i]
+        cols.append(c.clone_series())
+    out = DataFrame()
+    out.cols = cols
+    return out

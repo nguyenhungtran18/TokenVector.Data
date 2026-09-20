@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data"]
+
+def run() -> "str":
+    sch = make_schema(["id", "name", "score"], [DT_I64, DT_STR, DT_F64])
+    f1 = sch.fields[1]
+    print("schema: " + sch.names[0] + "/" + dt_name(f1.dtype) + " idx=" + str(sch.get_index("SCORE")))
+    m = make_mask(5, 1)
+    m.set(2, 0)
+    print("mask pop=" + str(m.pop_count()) + " all=" + str(m.all()) + " any=" + str(m.any()))
+    m2 = m.mask_not()
+    print("not pop=" + str(m2.pop_count()) + " idx=" + str(m.to_indices()))
+    c = make_col_f64([1.5, 2.5, 3.5])
+    c.set_null(1)
+    print("col n=" + str(c.length()) + " nulls=" + str(c.null_count()) + " v2=" + str(c.get_f64(2)))
+    cs = c.to_string_col()
+    print("str col: [" + cs.strings[0] + "," + cs.strings[1] + "," + cs.strings[2] + "]")
+    sc = make_str_col(["a", None, "c"])
+    print("strcol nulls=" + str(sc.null_count()) + " len=" + str(sc.length()))
+    s2 = sc.slice_str(0, 2)
+    print("slice n=" + str(s2.length()) + " nulls=" + str(s2.null_count()))
+    tk = c.take([2, 0])
+    print("take: " + str(tk.get_f64(0)) + "," + str(tk.get_f64(1)))
+    ci = make_col_i64([10, 20])
+    print("i64 col: " + str(ci.get_i64(1)))
+    cb = make_col_bool([1, 0, 1])
+    print("bool col pop=" + str(cb.valid.pop_count()))
+    a = make_mask(3, 1)
+    b = make_mask(3, 0)
+    b.set(1, 1)
+    x = a.mask_and(b)
+    y = a.mask_or(b)
+    z = a.mask_xor(b)
+    print("and=" + str(x.pop_count()) + " or=" + str(y.pop_count()) + " xor=" + str(z.pop_count()))
+    return "SUCCESS"

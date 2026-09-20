@@ -1,0 +1,1156 @@
+__tkv_import__ = ["tokenvector_data"]
+
+# -*- coding: utf-8 -*-
+# tokenvector_relational.tkv - port tu C# TokenVector.Data/Relational
+#   - GroupByEngine: GroupByContext (Agg), AggregationExpr (Sum/Mean/Min/Max/Count/Std/First/Last)
+#   - JoinEngine: Join (Inner/Left/Right/FullOuter/Cross), AsOfJoin (Backward/Forward/Nearest)
+#   - ReshapeEngine: ConcatVertical, ConcatHorizontal, Melt, Pivot
+# Ghi chu port:
+#   - Thay Dictionary<GroupKey,...> bang linear scan theo key (dung cho quy mo test)
+#   - Parallel.For -> vong lap tuan tu (ngon ngu khong co thread)
+#   - Group key dang str (ket hop cac gia tri key bang ky tu phan cach \x01)
+
+
+
+# ------------------------ GroupBy: aggregation spec ---------------------------
+def make_agg(target_column: "str", agg_type: "i32", output_name: "str") -> "AggExpr":
+    return AggExpr(target_column, agg_type, output_name)
+
+
+def agg_default_name(target_column: "str", agg_type: "i32") -> "str":
+    suffix = "sum"
+    if agg_type == AGG_MEAN:
+        suffix = "mean"
+    elif agg_type == AGG_MIN:
+        suffix = "min"
+    elif agg_type == AGG_MAX:
+        suffix = "max"
+    elif agg_type == AGG_COUNT:
+        suffix = "count"
+    elif agg_type == AGG_STD:
+        suffix = "std"
+    elif agg_type == AGG_FIRST:
+        suffix = "first"
+    elif agg_type == AGG_LAST:
+        suffix = "last"
+    return target_column + "_" + suffix
+
+
+# --------------------------- GroupByContext.Agg -------------------------------
+# Kieu numeric key: tra ve list[i32] cac chi so dong thuoc nhom (dung make_idx)
+def groupby_agg(df: "DataFrame", key_columns: "list[str]", exprs: "list[AggExpr]") -> "DataFrame":
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    if len(exprs) == 0:
+        raise ValueError("At least one aggregation expression required.")
+
+    n = df.row_count()
+    nk = len(key_columns)
+
+    k0 = df.col_by_name(key_columns[0])
+
+    # ===== Fast path: 1 khoa int64 - dict[int] -> group id, khong tao key string =====
+    if nk == 1 and k0.dtype == DT_I64:
+        kbuf = k0.i64s
+        kvmap = {}
+        kgroups = []
+        kcount = 0
+        for i in range(n):
+            kvi = kbuf[i]
+            gvi = kvmap.get(kvi, 0 - 1)
+            if gvi < 0:
+                kvmap[kvi] = kcount
+                kcount = kcount + 1
+                ng = make_idx([])
+                ng.append(i)
+                kgroups.append(ng)
+            else:
+                og = kgroups[gvi]
+                og.append(i)
+        # key columns ket qua (int key)
+        result_cols = []
+        kvals = []
+        for gx in range(kcount):
+            srow = kgroups[gx]
+            kvals.append(kbuf[srow[0]])
+        result_cols.append(make_series_i64(key_columns[0], kvals))
+        # aggregation cols: buffer truc tiep
+        ge = len(exprs)
+        for e in range(ge):
+            expr = exprs[e]
+            target = df.col_by_name(expr.target)
+            agg_vals = []
+            for gx in range(kcount):
+                agg_vals.append(_compute_agg(target, kgroups[gx], expr.agg_type))
+            result_cols.append(make_series_f64(expr.output, agg_vals))
+        return make_df(result_cols)
+
+    # ===== Fast path: 1 khoa str =====
+    if nk == 1 and k0.dtype == DT_STR:
+        sbuf = k0.strings
+        smap = {}
+        sgroups = []
+        scount = 0
+        for i in range(n):
+            ksi = sbuf[i]
+            gsi = smap.get(ksi, 0 - 1)
+            if gsi < 0:
+                smap[ksi] = scount
+                scount = scount + 1
+                sg = make_idx([])
+                sg.append(i)
+                sgroups.append(sg)
+            else:
+                og2 = sgroups[gsi]
+                og2.append(i)
+        result_cols = []
+        skv = []
+        for gx in range(scount):
+            srow = sgroups[gx]
+            skv.append(sbuf[srow[0]])
+        result_cols.append(make_series_str(key_columns[0], skv))
+        ge = len(exprs)
+        for e in range(ge):
+            expr = exprs[e]
+            target = df.col_by_name(expr.target)
+            agg_vals = []
+            for gx in range(scount):
+                agg_vals.append(_compute_agg(target, sgroups[gx], expr.agg_type))
+            result_cols.append(make_series_f64(expr.output, agg_vals))
+        return make_df(result_cols)
+
+    # ===== Truong hop tong quat: nhieu khoa hoac kieu khac =====
+    key_series = []
+    for k in range(nk):
+        key_series.append(df.col_by_name(key_columns[k]))
+
+    group_keys = []
+    group_rows = []
+    gmap = {}
+    gcount = 0
+    for i in range(n):
+        parts = []
+        for k in range(nk):
+            ks = key_series[k]
+            parts.append(ks.get_string(i))
+        key = parts[0]
+        for k in range(1, nk):
+            key = key + "\x01" + parts[k]
+        gg = 0 - 1
+        if key in gmap:
+            gg = gmap[key]
+        if gg < 0:
+            gmap[key] = gcount
+            gcount = gcount + 1
+            gnew = make_idx([])
+            gnew.append(i)
+            group_rows.append(gnew)
+        else:
+            gcur = group_rows[gg]
+            gcur.append(i)
+
+    gc = gcount
+    result_cols = []
+    for k in range(nk):
+        kn = key_columns[k]
+        sc = df.col_by_name(kn)
+        if sc.dtype == DT_STR:
+            strs = []
+            for gx in range(gc):
+                srow = group_rows[gx]
+                s0 = srow[0]
+                strs.append(sc.get_string(s0))
+            result_cols.append(make_series_str(kn, strs))
+        elif sc.dtype == DT_I64:
+            ivals = []
+            for gx in range(gc):
+                srow = group_rows[gx]
+                s0 = srow[0]
+                ivals.append(sc.get_i64(s0))
+            result_cols.append(make_series_i64(kn, ivals))
+        elif sc.dtype == DT_BOOL:
+            bvals = []
+            for gx in range(gc):
+                srow = group_rows[gx]
+                s0 = srow[0]
+                bvals.append(sc.get_bool(s0))
+            result_cols.append(make_series_bool(kn, bvals))
+        else:
+            fvals = []
+            for gx in range(gc):
+                srow = group_rows[gx]
+                s0 = srow[0]
+                fvals.append(sc.get_f64(s0))
+            result_cols.append(make_series_f64(kn, fvals))
+
+    ge = len(exprs)
+    for e in range(ge):
+        expr = exprs[e]
+        target = df.col_by_name(expr.target)
+        agg_vals = []
+        for gx in range(gc):
+            agg_vals.append(_compute_agg(target, group_rows[gx], expr.agg_type))
+        result_cols.append(make_series_f64(expr.output, agg_vals))
+
+    return make_df(result_cols)
+def _compute_agg(series: "Series", row_indices: "list[i32]", agg_type: "i32") -> "f64":
+    cnt = len(row_indices)
+    if cnt == 0:
+        return float("nan")
+    svalid = series.valid
+    sb = svalid.bits
+    dt = series.dtype
+    if agg_type == AGG_COUNT:
+        if series.null_count() == 0:
+            return float(cnt)
+        non_null = 0
+        for i in range(cnt):
+            r = row_indices[i]
+            if sb[r] == 1:
+                non_null = non_null + 1
+        return float(non_null)
+    has_nulls = series.null_count() > 0
+    # ===== f64 target =====
+    if dt == DT_F64:
+        buf = series.f64s
+        if has_nulls == 0:
+            if agg_type == AGG_FIRST:
+                r0 = row_indices[0]
+                return buf[r0]
+            if agg_type == AGG_LAST:
+                rl = row_indices[cnt - 1]
+                return buf[rl]
+            if agg_type == AGG_MIN:
+                # bo pass sum thua (TRIZ: loai bo cong doan trung gian)
+                smin = buf[row_indices[0]]
+                for i in range(1, cnt):
+                    r = row_indices[i]
+                    v = buf[r]
+                    if v < smin:
+                        smin = v
+                return smin
+            if agg_type == AGG_MAX:
+                smax = buf[row_indices[0]]
+                for i in range(1, cnt):
+                    r = row_indices[i]
+                    v = buf[r]
+                    if v > smax:
+                        smax = v
+                return smax
+            if agg_type == AGG_STD:
+                # Welford 1 pass thay 2 pass
+                if cnt < 2:
+                    return float("nan")
+                wcnt = 0
+                fcnt = 0.0
+                wmean = 0.0
+                wm2 = 0.0
+                for i in range(cnt):
+                    r = row_indices[i]
+                    x = buf[r]
+                    wcnt = wcnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - wmean
+                    wmean = wmean + d / fcnt
+                    wm2 = wm2 + d * (x - wmean)
+                dd = wm2 / (fcnt - 1.0)
+                return dd ** 0.5
+            total = 0.0
+            for i in range(cnt):
+                r = row_indices[i]
+                total = total + buf[r]
+            if agg_type == AGG_SUM:
+                return total
+            if agg_type == AGG_MEAN:
+                return total / float(cnt)
+            return float("nan")
+        # f64 co null: 1 pass duy nhat thu tong hop (bo list trung gian + pass sum)
+        vcnt = 0
+        fvcnt = 0.0
+        total = 0.0
+        fv = 0.0
+        lv = 0.0
+        smin = float("inf")
+        smax = float("-inf")
+        wmean = 0.0
+        wm2 = 0.0
+        for i in range(cnt):
+            r = row_indices[i]
+            if sb[r] == 1:
+                x = buf[r]
+                vcnt = vcnt + 1
+                fvcnt = fvcnt + 1.0
+                total = total + x
+                if vcnt == 1:
+                    fv = x
+                lv = x
+                if x < smin:
+                    smin = x
+                if x > smax:
+                    smax = x
+                d = x - wmean
+                wmean = wmean + d / fvcnt
+                wm2 = wm2 + d * (x - wmean)
+        if vcnt == 0:
+            return float("nan")
+        if agg_type == AGG_SUM:
+            return total
+        if agg_type == AGG_MEAN:
+            return total / fvcnt
+        if agg_type == AGG_MIN:
+            return smin
+        if agg_type == AGG_MAX:
+            return smax
+        if agg_type == AGG_FIRST:
+            return fv
+        if agg_type == AGG_LAST:
+            return lv
+        if agg_type == AGG_STD:
+            if vcnt < 2:
+                return float("nan")
+            dd = wm2 / (fvcnt - 1.0)
+            return dd ** 0.5
+        return float("nan")
+    # ===== i64 target =====
+    if dt == DT_I64:
+        buf = series.i64s
+        if has_nulls == 0:
+            if agg_type == AGG_MIN:
+                # so sanh int thoc truoc, float() chi mot lan cuoi (M10)
+                smin = buf[row_indices[0]]
+                for i in range(1, cnt):
+                    r = row_indices[i]
+                    v = buf[r]
+                    if v < smin:
+                        smin = v
+                return float(smin)
+            if agg_type == AGG_MAX:
+                smax = buf[row_indices[0]]
+                for i in range(1, cnt):
+                    r = row_indices[i]
+                    v = buf[r]
+                    if v > smax:
+                        smax = v
+                return float(smax)
+            if agg_type == AGG_FIRST:
+                r0 = row_indices[0]
+                return float(buf[r0])
+            if agg_type == AGG_LAST:
+                rl = row_indices[cnt - 1]
+                return float(buf[rl])
+            if agg_type == AGG_STD:
+                # Welford 1 pass thay 2 pass
+                if cnt < 2:
+                    return float("nan")
+                wcnt = 0
+                fcnt = 0.0
+                wmean = 0.0
+                wm2 = 0.0
+                for i in range(cnt):
+                    r = row_indices[i]
+                    x = float(buf[r])
+                    wcnt = wcnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - wmean
+                    wmean = wmean + d / fcnt
+                    wm2 = wm2 + d * (x - wmean)
+                dd = wm2 / (fcnt - 1.0)
+                return dd ** 0.5
+            total = 0.0
+            for i in range(cnt):
+                r = row_indices[i]
+                total = total + float(buf[r])
+            if agg_type == AGG_SUM:
+                return total
+            if agg_type == AGG_MEAN:
+                return total / float(cnt)
+            return float("nan")
+        # i64 co null: 1 pass duy nhat (bo list trung gian + pass sum)
+        vcnt = 0
+        fvcnt = 0.0
+        total = 0.0
+        fv = 0.0
+        lv = 0.0
+        smin = float("inf")
+        smax = float("-inf")
+        wmean = 0.0
+        wm2 = 0.0
+        for i in range(cnt):
+            r = row_indices[i]
+            if sb[r] == 1:
+                x = float(buf[r])
+                vcnt = vcnt + 1
+                fvcnt = fvcnt + 1.0
+                total = total + x
+                if vcnt == 1:
+                    fv = x
+                lv = x
+                if x < smin:
+                    smin = x
+                if x > smax:
+                    smax = x
+                d = x - wmean
+                wmean = wmean + d / fvcnt
+                wm2 = wm2 + d * (x - wmean)
+        if vcnt == 0:
+            return float("nan")
+        if agg_type == AGG_SUM:
+            return total
+        if agg_type == AGG_MEAN:
+            return total / fvcnt
+        if agg_type == AGG_MIN:
+            return smin
+        if agg_type == AGG_MAX:
+            return smax
+        if agg_type == AGG_FIRST:
+            return fv
+        if agg_type == AGG_LAST:
+            return lv
+        if agg_type == AGG_STD:
+            if vcnt < 2:
+                return float("nan")
+            dd = wm2 / (fvcnt - 1.0)
+            return dd ** 0.5
+        return float("nan")
+    # bool/str target: chi dung chung duong i64 neu co buffer, else nan
+    return float("nan")
+def _join_key_of(series_list: "list[Series]", row: "i32", nkeys: "i32") -> "str":
+    s0 = series_list[0]
+    key = s0.get_string(row)
+    for k in range(1, nkeys):
+        sk = series_list[k]
+        key = key + "\x01" + sk.get_string(row)
+    return key
+
+
+def join_frames(left: "DataFrame", right: "DataFrame", left_on: "str", right_on: "str",
+                join_type: "i32", left_suffix: "str", right_suffix: "str") -> "DataFrame":
+    lkeys = []
+    lkeys.append(left_on)
+    rkeys = []
+    rkeys.append(right_on)
+    return join_multi(left, right, lkeys, rkeys, join_type, left_suffix, right_suffix)
+
+
+def join_multi(left: "DataFrame", right: "DataFrame", left_keys: "list[str]", right_keys: "list[str]",
+               join_type: "i32", left_suffix: "str", right_suffix: "str") -> "DataFrame":
+    if join_type == JOIN_CROSS:
+        return cross_join(left, right, left_suffix, right_suffix)
+    if len(left_keys) != len(right_keys) or len(left_keys) == 0:
+        raise ValueError("Join keys must have equal non-zero lengths.")
+
+    nright = right.row_count()
+    nleft = left.row_count()
+    nk = len(right_keys)
+
+    lcol0 = left.col_by_name(left_keys[0])
+    rcol0 = right.col_by_name(right_keys[0])
+
+    # ===== Fast path A: 1 khoa int64 =====
+    if nk == 1 and rcol0.dtype == DT_I64 and lcol0.dtype == DT_I64:
+        rk_a = rcol0.i64s
+        lk_a = lcol0.i64s
+        map_a = {}
+        groups_a = []
+        count_a = 0
+        for r in range(nright):
+            kva = rk_a[r]
+            gida = 0 - 1
+            if kva in map_a:
+                gida = map_a[kva]
+            if gida < 0:
+                map_a[kva] = count_a
+                count_a = count_a + 1
+                ga = make_idx([])
+                ga.append(r)
+                groups_a.append(ga)
+            else:
+                gb = groups_a[gida]
+                gb.append(r)
+        pl_a = make_idx([])
+        pr_a = make_idx([])
+        mr_a = make_idx_n(nright)
+        for l in range(nleft):
+            kva2 = lk_a[l]
+            if kva2 in map_a:
+                gida2 = map_a[kva2]
+                gc = groups_a[gida2]
+                for j in range(len(gc)):
+                    pl_a.append(l)
+                    pr_a.append(gc[j])
+                    mr_a[gc[j]] = 1
+            elif join_type == JOIN_LEFT or join_type == JOIN_FULL:
+                pl_a.append(l)
+                pr_a.append(0 - 1)
+        if join_type == JOIN_RIGHT or join_type == JOIN_FULL:
+            for r in range(nright):
+                if mr_a[r] == 0:
+                    pl_a.append(0 - 1)
+                    pr_a.append(r)
+        skip_a = []
+        skip_a.append(right_keys[0])
+        return _build_joined_df(left, right, pl_a, pr_a, left_suffix, right_suffix, skip_a)
+
+    # ===== Fast path B: 1 khoa str =====
+    if nk == 1 and rcol0.dtype == DT_STR and lcol0.dtype == DT_STR:
+        rk_b = rcol0.strings
+        lk_b = lcol0.strings
+        map_b = {}
+        groups_b = []
+        count_b = 0
+        for r in range(nright):
+            ksb = rk_b[r]
+            gidb = 0 - 1
+            if ksb in map_b:
+                gidb = map_b[ksb]
+            if gidb < 0:
+                map_b[ksb] = count_b
+                count_b = count_b + 1
+                sb = make_idx([])
+                sb.append(r)
+                groups_b.append(sb)
+            else:
+                sc = groups_b[gidb]
+                sc.append(r)
+        pl_b = make_idx([])
+        pr_b = make_idx([])
+        mr_b = make_idx_n(nright)
+        for l in range(nleft):
+            ksb2 = lk_b[l]
+            if ksb2 in map_b:
+                gidb2 = map_b[ksb2]
+                sd = groups_b[gidb2]
+                for j in range(len(sd)):
+                    pl_b.append(l)
+                    pr_b.append(sd[j])
+                    mr_b[sd[j]] = 1
+            elif join_type == JOIN_LEFT or join_type == JOIN_FULL:
+                pl_b.append(l)
+                pr_b.append(0 - 1)
+        if join_type == JOIN_RIGHT or join_type == JOIN_FULL:
+            for r in range(nright):
+                if mr_b[r] == 0:
+                    pl_b.append(0 - 1)
+                    pr_b.append(r)
+        skip_b = []
+        skip_b.append(right_keys[0])
+        return _build_joined_df(left, right, pl_b, pr_b, left_suffix, right_suffix, skip_b)
+
+    # ===== Truong hop tong quat: nhieu khoa / kieu khac =====
+    # Van dung dict composite-key (chuoi) thay vi so sanh lai tung khoa; _join_key_of chi goi 1 lan moi dong.
+    right_key_cols = []
+    for k in range(nk):
+        right_key_cols.append(right.col_by_name(right_keys[k]))
+    map_g = {}
+    groups_g = []
+    count_g = 0
+    for r in range(nright):
+        keyg = _join_key_of(right_key_cols, r, nk)
+        gidg = 0 - 1
+        if keyg in map_g:
+            gidg = map_g[keyg]
+        if gidg < 0:
+            map_g[keyg] = count_g
+            count_g = count_g + 1
+            gg = make_idx([])
+            gg.append(r)
+            groups_g.append(gg)
+        else:
+            gh = groups_g[gidg]
+            gh.append(r)
+
+    pl_g = make_idx([])
+    pr_g = make_idx([])
+    mr_g = make_idx_n(nright)
+    left_key_cols = []
+    for k in range(nk):
+        left_key_cols.append(left.col_by_name(left_keys[k]))
+    for l in range(nleft):
+        keyg2 = _join_key_of(left_key_cols, l, nk)
+        if keyg2 in map_g:
+            gidg2 = map_g[keyg2]
+            gi = groups_g[gidg2]
+            for j in range(len(gi)):
+                pl_g.append(l)
+                pr_g.append(gi[j])
+                mr_g[gi[j]] = 1
+        elif join_type == JOIN_LEFT or join_type == JOIN_FULL:
+            pl_g.append(l)
+            pr_g.append(0 - 1)
+
+    if join_type == JOIN_RIGHT or join_type == JOIN_FULL:
+        for r in range(nright):
+            if mr_g[r] == 0:
+                pl_g.append(0 - 1)
+                pr_g.append(r)
+
+    return _build_joined_df(left, right, pl_g, pr_g, left_suffix, right_suffix, right_keys)
+def cross_join(left: "DataFrame", right: "DataFrame", left_suffix: "str", right_suffix: "str") -> "DataFrame":
+    nleft = left.row_count()
+    nright = right.row_count()
+    pairs_left = make_idx([])
+    pairs_right = make_idx([])
+    for l in range(nleft):
+        for r in range(nright):
+            pairs_left.append(l)
+            pairs_right.append(r)
+    no_keys = []
+    return _build_joined_df(left, right, pairs_left, pairs_right, left_suffix, right_suffix, no_keys)
+
+
+# --------------------------- AsOf: time index --------------------------------
+class _TsItem:
+    val: "f64"
+    idx: "i32"
+    is_null: "i32"
+
+
+def _ts_before(a: "_TsItem", b: "_TsItem", ascending: "i32") -> "i32":
+    # 1 neu a nen dung TRUOC b (equal -> 1 de giu tinh stable); null di ve CUOI
+    if a.is_null == 1 and b.is_null == 1:
+        return 1
+    if a.is_null == 1:
+        return 0
+    if b.is_null == 1:
+        return 1
+    if ascending == 1:
+        if a.val <= b.val:
+            return 1
+        return 0
+    if a.val >= b.val:
+        return 1
+    return 0
+
+
+def _ms_ts(items: "list[_TsItem]") -> "list[_TsItem]":
+    # Merge sort O(n log n), stable; null di ve CUOI
+    n = len(items)
+    if n <= 1:
+        return items
+    mid = n // 2
+    left = []
+    right = []
+    for i in range(mid):
+        left.append(items[i])
+    for i in range(mid, n):
+        right.append(items[i])
+    ls = _ms_ts(left)
+    rs = _ms_ts(right)
+    out = []
+    li = 0
+    ri = 0
+    nl = len(ls)
+    nr = len(rs)
+    while li < nl and ri < nr:
+        if _ts_before(ls[li], rs[ri], 1) == 1:
+            out.append(ls[li])
+            li = li + 1
+        else:
+            out.append(rs[ri])
+            ri = ri + 1
+    while li < nl:
+        out.append(ls[li])
+        li = li + 1
+    while ri < nr:
+        out.append(rs[ri])
+        ri = ri + 1
+    return out
+
+
+def _asof_best_at(sorted_times: "list[f64]", lo: "i32", hi: "i32", lt: "f64", direction: "i32",
+                  tolerance: "f64", right_rows: "list[i32]") -> "i32":
+    # Tim chi so (trong khong gian sorted_times[right_rows[k]]) phan tu "tot nhat" cho left time = lt.
+    # Tra ve k (chi so trong right_rows) hoac -1.
+    if direction == ASOF_BACKWARD:
+        if hi < lo:
+            return 0 - 1
+        lo1 = lo
+        hi1 = hi
+        ans = 0 - 1
+        while lo1 <= hi1:
+            mid = (lo1 + hi1) // 2
+            r = right_rows[mid]
+            rt = sorted_times[r]
+            if rt <= lt:
+                ans = mid
+                lo1 = mid + 1
+            else:
+                hi1 = mid - 1
+        if ans < 0:
+            return 0 - 1
+        if tolerance >= 0.0 and lt - sorted_times[right_rows[ans]] > tolerance:
+            return 0 - 1
+        return ans
+    if direction == ASOF_FORWARD:
+        if hi < lo:
+            return 0 - 1
+        lo2 = lo
+        hi2 = hi
+        ans2 = 0 - 1
+        while lo2 <= hi2:
+            mid = (lo2 + hi2) // 2
+            r = right_rows[mid]
+            rt = sorted_times[r]
+            if rt >= lt:
+                ans2 = mid
+                hi2 = mid - 1
+            else:
+                lo2 = mid + 1
+        if ans2 < 0:
+            return 0 - 1
+        if tolerance >= 0.0 and sorted_times[right_rows[ans2]] - lt > tolerance:
+            return 0 - 1
+        return ans2
+    # ASOF_NEAREST
+    if hi < lo:
+        return 0 - 1
+    # vi tri dau tien co rt >= lt
+    lo3 = lo
+    hi3 = hi
+    up = 0 - 1
+    while lo3 <= hi3:
+        mid = (lo3 + hi3) // 2
+        r = right_rows[mid]
+        if sorted_times[r] >= lt:
+            up = mid
+            hi3 = mid - 1
+        else:
+            lo3 = mid + 1
+    best_k = 0 - 1
+    best_diff = float("inf")
+    if up >= 0:
+        rt = sorted_times[right_rows[up]]
+        best_diff = rt - lt
+        best_k = up
+    dn = up - 1
+    if dn >= lo:
+        rt = sorted_times[right_rows[dn]]
+        dd = lt - rt
+        if dd <= best_diff:
+            best_diff = dd
+            best_k = dn
+    if best_k < 0:
+        return 0 - 1
+    if tolerance >= 0.0 and best_diff > tolerance:
+        return 0 - 1
+    return best_k
+
+
+def asof_join(left: "DataFrame", right: "DataFrame", left_on: "str", right_on: "str",
+              by: "str", direction: "i32", tolerance: "f64",
+              left_suffix: "str", right_suffix: "str") -> "DataFrame":
+    # by == "" nghia la khong group; tolerance == -1.0 nghia la khong gioi han
+    # O(n_right log n_right + n_left log n_right): sort right 1 lan, binary search cho moi left row.
+    left_time = left.col_by_name(left_on)
+    right_time = right.col_by_name(right_on)
+    nleft = left.row_count()
+    nright = right.row_count()
+
+    right_times = []
+    for r in range(nright):
+        if right_time.is_null(r) == 1:
+            right_times.append(float("nan"))
+        else:
+            right_times.append(right_time.get_f64(r))
+
+    # Chi so right khong-null, sap tang theo thoi gian (stable, merge sort)
+    ts_items = []
+    for r in range(nright):
+        rt = right_times[r]
+        if rt == rt:
+            ts_items.append(_TsItem(rt, r, 0))
+        else:
+            ts_items.append(_TsItem(0.0, r, 1))
+    ts_sorted = _ms_ts(ts_items)
+    right_rows = []
+    for k in range(nright):
+        it = ts_sorted[k]
+        right_rows.append(it.idx)
+
+    left_by = left.col_by_name(left_on)
+    right_by = right.col_by_name(right_on)
+    use_by = 0
+    if by != "":
+        use_by = 1
+        left_by = left.col_by_name(by)
+        right_by = right.col_by_name(by)
+
+    pairs_left = make_idx([])
+    pairs_right = make_idx([])
+    for l in range(nleft):
+        if left_time.is_null(l) == 1:
+            pairs_left.append(l)
+            pairs_right.append(0 - 1)
+            continue
+        lt = left_time.get_f64(l)
+        lo = 0
+        hi = nright - 1
+        if use_by == 1:
+            lval = left_by.get_string(l)
+            lo = 0 - 1
+            hi = 0 - 1
+            lo0 = 0
+            hi0 = nright - 1
+            while lo0 <= hi0:
+                mid = (lo0 + hi0) // 2
+                r = right_rows[mid]
+                if right_by.get_string(r) == lval:
+                    lo = mid
+                    hi0 = mid - 1
+                else:
+                    lo0 = mid + 1
+            if lo < 0:
+                pairs_left.append(l)
+                pairs_right.append(0 - 1)
+                continue
+            hi1 = lo
+            hi1 = hi1 + 1
+            hi2 = nright - 1
+            hi = hi1
+            lo0 = hi1
+            while lo0 <= hi2:
+                mid = (lo0 + hi2) // 2
+                r = right_rows[mid]
+                if right_by.get_string(r) == lval:
+                    hi = mid
+                    lo0 = mid + 1
+                else:
+                    hi2 = mid - 1
+        k = _asof_best_at(right_times, lo, hi, lt, direction, tolerance, right_rows)
+        pairs_left.append(l)
+        if k >= 0:
+            pairs_right.append(right_rows[k])
+        else:
+            pairs_right.append(0 - 1)
+
+    skip = []
+    skip.append(right_on)
+    return _build_joined_df(left, right, pairs_left, pairs_right, left_suffix, right_suffix, skip)
+
+
+def _build_joined_df(left: "DataFrame", right: "DataFrame", pairs_left: "list[i32]", pairs_right: "list[i32]",
+                     left_suffix: "str", right_suffix: "str", right_key_to_skip: "list[str]") -> "DataFrame":
+    total = len(pairs_left)
+    # Quet 1 luot de biet co row unmatched (-1) khong: neu khong va cot nguon
+    # all-valid thi materialize chay branchless (fast path O(1) mask, khong branch).
+    has_unmatched = 0
+    for i in range(total):
+        if pairs_left[i] < 0:
+            has_unmatched = 1
+            break
+    if has_unmatched == 0:
+        for i in range(total):
+            if pairs_right[i] < 0:
+                has_unmatched = 1
+                break
+    result_cols = []
+
+    # Cot left
+    lnames = df_column_names(left)
+    for i in range(len(lnames)):
+        name = lnames[i]
+        out_name = name
+        if right.has_col(name) == 1 and _str_in_list(name, right_key_to_skip) == 0:
+            out_name = name + left_suffix
+        src = left.col_by_name(name)
+        result_cols.append(_materialize_joined(src, pairs_left, total, has_unmatched))
+
+    # Cot right
+    rnames = df_column_names(right)
+    for i in range(len(rnames)):
+        name = rnames[i]
+        if _str_in_list(name, right_key_to_skip) == 1 and left.has_col(name) == 1:
+            continue
+        out_name = name
+        if left.has_col(name) == 1:
+            out_name = name + right_suffix
+        src = right.col_by_name(name)
+        result_cols.append(_materialize_joined(src, pairs_right, total, has_unmatched))
+
+    return make_df(result_cols)
+
+
+def _materialize_joined(src: "Series", row_map: "list[i32]", total: "i32", has_unmatched: "i32") -> "Series":
+    nm = src.name
+    dt = src.dtype
+    sv = src.valid
+    sbits = sv.bits
+    # Fast path: khong co unmatched va cot nguon all-valid -> branchless copy,
+    # mask all-valid dung cache pc (khong set() per-element, khong cap phat 0).
+    if has_unmatched == 0 and sv.all1() == 1:
+        vm = make_mask(total, 1)
+        vm.pc = total
+        if dt == DT_STR:
+            sbuf = src.strings
+            sval = []
+            for i in range(total):
+                r = row_map[i]
+                sval.append(sbuf[r])
+            return make_series_str_with_mask(nm, sval, vm)
+        if dt == DT_I64:
+            ibuf = src.i64s
+            ival = []
+            for i in range(total):
+                r = row_map[i]
+                ival.append(ibuf[r])
+            return make_series_i64_with_mask(nm, ival, vm)
+        if dt == DT_BOOL:
+            bbuf = src.bools
+            bval = []
+            for i in range(total):
+                r = row_map[i]
+                bval.append(bbuf[r])
+            return make_series_bool_with_mask(nm, bval, vm)
+        fbuf = src.f64s
+        fval = []
+        for i in range(total):
+            r = row_map[i]
+            fval.append(fbuf[r])
+        return make_series_f64_with_mask(nm, fval, vm)
+    vm = make_mask(total, 0)
+    if dt == DT_STR:
+        sbuf = src.strings
+        sval = []
+        for i in range(total):
+            r = row_map[i]
+            if r >= 0 and sbits[r] == 1:
+                sval.append(sbuf[r])
+            else:
+                sval.append("")
+        return make_series_str_with_mask(nm, sval, vm)
+    if dt == DT_I64:
+        ibuf = src.i64s
+        ival = []
+        for i in range(total):
+            r = row_map[i]
+            if r >= 0 and sbits[r] == 1:
+                vm.set(i, 1)
+                ival.append(ibuf[r])
+            else:
+                ival.append(0)
+        return make_series_i64_with_mask(nm, ival, vm)
+    if dt == DT_BOOL:
+        bbuf = src.bools
+        bval = []
+        for i in range(total):
+            r = row_map[i]
+            if r >= 0 and sbits[r] == 1:
+                vm.set(i, 1)
+                bval.append(bbuf[r])
+            else:
+                bval.append(0)
+        return make_series_bool_with_mask(nm, bval, vm)
+    fbuf = src.f64s
+    fval = []
+    for i in range(total):
+        r = row_map[i]
+        if r >= 0 and sbits[r] == 1:
+            vm.set(i, 1)
+            fval.append(fbuf[r])
+        else:
+            fval.append(0.0)
+    return make_series_f64_with_mask(nm, fval, vm)
+def _str_in_list(s: "str", items: "list[str]") -> "i32":
+    for i in range(len(items)):
+        if items[i] == s:
+            return 1
+    return 0
+
+
+def make_idx_n(n: "i32") -> "list[i32]":
+    r = []
+    for i in range(n):
+        r.append(0)
+    return r
+
+
+# ----------------------------- ReshapeEngine ----------------------------------
+def concat_vertical(dfs: "list[DataFrame]") -> "DataFrame":
+    if len(dfs) == 0:
+        raise ValueError("At least one DataFrame is required for vertical concatenation.")
+    if len(dfs) == 1:
+        return df_clone(dfs[0])
+
+    first = dfs[0]
+    schema = df_column_names(first)
+    result_cols = []
+    for c in range(len(schema)):
+        name = schema[c]
+        is_str = 0
+        for d in range(len(dfs)):
+            df = dfs[d]
+            if df.has_col(name) == 0:
+                raise ValueError("Schema mismatch: DataFrame missing column '" + name + "'.")
+            col = df.col_by_name(name)
+            if d == 0:
+                if col.dtype == DT_STR:
+                    is_str = 1
+                else:
+                    is_str = 0
+        all_fvals = []
+        all_strs = []
+        all_ivals = []
+        for d in range(len(dfs)):
+            df = dfs[d]
+            col = df.col_by_name(name)
+            for r in range(col.length()):
+                if is_str == 1:
+                    all_strs.append(col.get_string(r))
+                else:
+                    all_fvals.append(col.get_f64(r))
+        if is_str == 1:
+            result_cols.append(make_series_str(name, all_strs))
+        else:
+            first_col = first.col_by_name(name)
+            if first_col.dtype == DT_I64:
+                nf = len(all_fvals)
+                for iv in range(nf):
+                    all_ivals.append(int(all_fvals[iv]))
+                result_cols.append(make_series_i64(name, all_ivals))
+            else:
+                result_cols.append(make_series_f64(name, all_fvals))
+    return make_df(result_cols)
+
+
+def concat_horizontal(dfs: "list[DataFrame]") -> "DataFrame":
+    if len(dfs) == 0:
+        raise ValueError("At least one DataFrame is required for horizontal concatenation.")
+    if len(dfs) == 1:
+        return df_clone(dfs[0])
+    first_df = dfs[0]
+    expected = first_df.row_count()
+    result_cols = []
+    for d in range(len(dfs)):
+        df = dfs[d]
+        if df.row_count() != expected:
+            raise ValueError("Row count mismatch in horizontal concat")
+        for c in range(df.column_count()):
+            csrc = df.col_at(c)
+            result_cols.append(csrc.clone_series())
+    return make_df(result_cols)
+
+
+def melt(df: "DataFrame", id_vars: "list[str]", value_vars: "list[str]",
+         var_name: "str", value_name: "str") -> "DataFrame":
+    n = df.row_count()
+    num_values = len(value_vars)
+    out_n = n * num_values
+    result_cols = []
+
+    # 1. Lap lai id_vars
+    for c in range(len(id_vars)):
+        src = df.col_by_name(id_vars[c])
+        if src.dtype == DT_STR:
+            strs = []
+            for rep in range(num_values):
+                for r in range(n):
+                    strs.append(src.get_string(r))
+            result_cols.append(make_series_str(id_vars[c], strs))
+        elif src.dtype == DT_I64:
+            ivals = []
+            for rep in range(num_values):
+                for r in range(n):
+                    ivals.append(src.get_i64(r))
+            result_cols.append(make_series_i64(id_vars[c], ivals))
+        else:
+            fvals = []
+            for rep in range(num_values):
+                for r in range(n):
+                    fvals.append(src.get_f64(r))
+            result_cols.append(make_series_f64(id_vars[c], fvals))
+
+    # 2. Cot variable
+    var_strs = []
+    for v in range(num_values):
+        col_name = value_vars[v]
+        for r in range(n):
+            var_strs.append(col_name)
+    result_cols.append(make_series_str(var_name, var_strs))
+
+    # 3. Cot value (dang string - giong C# valStrings = valCol[r]?.ToString())
+    val_strs = []
+    for v in range(num_values):
+        col = df.col_by_name(value_vars[v])
+        for r in range(n):
+            if col.is_null(r) == 1:
+                val_strs.append(None)
+            else:
+                val_strs.append(col.get_string(r))
+    result_cols.append(make_series_str(value_name, val_strs))
+
+    return make_df(result_cols)
+
+
+def pivot(df: "DataFrame", index: "str", columns: "str", values: "str") -> "DataFrame":
+    idx_series = df.col_by_name(index)
+    piv_series = df.col_by_name(columns)
+    val_series = df.col_by_name(values)
+    n = df.row_count()
+
+    # Unique index (theo thu tu xuat hien)
+    unique_indices = make_idx([])
+    seen_idx = []
+    for i in range(n):
+        ival = idx_series.get_string(i)
+        seen = 0
+        for s in range(len(seen_idx)):
+            if seen_idx[s] == ival:
+                seen = 1
+                break
+        if seen == 0:
+            seen_idx.append(ival)
+            unique_indices.append(i)
+    n_idx = len(seen_idx)
+
+    # Unique pivot
+    unique_pivots = []
+    seen_piv = []
+    for i in range(n):
+        pval = piv_series.get_string(i)
+        seen = 0
+        for s in range(len(seen_piv)):
+            if seen_piv[s] == pval:
+                seen = 1
+                break
+        if seen == 0:
+            seen_piv.append(pval)
+            unique_pivots.append(pval)
+
+    # cell value: (i_val, p_val) -> val f64 (linear map, luu chi so dong dau tien)
+    result_cols = []
+    # Cot index (dang str giong thi giu str, khac thi f64 - don gian hoa theo test)
+    if idx_series.dtype == DT_STR:
+        strs = []
+        for i in range(n_idx):
+            strs.append(seen_idx[i])
+        result_cols.append(make_series_str(index, strs))
+    else:
+        fvals = []
+        for i in range(n_idx):
+            fvals.append(idx_series.get_f64(unique_indices[i]))
+        result_cols.append(make_series_f64(index, fvals))
+
+    # Cot pivot: gia tri f64 (mask neu thieu)
+    for p in range(len(unique_pivots)):
+        pval = unique_pivots[p]
+        vals = []
+        vm = make_mask(n_idx, 0)
+        for i in range(n_idx):
+            ikey = seen_idx[i]
+            found = -1
+            for r in range(n):
+                if idx_series.get_string(r) == ikey and piv_series.get_string(r) == pval:
+                    found = r
+                    break
+            if found >= 0 and val_series.is_null(found) == 0:
+                vals.append(val_series.get_f64(found))
+                vm.set(i, 1)
+            else:
+                vals.append(0.0)
+        c = make_col_f64_with_mask(vals, vm)
+        result_cols.append(make_series(unique_pivots[p], c))
+    return make_df(result_cols)
+
+
+
+

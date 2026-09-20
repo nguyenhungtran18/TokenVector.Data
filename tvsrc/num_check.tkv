@@ -1,0 +1,73 @@
+# -*- coding: utf-8 -*-
+# Check module numerics - anh xa 4 [Fact] cua NumericsInteropTests.cs
+__tkv_import__ = ["tokenvector_data", "tokenvector_numerics"]
+
+def run() -> "i32":
+    # TestSeriesToNDArray_ZeroCopy
+    sx = make_series_f64("x", [1.0, 2.0, 3.0, 4.0, 5.0])
+    nd = series_to_mat(sx)
+    ok1 = 1
+    if mat_total_length(nd) != 5 or nd.rank != 1:
+        ok1 = 0
+    if mat_at(nd, 0, 0) != 1.0 or mat_at(nd, 4, 0) != 5.0:
+        ok1 = 0
+    mat_set(nd, 0, 0, 99.0)
+    xbuf = sx.f64s
+    vx = xbuf[0]
+    if vx != 99.0:
+        ok1 = 0
+    print("t1_series_to_ndarray_zero_copy=" + str(ok1))
+
+    # TestDataFrameToNDArray_2DMatrix
+    df = make_df([
+        make_series_f64("feat1", [1.0, 3.0, 5.0]),
+        make_series_f64("feat2", [2.0, 4.0, 6.0]),
+    ])
+    mat = df_to_mat_2d(df)
+    ok2 = 1
+    if mat.rank != 2 or mat.rows != 3 or mat.cols != 2:
+        ok2 = 0
+    if mat_at(mat, 0, 0) != 1.0 or mat_at(mat, 0, 1) != 2.0:
+        ok2 = 0
+    if mat_at(mat, 1, 0) != 3.0 or mat_at(mat, 1, 1) != 4.0:
+        ok2 = 0
+    if mat_at(mat, 2, 0) != 5.0 or mat_at(mat, 2, 1) != 6.0:
+        ok2 = 0
+    print("t2_df_to_ndarray_2d=" + str(ok2))
+
+    # TestSeriesAndDataFrameToTensor_AutogradDifferentiable
+    sw = make_series_f64("weight", [2.0, 3.0, 4.0])
+    tensor = series_to_mat_grad(sw, 1)
+    y = mat_square_sum(tensor)
+    ok3 = 1
+    if tensor.requires_grad != 1 or mat_total_length(tensor) != 3:
+        ok3 = 0
+    if mat_at(y, 0, 0) != 4.0 or mat_at(y, 1, 0) != 9.0 or mat_at(y, 2, 0) != 16.0:
+        ok3 = 0
+    print("t3_series_to_tensor=" + str(ok3))
+
+    # TestFromNDArrayAndFromTensor_ToDataFrame
+    flat = [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
+    ndarray = make_mat_2d(3, 2, flat)
+    dfa = mat_to_df(ndarray, ["col_a", "col_b"])
+    ok4 = 1
+    if dfa.row_count() != 3 or dfa.column_count() != 2:
+        ok4 = 0
+    ca = dfa.col_by_name("col_a")
+    cb = dfa.col_by_name("col_b")
+    if ca.get_f64(0) != 10.0 or cb.get_f64(0) != 20.0:
+        ok4 = 0
+    if ca.get_f64(2) != 50.0 or cb.get_f64(2) != 60.0:
+        ok4 = 0
+    dft = mat_to_df_from_tensor(ndarray, ["t_a", "t_b"])
+    ta = dft.col_by_name("t_a")
+    if dft.row_count() != 3 or ta.get_f64(0) != 10.0:
+        ok4 = 0
+    print("t4_from_ndarray_to_df=" + str(ok4))
+
+    all_ok = ok1 + ok2 + ok3 + ok4
+    if all_ok == 4:
+        print("NUMERICS ALL PASS")
+    else:
+        print("NUMERICS FAILED")
+    return 0

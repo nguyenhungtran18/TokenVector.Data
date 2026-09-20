@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+# BENCH 8 worker OUTPUT THAT 5M - nang cap tu bench_thread_out (4 worker)
+def w1() -> "list[f64]":
+    out = []
+    for i in range(0, 625000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w2() -> "list[f64]":
+    out = []
+    for i in range(625000, 1250000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w3() -> "list[f64]":
+    out = []
+    for i in range(1250000, 1875000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w4() -> "list[f64]":
+    out = []
+    for i in range(1875000, 2500000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w5() -> "list[f64]":
+    out = []
+    for i in range(2500000, 3125000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w6() -> "list[f64]":
+    out = []
+    for i in range(3125000, 3750000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w7() -> "list[f64]":
+    out = []
+    for i in range(3750000, 4375000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w8() -> "list[f64]":
+    out = []
+    for i in range(4375000, 5000000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def _ms(t1: "i64", t2: "i64") -> "f64":
+    return float(t2 - t1) / 10000.0
+
+def run() -> "i32":
+    w1()
+    best = 999999.0
+    n = 0
+    for rep in range(3):
+        t1 = datetime()
+        h1 = thread_spawn(w1)
+        h2 = thread_spawn(w2)
+        h3 = thread_spawn(w3)
+        h4 = thread_spawn(w4)
+        h5 = thread_spawn(w5)
+        h6 = thread_spawn(w6)
+        h7 = thread_spawn(w7)
+        h8 = thread_spawn(w8)
+        r1 = thread_join(h1)
+        r2 = thread_join(h2)
+        r3 = thread_join(h3)
+        r4 = thread_join(h4)
+        r5 = thread_join(h5)
+        r6 = thread_join(h6)
+        r7 = thread_join(h7)
+        r8 = thread_join(h8)
+        t2 = datetime()
+        ms = _ms(datetime_ticks(t1), datetime_ticks(t2))
+        if ms < best:
+            best = ms
+        n = len(r1) + len(r2) + len(r3) + len(r4) + len(r5) + len(r6) + len(r7) + len(r8)
+    print("parallel8 best_of3_ms=", str(best), " n=", str(n), " chk=", str(r8[624999]))
+    print("BENCH 8T DONE")
+    return 0

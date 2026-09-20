@@ -2,138 +2,133 @@
 
 [ 🇬🇧 English ](README.md) | [ 🇻🇳 Tiếng Việt ](README_VI.md)
 
-[![.NET 8](https://img.shields.io/badge/.NET-8.0%20LTS-purple.svg)](https://dotnet.microsoft.com/)
-[![C# 12](https://img.shields.io/badge/C%23-12.0-blue.svg)](https://learn.microsoft.com/dotnet/csharp/)
+[![Language](https://img.shields.io/badge/Language-TokenVector%20(tkv)-purple.svg)]()
+[![Target](https://img.shields.io/badge/Target-.NET%20CIL%20DLL-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-51%2F51%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Checks-9%2F9%20Suites%20Passed-brightgreen.svg)]()
 
-**`TokenVector.Data.dll`** là thư viện xử lý dữ liệu dạng bảng và DataFrame dạng cột (Columnar Storage) hiệu năng siêu cao, được viết bằng **C# 12 / .NET 8 LTS** tối ưu riêng cho hệ sinh thái ngôn ngữ lập trình **TokenVector** và trình biên dịch .NET CIL AOT.
+**TokenVector.Data** là thư viện xử lý dữ liệu dạng bảng và DataFrame dạng cột (columnar) hiệu năng cao, được hiện thực **hoàn toàn bằng ngôn ngữ lập trình TokenVector (tkv)** và biên dịch ra assembly .NET CIL (`TokenVector.Data.dll`) qua `tkvc` + `ilasm`.
 
-Thư viện áp dụng kiến trúc bố cục bộ nhớ contiguous theo chuẩn Apache Arrow, đa luồng không GIL (True No-GIL Multithreading), mặt nạ null bitboard 64-bit (`BitmapMask`), tăng tốc phần cứng SIMD, phép nối chuỗi thời gian tài chính tần suất cao `AsOfJoin`, phân tích CSV/JSON đa luồng, tuần tự hóa Apache Arrow IPC Feather, và cầu nối Zero-Copy trực tiếp sang `TokenVector.Numerics.NDArray<T>` cùng `TokenVector.Numerics.Autograd.Tensor<T>`.
+Phiên bản **1.0.1** đánh dấu việc chuyển dịch hoàn toàn thư viện từ C# sang ngôn ngữ TokenVector: toàn bộ 22 file C# đã được port sang 6 module `.tkv` thuần chủng, và 51 unit test được ánh xạ lại thành các check tkv bản ngữ — **51/51 PASS**.
+
+Phiên bản **1.0.2** là đợt nâng cấp hiệu năng & tính năng:
+
+* **Hiệu năng** — `DataFrame.sort_by` dùng merge sort ổn định **O(n log n)** (trước là insertion sort O(n²)); `asof_join` sort frame phải 1 lần rồi **binary search** từng dòng trái — tổng thể **O(n log m)** (trước là quét tuyến tính O(n·m)), đồng thời hỗ trợ frame phải **chưa sort**; rolling `mean`/`std` đạt **O(n)** (std trước là O(n·window) với 2 lượt quét).
+* **Null propagation** — `vec_add/sub/mul/div`, `vec_add_scalar/mul_scalar`, `vec_abs/sqrt/exp/log/pow` truyền null xuyên suốt (null vào → null ra).
+* **API mới** — `Series.ffill/bfill`, `Series.str_map_contains/startswith/endswith/upper/lower/replace`, `Series.between`, `Series.is_in_f64/is_in_str`, `DataFrame.drop_duplicates/duplicated_mask/value_counts`.
 
 ---
 
-## 📋 Đặc Điểm Kiến Trúc Nổi Bật
+## 📦 Các module
 
-| Tính năng | TokenVector.Data (.NET 8 / C# 12) |
+| Module (tkv) | Nội dung |
 | :--- | :--- |
-| **Lưu trữ cột (Columnar Memory)** | Bộ nhớ unmanaged liên tục (`Column<T>`), chuỗi UTF-8 định dạng Arrow với buffer byte + vector offset (`StringColumn`) |
-| **Biểu diễn giá trị Null** | Mặt nạ bitboard 64-bit `BitmapMask` khai thác chỉ thị phần cứng POPCNT và SIMD bitwise |
-| **Đa luồng không GIL** | Tận dụng 100% các lõi CPU qua `Parallel.For` và TPL trong GroupBy, Hash Join, Parse CSV, và Filter |
-| **Tăng tốc phần cứng** | Vector hóa SIMD (AVX2, SSE4, FMA) cho các phép toán số học, hàm cửa sổ và thống kê |
-| **Phép nối quan hệ** | Parallel Radix Hash Join đa khóa (`Inner`, `Left`, `Right`, `FullOuter`, `Cross`) và **`AsOfJoin`** cho chuỗi thời gian tài chính |
-| **Biến đổi cấu trúc bảng** | `Pivot` (dài sang rộng), `Melt` (rộng sang dài), `ConcatVertical`, `ConcatHorizontal` |
-| **I/O Luồng dữ liệu** | Phân tích CSV đa luồng tự động suy luận Schema, đọc streaming NDJSON, và luồng nhị phân Apache Arrow IPC Feather |
-| **Xử lý Out-Of-Core** | DataFrame ánh xạ bộ nhớ (`OutOfCoreDataFrame`) hỗ trợ truy vấn các tập dữ liệu vượt quá dung lượng RAM |
-| **Cầu nối Zero-Copy Tensor** | Chuyển đổi tức thì, không sao chép bộ nhớ giữa `DataFrame`/`Series` và `NDArray<T>` / `Tensor<T>` của `TokenVector.Numerics` |
+| `tokenvector_data.tkv` | `DataTypes`, `Schema`, `Mask` (bitmap null), `Col`, `StrCol`, `Series`, `DataFrame`, các helper `ChunkedArray` |
+| `tokenvector_compute.tkv` | `VectorMath` (cộng/trừ/nhân/chia, exp, log, abs, phép với scalar), `FilterEngine`, `Aggregations` (sum/mean/min/max/std/var/quantile), `WindowFunctions` (rolling, shift, diff, cumsum, rank) |
+| `tokenvector_relational.tkv` | `GroupByEngine` (đa khóa, đa tổng hợp), `JoinEngine` (Inner/Left/Right/Full/Cross + `AsOfJoin` tài chính), `ReshapeEngine` (Pivot, Melt, Concat dọc/ngang) |
+| `tokenvector_io.tkv` | `FastCsvReader/Writer` (quoted field, tự suy luận kiểu), `FastJsonReader` (NDJSON + JSON array) |
+| `tokenvector_numerics.tkv` | `NumericsInterop` — cầu nối `Series`/`DataFrame` ⇄ `Mat` (mô hình NDArray/Tensor) với **zero-copy** cho cột f64 không null, kèm cờ `requires_grad` |
+| `tokenvector_arrow.tkv` | `ArrowIpcEngine` (round-trip dòng ARROW1, giữ nguyên mask null) + `OutOfCoreDataFrame` (persist / open / read batch) |
 
 ---
 
-## 📊 Ma Trận So Sánh Kiến Trúc Đối Thủ
+## ✨ Điểm nổi bật
 
-| Tiêu chí | TokenVector.Data | Polars | DuckDB | Pandas 2.x | MS.Data.Analysis |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Ngôn ngữ** | C# 12 / .NET 8 AOT | Rust Native | C++11 Native | Python / C | C# (.NET Core) |
-| **Bộ nhớ** | Arrow Columnar | Arrow Columnar | Vector Chunked | Row/Col Block | Object / Array |
-| **Đa luồng** | **No-GIL (100% Cores)** | Rayon Stealing | Vector Pipes | **Bị nghẽn bởi GIL**| Giới hạn |
-| **Quản lý Null**| **64-bit Bitboard** | Arrow Validity | Validity Mask | `NaN` / Byte Mask | BitArray |
-| **SIMD** | AVX2 / SSE4 / FMA | AVX2 / AVX-512 | Vector Chunks | NumPy / C | Một phần |
-| **AsOf Join** | **Tích hợp sẵn** | `join_asof` | Qua SQL | `merge_asof` | ❌ Không |
-| **AI / Tensor** | **Zero-Copy Bridge** | FFI Copy | Arrow Export | Copy / View | ❌ Không |
-| **Out-Of-Core** | **MemoryMappedFiles** | Streaming | Disk Spilling | ❌ Không | ❌ Không |
-| **Binary I/O** | Arrow IPC Feather | Arrow / Parquet | Parquet / DuckDB | Feather / Parquet | Arrow |
+* **Hiện thực thuần TokenVector** — không còn mã C# nào; toàn bộ engine nằm trong 6 module `.tkv` (~116 KB mã nguồn).
+* **API DataFrame thân thuộc** — Series/DataFrame với schema, mask null theo cột, group-by đa tổng hợp, 5 kiểu join, AsOf time-series join, pivot/melt.
+* **I/O chắc chắn** — CSV có quoted field & tự suy luận kiểu, đọc NDJSON và JSON array, round-trip writer, hỗ trợ cả file lẫn chuỗi.
+* **Trao đổi kiểu Arrow** — định dạng dòng khung `ARROW1` giữ được mask null (validity bitmap) qua tuần tự hóa.
+* **Cầu nối Numerics** — chuyển cột số sang `Mat` 1D/2D (buffer f64 phẳng + shape + `requires_grad`); cột f64 không null được bọc **zero-copy** (thay đổi qua Mat nhìn thấy ngay trong Series).
+* **Tương tác .NET** — biên dịch ra DLL CIL thuần; gọi được từ mọi ngôn ngữ .NET qua reflection hoặc tham chiếu trực tiếp class `TKVApp`.
 
 ---
 
-## ⚡ Kết Quả Đo Lường Hiệu Năng Thực Tế (5.000.000 Dòng)
+## 🧪 Kiểm chứng & đảm bảo chất lượng
 
-Thực thi trên hệ thống CPU đa lõi, chế độ .NET 8.0 LTS Release Mode (xem chi tiết tại [BENCHMARKS_VI.md](BENCHMARKS_VI.md)):
+Bộ test C# gốc (51 `[Fact]`) đã được ánh xạ đầy đủ thành các chương trình check tkv bản ngữ. Trạng thái regression — toàn bộ xanh:
 
-| Khối lượng công việc (Workload) | Quy mô dữ liệu | Thời gian (Latency) | Thông lượng (Throughput) | Mức tiêu thụ bộ nhớ |
-| :--- | :--- | :--- | :--- | :--- |
-| **Số học vector hóa SIMD** (`colA * 2.5 + colB`) | 5.000.000 dòng | **11.2 ms** | **~446.4 triệu dòng/s** | Tối thiểu (Zero GC) |
-| **Lọc điều kiện song song** (`val_a > 500.0`) | 5.000.000 dòng | **18.5 ms** | **~270.2 triệu dòng/s** | Mặt nạ Bitboard (625 KB) |
-| **Gom nhóm đa cột Radix GroupBy** (8 nhóm x 4 aggs) | 5.000.000 dòng | **42.1 ms** | **~118.7 triệu dòng/s** | Zero Heap Allocation |
-| **Trung bình trượt Rolling Mean** (Window=50, O(N)) | 1.000.000 dòng | **8.4 ms** | **~119.0 triệu dòng/s** | Bộ đệm cột kết quả |
-| **Phép nối Parallel Hash Join** (1M dòng x 50K keys) | 1.000.000 dòng | **28.6 ms** | **~34.9 triệu dòng/s** | Bảng băm tra cứu |
-| **Financial AsOf Join chuỗi thời gian** | 500.000 dòng | **14.2 ms** | **~35.2 triệu dòng/s** | Tối ưu |
-| **Phân tích CSV đa luồng** (3 cột, có dấu nháy) | 500.000 dòng | **31.5 ms** | **~15.8 triệu dòng/s** | Streaming buffer |
-| **Tuần tự hóa Apache Arrow IPC Feather** | 1.000.000 dòng | **9.1 ms** | **~109.8 triệu dòng/s** | Payload liên tục |
-
----
-
-## 🔍 Phân Tích So Sánh Đối Thủ Chi Tiết
-
-### 1. So với Pandas (Python)
-* **Tốc độ xử lý:** `TokenVector.Data` **nhanh hơn từ 8x đến 25x** so với Pandas trong các tác vụ gom nhóm (GroupBy), ghép nối (Join) và lọc dữ liệu (Filter). Pandas bị giới hạn bởi cơ chế Global Interpreter Lock (GIL) đơn luồng của Python, trong khi `TokenVector.Data` tự động phân tán tính toán song song trên 100% các lõi CPU.
-* **Mức tiêu thụ bộ nhớ (RAM):** `TokenVector.Data` tiết kiệm **hơn 60% RAM** nhờ cấu trúc vector bộ nhớ unmanaged chuẩn Apache Arrow và mặt nạ null 64-bit Bitboard, loại bỏ hoàn toàn chi phí bọc đối tượng (object overhead) và sao chép bộ nhớ của Pandas.
-
-### 2. So với Microsoft.Data.Analysis (.NET)
-* **Tính năng hoàn thiện:** `Microsoft.Data.Analysis` thiếu vắng GroupBy đa cột với nhiều biểu thức tổng hợp song song, thiếu phép nối chuỗi thời gian tài chính `AsOfJoin`, thiếu luồng nhị phân Apache Arrow IPC Feather, thiếu `Pivot`/`Melt` và không có cầu nối với Tensor vi phân.
-* **Thông lượng:** `TokenVector.Data` đạt thông lượng **cao hơn từ 3 đến 5 lần** nhờ bộ đệm span unmanaged tối ưu và chỉ thị phần cứng POPCNT.
-
-### 3. So với Polars (Rust) & DuckDB (C++)
-* **Khả năng tương thích hệ sinh thái:** Dù Polars và DuckDB là những engine xử lý dữ liệu hàng đầu viết bằng Rust/C++, `TokenVector.Data` sở hữu lợi thế vượt trội khi **biên dịch trực tiếp sang mã CIL AOT** của ngôn ngữ TokenVector và runtime .NET. Điều này mang lại khả năng **chia sẻ bộ nhớ Zero-Copy tức thì với `TokenVector.Numerics.NDArray<T>` và `Autograd.Tensor<T>`** mà không phải trả phí tổn truyền dữ liệu qua FFI (Foreign Function Interface) hay chuyển đổi kiểu dữ liệu trung gian.
-
----
-
-## 🧪 Kiểm Thử & Đảm Bảo Chất Lượng
-
-Tất cả **51/51 automated unit tests** đã vượt qua thành công với tỷ lệ 100% ở chế độ Release:
-```powershell
-dotnet test TokenVector.Data.sln -c Release
-```
 ```text
-Passed!  - Failed: 0, Passed: 51, Skipped: 0, Total: 51, Duration: 47 ms - TokenVector.Data.Tests.dll (net8.0)
+base_check   (DataTypes/Schema/Mask/Column/StringColumn)   SUCCESS
+comp_check   (VectorMath/Filter/Agg/Window)                SUCCESS
+core_check   (Series/DataFrame/ChunkedArray)               SUCCESS
+rel_check    (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
+io_check     (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
+num_check    (NumericsInterop: 4 check)                    ALL PASS
+arr_check    (ArrowIpc/OutOfCore: 2 check)                 ALL PASS
+feat_check   (v1.0.2: ffill/bfill, string maps, dedup,
+              value_counts, between, is_in, null prop)     SUCCESS
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Nhanh (C#)
-
-```csharp
-using TokenVector.Data.Common;
-using TokenVector.Data.Core;
-using TokenVector.Data.Compute;
-using TokenVector.Data.Relational;
-using TokenVector.Data.Interop;
-
-// 1. Tạo DataFrame
-var df = new DataFrame(
-    Series.FromValues("user_id", new[] { 1, 2, 3, 4, 5 }),
-    Series.FromStrings("dept", new[] { "IT", "HR", "IT", "Sales", "HR" }),
-    Series.FromValues("salary", new[] { 75000.0, 52000.0, 88000.0, 61000.0, 58000.0 })
-);
-
-// 2. Gom nhóm GroupBy và tổng hợp song song
-var summary = df.GroupBy("dept").Agg(
-    Agg.Count("salary", "headcount"),
-    Agg.Mean("salary", "avg_salary"),
-    Agg.Max("salary", "max_salary")
-);
-
-// 3. Phép nối AsOf Join tần suất cao
-var matched = trades.AsOfJoin(quotes, leftOn: "timestamp", rightOn: "timestamp", direction: AsOfDirection.Backward);
-
-// 4. Cầu nối Zero-Copy sang TokenVector.Numerics NDArray
-var numericMatrix = df.ToNDArray<double>(new[] { "user_id", "salary" });
-```
-
----
-
-## 💻 Hướng Dẫn Nhanh (Ngôn ngữ thuần TokenVector)
+## 🚀 Bắt đầu nhanh (ngôn ngữ TokenVector)
 
 ```tokenvector
-import tv.data as td
-from tv.data import Agg
+__tkv_import__ = ["tokenvector_data", "tokenvector_relational"]
 
-# Đọc CSV và thực hiện phân tích gom nhóm
-df = td.read_csv("employees.csv")
-report = df.groupby("department").agg(
-    Agg.mean("salary", out_name="avg_salary"),
-    Agg.count("id", out_name="headcount")
-)
-print(report)
+def run() -> "i32":
+    # 1. Tao DataFrame
+    df = make_df([
+        make_series_i64("user_id", [1, 2, 3, 4, 5]),
+        make_series_str("dept", ["IT", "HR", "IT", "Sales", "HR"]),
+        make_series_f64("salary", [75000.0, 52000.0, 88000.0, 61000.0, 58000.0]),
+    ])
+
+    # 2. GroupBy & tong hop
+    report = groupby_agg(df, ["dept"], [
+        make_agg("salary", AGG_COUNT, "headcount"),
+        make_agg("salary", AGG_MEAN, "avg_salary"),
+        make_agg("salary", AGG_MAX, "max_salary"),
+    ])
+
+    # 3. Cac kieu join
+    joined = join_frames(df, bonuses, "user_id", "user_id", JOIN_INNER)
+
+    # 4. CSV I/O
+    df2 = csv_read_string(csv_text, ",", 1, "")
+    out = csv_write_string(df2, ",", 1, "")
+    return 0
 ```
 
-Xem tài liệu đầy đủ tại [Sổ tay nhà phát triển (Tiếng Anh)](USER_GUIDE.md), [Báo cáo Benchmark (Tiếng Việt)](BENCHMARKS_VI.md) hoặc [Hướng dẫn sử dụng (Tiếng Việt)](USER_GUIDE_VI.md).
+---
+
+## 💻 Bắt đầu nhanh (phía .NET qua reflection)
+
+```powershell
+$asm  = [System.Reflection.Assembly]::LoadFrom("TokenVector.Data.dll")
+$app  = $asm.GetType("TKVApp")
+
+$csv = "id,name,score`n1,Alice,95.5`n2,Bob,88.0"
+$df  = $app.GetMethod("csv_read_string").Invoke($null,
+         @([string]$csv, [string]",", [int]1, [string]""))
+$df.GetType().GetMethod("row_count").Invoke($df, @())   # -> 2
+```
+
+Mọi hàm của engine là static method của class `TKVApp` (các record như `DataFrame`, `Series`, `Mask` là class public dùng được như kiểu .NET).
+
+---
+
+## 🔧 Build từ mã nguồn
+
+Yêu cầu: trình biên dịch TokenVector (`tkvc.exe`) và `ilasm.exe` của .NET Framework.
+
+```bash
+# 1. Gop 6 module thanh 1 file nguon thu vien
+tkvc.exe build --entry run tokenvector_data_all.tkv   # tao .exe + tokenvector_data_all.il
+
+# 2. Chuyen IL: doi ten module/assembly thanh TokenVector.Data, bo .entrypoint
+
+# 3. Hop bien thanh DLL
+ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
+
+# 4. Dong goi
+nuget.exe pack TokenVector.Data.nuspec
+```
+
+Artifact dựng sẵn: `tvsrc/TokenVector.Data.dll` và `packages/TokenVector.Data.1.0.2.nupkg`.
+
+---
+
+## 📄 Giấy phép
+
+MIT — xem [LICENSE](LICENSE).

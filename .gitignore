@@ -13,3 +13,15 @@
 ## OS generated
 .DS_Store
 Thumbs.db
+
+## TokenVector build artifacts (tkvc + ilasm output)
+tvsrc/*.exe
+tvsrc/*.il
+!tvsrc/TokenVector.Data.il
+tvsrc/*_out*.txt
+tvsrc/*_v102.txt
+tvsrc/ooc_test_tmp.feather
+tvsrc/test_out.csv
+
+## Test runner output
+TestResults/

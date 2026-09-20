@@ -1,0 +1,201 @@
+# -*- coding: utf-8 -*-
+# Probe: TKV B1 voi 8 worker (chunk 625k), REP=20, tu do ticks trong worker
+N = 5000000
+REP = 20
+
+def _sum_chunk(lo: "i64", hi: "i64") -> "f64":
+    s = 0.0
+    for i in range(lo, hi):
+        v = float(i % 10000) * 0.001
+        s = s + (v * 2.5 + v)
+    return s
+
+def v1a() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(0, 625000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1b() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(625000, 1250000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1c() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(1250000, 1875000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1d() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(1875000, 2500000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2a() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(0, 625000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2b() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(625000, 1250000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2c() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(1250000, 1875000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2d() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(1875000, 2500000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2e() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(2500000, 3125000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2f() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(3125000, 3750000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2g() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(3750000, 4375000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v2h() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(4375000, 5000000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1e() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(2500000, 3125000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1f() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(3125000, 3750000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1g() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(3750000, 4375000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def v1h() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(4375000, 5000000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def _cnt_chunk(lo: "i64", hi: "i64") -> "i64":
+    c = 0
+    for i in range(lo, hi):
+        v = float(i % 10000) * 0.001
+        if v > 5.0:
+            c = c + 1
+    return c
+
+def _ms_ticks(t: "i64") -> "f64":
+    return float(t) / 10000.0
+
+def run() -> "i32":
+    for trial in range(3):
+        ta = datetime()
+        p0 = thread_spawn(v1a)
+        p1 = thread_spawn(v1b)
+        p2 = thread_spawn(v1c)
+        p3 = thread_spawn(v1d)
+        p4 = thread_spawn(v1e)
+        p5 = thread_spawn(v1f)
+        p6 = thread_spawn(v1g)
+        p7 = thread_spawn(v1h)
+        q0 = thread_join(p0)
+        q1 = thread_join(p1)
+        q2 = thread_join(p2)
+        q3 = thread_join(p3)
+        q4 = thread_join(p4)
+        q5 = thread_join(p5)
+        q6 = thread_join(p6)
+        q7 = thread_join(p7)
+        tb = datetime()
+        print("B1 par8 wall_ms=", _ms_ticks(datetime_ticks(tb - ta)), " cpu_sum_ms=", _ms_ticks(q0 + q1 + q2 + q3 + q4 + q5 + q6 + q7))
+        # B2 par8
+        tc = datetime()
+        r0 = thread_spawn(v2a)
+        r1 = thread_spawn(v2b)
+        r2 = thread_spawn(v2c)
+        r3 = thread_spawn(v2d)
+        r4 = thread_spawn(v2e)
+        r5 = thread_spawn(v2f)
+        r6 = thread_spawn(v2g)
+        r7 = thread_spawn(v2h)
+        z0 = thread_join(r0)
+        z1 = thread_join(r1)
+        z2 = thread_join(r2)
+        z3 = thread_join(r3)
+        z4 = thread_join(r4)
+        z5 = thread_join(r5)
+        z6 = thread_join(r6)
+        z7 = thread_join(r7)
+        td = datetime()
+        print("B2 par8 wall_ms=", _ms_ticks(datetime_ticks(td - tc)), " cpu_sum_ms=", _ms_ticks(z0 + z1 + z2 + z3 + z4 + z5 + z6 + z7))
+    return 0

@@ -1,0 +1,117 @@
+# -*- coding: utf-8 -*-
+# Test fast-path all-valid + slow-path co null cho vec_* / comparison
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute"]
+
+FAILS: "i32" = 0
+
+
+def eq_f(a: "f64", b: "f64") -> "i32":
+    d = a - b
+    if d < 0.0:
+        d = 0.0 - d
+    if d < 0.000001:
+        return 1
+    return 0
+
+
+def chk(name: "str", ok: "i32") -> "i32":
+    if ok != 1:
+        print("FAIL:", name)
+        return 1
+    print("ok:", name)
+    return 0
+
+
+def run() -> "i32":
+    FAILS = 0
+    # ---------- 1. f64 all-valid (fast path) ----------
+    A = make_col_f64([1.0, 2.0, 3.0, 4.0])
+    B = make_col_f64([10.0, 20.0, 30.0, 40.0])
+    c = vec_add(A, B)
+    FAILS = FAILS + chk("add fast values", eq_f(c.f64s[0], 11.0) * eq_f(c.f64s[3], 44.0))
+    FAILS = FAILS + chk("add fast null_count", c.null_count() == 0)
+    FAILS = FAILS + chk("add fast popcount", c.valid.pop_count() == 4)
+
+    c = vec_mul(A, B)
+    FAILS = FAILS + chk("mul fast", eq_f(c.f64s[1], 40.0) * eq_f(c.f64s[2], 90.0))
+    c = vec_sub(B, A)
+    FAILS = FAILS + chk("sub fast", eq_f(c.f64s[0], 9.0) * eq_f(c.f64s[3], 36.0))
+    c = vec_div(B, A)
+    FAILS = FAILS + chk("div fast", eq_f(c.f64s[0], 10.0) * eq_f(c.f64s[3], 10.0))
+    c = vec_add_scalar(A, 2.5)
+    FAILS = FAILS + chk("add_scalar fast", eq_f(c.f64s[0], 3.5) * eq_f(c.f64s[3], 6.5))
+    FAILS = FAILS + chk("add_scalar fast valid", c.valid.pop_count() == 4)
+    c = vec_mul_scalar(A, 3.0)
+    FAILS = FAILS + chk("mul_scalar fast", eq_f(c.f64s[2], 9.0))
+    c = vec_abs(A)
+    FAILS = FAILS + chk("abs fast valid", c.valid.pop_count() == 4)
+
+    m = vec_gt_scalar(A, 2.0)
+    FAILS = FAILS + chk("gt_scalar fast bits", (m.bits[0] == 0 and m.bits[1] == 0 and m.bits[2] == 1 and m.bits[3] == 1))
+    FAILS = FAILS + chk("gt_scalar fast pc", m.pop_count() == 2)
+    m = vec_ge_scalar(A, 2.0)
+    FAILS = FAILS + chk("ge_scalar fast pc", m.pop_count() == 3)
+    m = vec_lt_scalar(A, 3.0)
+    FAILS = FAILS + chk("lt_scalar fast pc", m.pop_count() == 2)
+    m = vec_le_scalar(A, 3.0)
+    FAILS = FAILS + chk("le_scalar fast pc", m.pop_count() == 3)
+    m = vec_eq_scalar(A, 2.0)
+    FAILS = FAILS + chk("eq_scalar fast pc", m.pop_count() == 1)
+    m = vec_ne_scalar(A, 2.0)
+    FAILS = FAILS + chk("ne_scalar fast pc", m.pop_count() == 3)
+    m = vec_gt(A, B)
+    FAILS = FAILS + chk("gt binary fast pc", m.pop_count() == 0)
+    m = vec_lt(A, B)
+    FAILS = FAILS + chk("lt binary fast pc", m.pop_count() == 4)
+    m = vec_eq(A, A)
+    FAILS = FAILS + chk("eq binary fast pc", m.pop_count() == 4)
+    m = vec_ne(A, B)
+    FAILS = FAILS + chk("ne binary fast pc", m.pop_count() == 4)
+    m = vec_ge(A, A)
+    FAILS = FAILS + chk("ge binary fast pc", m.pop_count() == 4)
+    m = vec_le(B, A)
+    FAILS = FAILS + chk("le binary fast pc", m.pop_count() == 0)
+
+    # ---------- 2. f64 co null (slow path) ----------
+    mk = make_mask(4, 1)
+    mk.set(1, 0)
+    AN = make_col_f64_with_mask([1.0, 2.0, 3.0, 4.0], mk)
+    FAILS = FAILS + chk("AN has null", AN.null_count() == 1)
+    c = vec_add_scalar(AN, 2.5)
+    FAILS = FAILS + chk("add_scalar slow values", eq_f(c.f64s[0], 3.5) * eq_f(c.f64s[2], 5.5) * eq_f(c.f64s[3], 6.5))
+    cv = c.valid
+    FAILS = FAILS + chk("add_scalar slow null preserved", (cv.bits[1] == 0 and cv.pop_count() == 3))
+    c = vec_add(AN, B)
+    FAILS = FAILS + chk("add slow valid", c.valid.pop_count() == 3)
+    FAILS = FAILS + chk("add slow values", eq_f(c.f64s[0], 11.0) * eq_f(c.f64s[2], 33.0))
+    m = vec_gt_scalar(AN, 2.0)
+    FAILS = FAILS + chk("gt_scalar slow bits", (m.bits[0] == 0 and m.bits[1] == 0 and m.bits[2] == 1 and m.bits[3] == 1))
+
+    # ---------- 3. i64 all-valid + null ----------
+    I = make_col_i64([1, 2, 3, 4])
+    J = make_col_i64([10, 20, 30, 40])
+    c = vec_add(I, J)
+    FAILS = FAILS + chk("i64 add fast", (c.i64s[0] == 11 and c.i64s[3] == 44))
+    FAILS = FAILS + chk("i64 add dtype", c.dtype == DT_I64)
+    FAILS = FAILS + chk("i64 add valid", c.valid.pop_count() == 4)
+    c = vec_mul(I, J)
+    FAILS = FAILS + chk("i64 mul fast", (c.i64s[1] == 40 and c.i64s[2] == 90))
+    c = vec_add_scalar(I, 2.0)
+    FAILS = FAILS + chk("i64 add_scalar fast", (c.i64s[0] == 3 and c.i64s[3] == 6))
+    mki = make_mask(4, 1)
+    mki.set(2, 0)
+    IN = make_col_i64_with_mask([1, 2, 3, 4], mki)
+    c = vec_add_scalar(IN, 2.0)
+    FAILS = FAILS + chk("i64 add_scalar slow", (c.i64s[0] == 3 and c.i64s[3] == 6 and c.valid.pop_count() == 3))
+    m = vec_gt_scalar(IN, 2.0)
+    FAILS = FAILS + chk("i64 gt_scalar slow", (m.pop_count() == 1 and m.bits[3] == 1))
+
+    # ---------- 4. Filter flow qua mask ----------
+    df = DataFrame()
+    df = df.with_column("v", make_series("v", A))
+    m = vec_gt_scalar(A, 2.0)
+    fdf = df.filter(m)
+    FAILS = FAILS + chk("filter rows", fdf.row_count() == 2)
+
+    print("FAILS=", FAILS)
+    return 0

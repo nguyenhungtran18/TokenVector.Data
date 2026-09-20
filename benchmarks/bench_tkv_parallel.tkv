@@ -1,0 +1,171 @@
+# -*- coding: utf-8 -*-
+# PBENCH v2: Benchmark da luong TokenVector - B1 (vec arith) & B2 (filter count) @ 5M rows
+# Moi doan cong viec lap REP=20 lan, worker tu do ticks ben trong -> tong > 300ms,
+# triet de the granularity ~15.6ms cua DateTime.UtcNow (.NET Framework).
+N = 5000000
+REP = 20
+
+def _sum_chunk(lo: "i64", hi: "i64") -> "f64":
+    s = 0.0
+    for i in range(lo, hi):
+        v = float(i % 10000) * 0.001
+        s = s + (v * 2.5 + v)
+    return s
+
+def _cnt_chunk(lo: "i64", hi: "i64") -> "i64":
+    c = 0
+    for i in range(lo, hi):
+        v = float(i % 10000) * 0.001
+        if v > 5.0:
+            c = c + 1
+    return c
+
+# ---- B1 workers: 4 phan, moi phan lap REP lan ----
+def w1a() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(0, 1250000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w1b() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(1250000, 2500000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w1c() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(2500000, 3750000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w1d() -> "i64":
+    ta = datetime()
+    r = 0
+    for rep in range(REP):
+        s = _sum_chunk(3750000, 5000000)
+        r = r + 1
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+# ---- B2 workers ----
+def w2a() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(0, 1250000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w2b() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(1250000, 2500000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w2c() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(2500000, 3750000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def w2d() -> "i64":
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = c + _cnt_chunk(3750000, 5000000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+# ---- serial: lap REP lan toan bo 5M ----
+def s1() -> "i64":
+    ta = datetime()
+    acc = 0.0
+    for rep in range(REP):
+        acc = acc + _sum_chunk(0, 5000000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def s2() -> "i64":
+    ta = datetime()
+    tot = 0
+    for rep in range(REP):
+        tot = tot + _cnt_chunk(0, 5000000)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+def _ms_ticks(t: "i64") -> "f64":
+    return float(t) / 10000.0
+
+def run() -> "i32":
+    # warm-up JIT
+    wj = s1()
+    print("warmup(s1 x REP) ms=", _ms_ticks(wj))
+
+    # ===== B1 serial (tong REP lan) =====
+    r1 = s1()
+    print("B1 serial total_ms=", _ms_ticks(r1))
+
+    # ===== B1 par2 =====
+    ta = datetime()
+    t0 = thread_spawn(w1a)
+    t1 = thread_spawn(w1b)
+    v0 = thread_join(t0)
+    v1 = thread_join(t1)
+    tb = datetime()
+    print("B1 par2 wall_ms=", _ms_ticks(datetime_ticks(tb - ta)), " cpu_sum_ms=", _ms_ticks(v0 + v1))
+
+    # ===== B1 par4 =====
+    tc = datetime()
+    u0 = thread_spawn(w1a)
+    u1 = thread_spawn(w1b)
+    u2 = thread_spawn(w1c)
+    u3 = thread_spawn(w1d)
+    q0 = thread_join(u0)
+    q1 = thread_join(u1)
+    q2 = thread_join(u2)
+    q3 = thread_join(u3)
+    td = datetime()
+    print("B1 par4 wall_ms=", _ms_ticks(datetime_ticks(td - tc)), " cpu_sum_ms=", _ms_ticks(q0 + q1 + q2 + q3))
+
+    # ===== B2 serial =====
+    r2 = s2()
+    print("B2 serial total_ms=", _ms_ticks(r2))
+
+    # ===== B2 par2 =====
+    te = datetime()
+    b0 = thread_spawn(w2a)
+    b1 = thread_spawn(w2b)
+    g0 = thread_join(b0)
+    g1 = thread_join(b1)
+    tf = datetime()
+    print("B2 par2 wall_ms=", _ms_ticks(datetime_ticks(tf - te)), " cpu_sum_ms=", _ms_ticks(g0 + g1))
+
+    # ===== B2 par4 =====
+    tg = datetime()
+    c0 = thread_spawn(w2a)
+    c1 = thread_spawn(w2b)
+    c2 = thread_spawn(w2c)
+    c3 = thread_spawn(w2d)
+    h0 = thread_join(c0)
+    h1 = thread_join(c1)
+    h2 = thread_join(c2)
+    h3 = thread_join(c3)
+    th = datetime()
+    print("B2 par4 wall_ms=", _ms_ticks(datetime_ticks(th - tg)), " cpu_sum_ms=", _ms_ticks(h0 + h1 + h2 + h3))
+
+    print("PBENCH DONE")
+    return 0

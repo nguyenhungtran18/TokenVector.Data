@@ -1,0 +1,73 @@
+# -*- coding: utf-8 -*-
+# Check module arrow - anh xa 2 [Fact] cua ArrowAndMemMapTests.cs
+__tkv_import__ = ["tokenvector_data", "tokenvector_arrow"]
+
+def run() -> "i32":
+    # TestArrowIpc_StreamRoundTrip
+    vi = make_mask(4, 1)
+    vd = make_mask(4, 1)
+    vd.set(2, 0)
+    vs = make_mask(4, 1)
+    vs.set(2, 0)
+    ci = make_col_i64_with_mask([10, 20, 30, 40], vi)
+    cd = make_col_f64_with_mask([1.5, 2.5, 0.0, 4.5], vd)
+    s_s = make_series_str_with_mask("str_col", ["one", "two", "", "four"], vs)
+    s_i = make_series("int_col", ci)
+    s_d = make_series_f64_with_mask("double_col", [1.5, 2.5, 0.0, 4.5], vd)
+    cols1 = [s_i, s_d, s_s]
+    original = make_df(cols1)
+
+    stream = arrow_write_string(original)
+    ok1 = 1
+    if len(stream) <= 0:
+        ok1 = 0
+    restored = arrow_read_string(stream)
+    if restored.row_count() != 4 or restored.column_count() != 3:
+        ok1 = 0
+    ric = restored.col_by_name("int_col")
+    if ric.get_i64(0) != 10 or ric.get_i64(3) != 40:
+        ok1 = 0
+    rdc = restored.col_by_name("double_col")
+    if rdc.get_f64(0) != 1.5:
+        ok1 = 0
+    if rdc.is_null(2) != 1:
+        ok1 = 0
+    rsc = restored.col_by_name("str_col")
+    if rsc.get_string(0) != "one" or rsc.get_string(3) != "four":
+        ok1 = 0
+    if rsc.is_null(2) != 1:
+        ok1 = 0
+    print("t1_arrow_roundtrip=" + str(ok1))
+
+    # TestOutOfCoreDataFrame_PersistAndBatchRead
+    oi = make_col_i64_with_mask([1, 2, 3, 4, 5, 6, 7, 8], make_mask(8, 1))
+    ov = make_col_f64_with_mask([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0], make_mask(8, 1))
+    s_id = make_series("id", oi)
+    s_val = make_series("val", ov)
+    cols2 = [s_id, s_val]
+    odf = make_df(cols2)
+    path = "ooc_test_tmp.feather"
+    ooc_persist(odf, path)
+    ok2 = 1
+    if file_exists(path) != 1:
+        ok2 = 0
+    o = ooc_open(path)
+    if ooc_row_count(o) != 8 or ooc_col_count(o) != 2:
+        ok2 = 0
+    batch = ooc_read_batch(o, 2, 4)
+    if batch.row_count() != 4:
+        ok2 = 0
+    bid = batch.col_by_name("id")
+    bval = batch.col_by_name("val")
+    if bid.get_i64(0) != 3 or bid.get_i64(3) != 6:
+        ok2 = 0
+    if bval.get_f64(0) != 30.0 or bval.get_f64(3) != 60.0:
+        ok2 = 0
+    print("t2_out_of_core_batch=" + str(ok2))
+
+    all_ok = ok1 + ok2
+    if all_ok == 2:
+        print("ARROW ALL PASS")
+    else:
+        print("ARROW FAILED")
+    return 0

@@ -1,0 +1,179 @@
+# ==============================================================================
+# TOKENVECTOR.DATA - NUMERICS INTEROP MODULE (port tu NumericsInterop.cs)
+# Bridge giua Series/DataFrame va NDArray/Tensor cua TokenVector.Numerics.
+# Trong tkv, NDArray/Tensor duoc mo hinh hoa bang record Mat:
+#   Mat = { rank, rows, cols, f64s: list[f64], requires_grad }
+#   - ToNDArray<T>/ToTensor<T> (Series)     -> series_to_mat / series_to_mat_grad
+#   - ToNDArray<T>/ToTensor<T> (DataFrame)  -> df_to_mat_2d / df_to_mat_2d_grad
+#   - FromNDArray/FromTensor                -> mat_to_df / mat_to_df_from_tensor
+# ==============================================================================
+__tkv_import__ = ["tokenvector_data"]
+
+# NDArray 1D hoac 2D f64 (mo hinh hoa NDArray<T>/Tensor<T>)
+class Mat:
+    rank: "i32"
+    rows: "i32"
+    cols: "i32"
+    f64s: "list[f64]"
+    requires_grad: "i32"
+
+def make_mat_1d(vals: "list[f64]") -> "Mat":
+    n = len(vals)
+    m = Mat(n, n, 1, 0)
+    m.f64s = vals
+    return m
+
+def make_mat_2d(rows: "i32", cols: "i32", flat: "list[f64]") -> "Mat":
+    m = Mat(2, rows, cols, 0)
+    m.f64s = flat
+    return m
+
+def mat_total_length(m: "Mat") -> "i32":
+    if m.rank == 1:
+        n1 = len(m.f64s)
+        return n1
+    return m.rows * m.cols
+
+def mat_at(m: "Mat", r: "i32", c: "i32") -> "f64":
+    # 1D: chi dung r; 2D: r*cols+c (C-contiguous, giong flatData[r*colCount+c])
+    if m.rank == 1:
+        v1 = m.f64s[r]
+        return v1
+    idx = r * m.cols + c
+    return m.f64s[idx]
+
+def mat_set(m: "Mat", r: "i32", c: "i32", val: "f64") -> "i32":
+    if m.rank == 1:
+        m.f64s[r] = val
+        return 0
+    idx = r * m.cols + c
+    m.f64s[idx] = val
+    return 0
+
+# ---------------- Series -> Mat (ToNDArray / ToTensor) ----------------
+
+def series_to_mat(s: "Series") -> "Mat":
+    # zero-copy khi dtype f64 va khong co null (giong C#: wrap truc tiep f64s)
+    vm = s.valid
+    n = vm.n
+    any_null = 0
+    for i in range(n):
+        if vm.get(i) == 0:
+            any_null = 1
+            break
+    if s.dtype == DT_F64 and any_null == 0:
+        mz = Mat(1, n, 1, 0)
+        mz.f64s = s.f64s
+        return mz
+    # materialize copy voi dtype conversion (null -> 0.0)
+    out = []
+    for i in range(n):
+        if vm.get(i) == 1:
+            if s.dtype == DT_F64:
+                v = s.f64s[i]
+                out.append(v)
+            elif s.dtype == DT_I64:
+                v2 = s.i64s[i]
+                out.append(float(v2))
+            else:
+                out.append(0.0)
+        else:
+            out.append(0.0)
+    mc = Mat(1, n, 1, 0)
+    mc.f64s = out
+    return mc
+
+def series_to_mat_grad(s: "Series", requires_grad: "i32") -> "Mat":
+    # ToTensor<T>(series, requiresGrad)
+    m = series_to_mat(s)
+    m.requires_grad = requires_grad
+    return m
+
+# ---------------- DataFrame -> Mat 2D (ToNDArray / ToTensor) ----------------
+
+def df_to_mat_2d(df: "DataFrame") -> "Mat":
+    # gom tat ca cot so (i64/f64/bool) theo thu tu cot, row-major
+    nc = df.column_count()
+    nr = df.row_count()
+    numeric_dtypes = []
+    for c in range(nc):
+        s = df.col_at(c)
+        if s.dtype == DT_I64 or s.dtype == DT_F64 or s.dtype == DT_BOOL:
+            numeric_dtypes.append(s.dtype)
+        else:
+            numeric_dtypes.append(0 - 1)
+    cnum = 0
+    for c in range(nc):
+        if numeric_dtypes[c] >= 0:
+            cnum = cnum + 1
+    if cnum == 0:
+        me = Mat(2, 0, 0, 0)
+        me.f64s = []
+        return me
+    flat = []
+    for r in range(nr):
+        for c in range(nc):
+            dt = numeric_dtypes[c]
+            if dt < 0:
+                continue
+            sc = df.col_at(c)
+            if dt == DT_F64:
+                v = sc.f64s[r]
+                flat.append(v)
+            elif dt == DT_I64:
+                v2 = sc.i64s[r]
+                flat.append(float(v2))
+            else:
+                v3 = sc.bools[r]
+                flat.append(float(v3))
+    m2 = Mat(2, nr, cnum, 0)
+    m2.f64s = flat
+    return m2
+
+def df_to_mat_2d_grad(df: "DataFrame", requires_grad: "i32") -> "Mat":
+    # ToTensor<T>(df, columns, requiresGrad)
+    m = df_to_mat_2d(df)
+    m.requires_grad = requires_grad
+    return m
+
+# ---------------- Mat -> DataFrame (FromNDArray / FromTensor) ----------------
+
+def mat_to_df(m: "Mat", names: "list[str]") -> "DataFrame":
+    result_cols = []
+    if m.rank == 1:
+        col_name = "col_0"
+        if len(names) > 0:
+            col_name = names[0]
+        sv = []
+        for i in range(len(m.f64s)):
+            vv = m.f64s[i]
+            sv.append(vv)
+        result_cols.append(make_series_f64(col_name, sv))
+        return make_df(result_cols)
+    if m.rank != 2:
+        return empty_df()
+    for c in range(m.cols):
+        col_data = []
+        for r in range(m.rows):
+            v = m.f64s[r * m.cols + c]
+            col_data.append(v)
+        cname = "col_" + str(c)
+        if c < len(names):
+            cname = names[c]
+        result_cols.append(make_series_f64(cname, col_data))
+    return make_df(result_cols)
+
+def mat_to_df_from_tensor(m: "Mat", names: "list[str]") -> "DataFrame":
+    # FromTensor<T> = FromNDArray(tensor.Data)
+    return mat_to_df(m, names)
+
+def mat_square_sum(m: "Mat") -> "Mat":
+    # y = x * x (autograd forward cua test thu 3)
+    n = len(m.f64s)
+    out = []
+    for i in range(n):
+        v = m.f64s[i]
+        out.append(v * v)
+    mr = Mat(m.rank, m.rows, m.cols, 0)
+    mr.f64s = out
+    return mr

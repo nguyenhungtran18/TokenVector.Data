@@ -1,0 +1,213 @@
+# ==============================================================================
+# TOKENVECTOR.DATA - ARROW IPC / OUT-OF-CORE MODULE
+# (port tu ArrowIpcEngine.cs + OutOfCoreDataFrame.cs)
+# Arrow IPC stream format: magic "ARROW1" + schema + column data + footer magic.
+# tkv khong co byte buffer nen luu dang JSON text; cau truc du lieu tuong duong:
+#   magic | col_count | row_count | per col: name, dtype, nullable | per col:
+#   mask?, dtype data, footer magic
+# OutOfCoreDataFrame.Persist/Open/ReadBatch -> ooc_persist / ooc_open / ooc_read_batch
+# ==============================================================================
+__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+
+def arrow_dtype_code(dt: "i32") -> "i32":
+    # ma hoa dtype -> code byte (giong (byte)field.Type ben C#)
+    return dt
+
+def arrow_write_string(df: "DataFrame") -> "str":
+    # Serializes a DataFrame into an Arrow IPC "stream" (chuoi JSON hoan doi)
+    parts = []
+    parts.append("ARROW1")
+    nc = df.column_count()
+    nr = df.row_count()
+    parts.append(str(nc))
+    parts.append(str(nr))
+    # schema: name + dtype + nullable moi cot
+    for c in range(nc):
+        s = df.col_at(c)
+        parts.append(s.name)
+        parts.append(str(s.dtype))
+        nullable = 1
+        if s.dtype == DT_STR or s.dtype == DT_F64:
+            parts.append(str(nullable))
+        else:
+            parts.append(str(nullable))
+    # column data
+    for c in range(nc):
+        s = df.col_at(c)
+        vm = s.valid
+        if s.dtype == DT_STR:
+            parts.append("S")
+            parts.append(str(len(s.strings)))
+            for i in range(len(s.strings)):
+                has_null = 0
+                if vm.get(i) == 0:
+                    has_null = 1
+                parts.append(str(has_null) + "|" + s.strings[i])
+        else:
+            parts.append("V")
+            parts.append(str(s.dtype))
+            # sentinel -1 = all-valid: bo toan bo dong mask (tia kich thuoc stream)
+            if vm.all1() == 1:
+                parts.append("-1")
+            else:
+                parts.append(str(len(vm.bits)))
+                for i in range(len(vm.bits)):
+                    parts.append(str(vm.bits[i]))
+            if s.dtype == DT_F64:
+                parts.append(str(len(s.f64s)))
+                for i in range(len(s.f64s)):
+                    v = s.f64s[i]
+                    parts.append(str(v))
+            elif s.dtype == DT_I64:
+                parts.append(str(len(s.i64s)))
+                for i in range(len(s.i64s)):
+                    v2 = s.i64s[i]
+                    parts.append(str(v2))
+            elif s.dtype == DT_BOOL:
+                parts.append(str(len(s.bools)))
+                for i in range(len(s.bools)):
+                    v4 = s.bools[i]
+                    parts.append(str(v4))
+    parts.append("ARROW1")
+    row_text = ""
+    for p in range(len(parts)):
+        row_text = row_text + parts[p]
+        if p < len(parts) - 1:
+            row_text = row_text + "\n"
+    return row_text
+
+def arrow_read_string(stream_text: "str") -> "DataFrame":
+    # Deserializes a DataFrame from an Arrow IPC "stream"
+    lines = stream_text.split("\n")
+    if len(lines) < 4:
+        return empty_df()
+    if lines[0] != "ARROW1":
+        return empty_df()
+    nc = int(lines[1])
+    nr = int(lines[2])
+    pos = 3
+    names = []
+    dtypes = []
+    for c in range(nc):
+        names.append(lines[pos])
+        dtypes.append(int(lines[pos + 1]))
+        pos = pos + 3
+    result_cols = []
+    for c in range(nc):
+        dt = dtypes[c]
+        vm = make_mask(nr, 1)
+        if lines[pos] == "S":
+            pos = pos + 1
+            cnt = int(lines[pos])
+            pos = pos + 1
+            svals = []
+            for i in range(cnt):
+                cell = lines[pos]
+                pos = pos + 1
+                bar = cell.find("|")
+                has_null = int(cell[0:bar])
+                txt = cell[bar + 1:len(cell)]
+                if has_null == 1:
+                    vm.set(i, 0)
+                    svals.append("")
+                else:
+                    svals.append(txt)
+            result_cols.append(make_series_str_with_mask(names[c], svals, vm))
+        else:
+            pos = pos + 1
+            col_dt = int(lines[pos])
+            pos = pos + 1
+            mbits = int(lines[pos])
+            pos = pos + 1
+            if mbits < 0:
+                # sentinel all-valid: dung san mask, khong co dong bit nao
+                vm.pc = nr
+            else:
+                for i in range(mbits):
+                    bv = int(lines[pos])
+                    pos = pos + 1
+                    if bv == 0:
+                        vm.set(i, 0)
+            nvals = int(lines[pos])
+            pos = pos + 1
+            if col_dt == DT_F64:
+                fvals = []
+                for i in range(nvals):
+                    fvals.append(float(lines[pos]))
+                    pos = pos + 1
+                result_cols.append(make_series_f64_with_mask(names[c], fvals, vm))
+            elif col_dt == DT_I64:
+                ivals = []
+                for i in range(nvals):
+                    ivals.append(int(lines[pos]))
+                    pos = pos + 1
+                result_cols.append(make_series_i64_with_mask(names[c], ivals, vm))
+            elif col_dt == DT_BOOL:
+                bvals = []
+                for i in range(nvals):
+                    bvals.append(int(lines[pos]))
+                    pos = pos + 1
+                result_cols.append(make_series_bool_with_mask(names[c], bvals, vm))
+            else:
+                pos = pos + nvals
+                result_cols.append(make_series_f64(names[c], []))
+    if lines[pos] != "ARROW1":
+        return empty_df()
+    return make_df(result_cols)
+
+def arrow_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    write_file(file_path, arrow_write_string(df))
+    return 0
+
+def arrow_read_file(file_path: "str") -> "DataFrame":
+    return arrow_read_string(read_file(file_path))
+
+# ---------------- OutOfCoreDataFrame (persist / open / read batch) ----------------
+
+class Ooc:
+    file_path: "str"
+    row_count_v: "i32"
+    col_count_v: "i32"
+    names: "list[str]"
+    dtypes: "list[i32]"
+
+def ooc_persist(df: "DataFrame", file_path: "str") -> "i32":
+    arrow_write_file(df, file_path)
+    return 0
+
+def ooc_open(file_path: "str") -> "Ooc":
+    header = arrow_read_string(read_file(file_path))
+    nc = header.column_count()
+    nr = header.row_count()
+    nm = []
+    dtl = []
+    for c in range(nc):
+        s = header.col_at(c)
+        nm.append(s.name)
+        dtl.append(s.dtype)
+    o = Ooc(file_path, nr, nc)
+    o.names = nm
+    o.dtypes = dtl
+    return o
+
+def ooc_row_count(o: "Ooc") -> "i32":
+    return o.row_count_v
+
+def ooc_col_count(o: "Ooc") -> "i32":
+    return o.col_count_v
+
+def ooc_read_batch(o: "Ooc", offset: "i32", length: "i32") -> "DataFrame":
+    # doc toan bo file, lay dong [offset, offset+length) - ung voi batch reader
+    all_df = arrow_read_file(o.file_path)
+    nr = all_df.row_count()
+    nc = all_df.column_count()
+    if offset < 0 or offset + length > nr:
+        return empty_df()
+    keep = []
+    for i in range(length):
+        keep.append(offset + i)
+    picked_cols = []
+    for c in range(nc):
+        s = all_df.col_at(c)
+        picked_cols.append(s.slice_series(offset, length))
+    return make_df(picked_cols)

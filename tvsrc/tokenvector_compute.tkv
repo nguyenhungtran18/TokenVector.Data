@@ -1,0 +1,1292 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Native TokenVector port
+# Module Compute: VectorMath + FilterEngine + Aggregations + WindowFunctions
+# (port tu: VectorMath.cs, FilterEngine.cs, Aggregations.cs,
+#  WindowFunctions.cs - dang ky chuc nang tuong duong)
+# =============================================================================
+
+# ------------------------------ VectorMath -----------------------------------
+def vec_add(a: "Col", b: "Col") -> "Col":
+    if a.length() != b.length():
+        raise ValueError("Column lengths must match: " + str(a.length()) + " vs " + str(b.length()))
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            # Fast-path: khong co null -> bo is_null()/set() per-element
+            ri = r.i64s
+            for i in range(n):
+                ri.append(ai[i] + bi[i])
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                r.i64s.append(ai[i] + bi[i])
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] + bf[i])
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            r.f64s.append(af[i] + bf[i])
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_sub(a: "Col", b: "Col") -> "Col":
+    if a.length() != b.length():
+        raise ValueError("Column lengths must match: " + str(a.length()) + " vs " + str(b.length()))
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            ri = r.i64s
+            for i in range(n):
+                ri.append(ai[i] - bi[i])
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                r.i64s.append(ai[i] - bi[i])
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] - bf[i])
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            r.f64s.append(af[i] - bf[i])
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_mul(a: "Col", b: "Col") -> "Col":
+    if a.length() != b.length():
+        raise ValueError("Column lengths must match: " + str(a.length()) + " vs " + str(b.length()))
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            ri = r.i64s
+            for i in range(n):
+                ri.append(ai[i] * bi[i])
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                r.i64s.append(ai[i] * bi[i])
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] * bf[i])
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            r.f64s.append(af[i] * bf[i])
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_div(a: "Col", b: "Col") -> "Col":
+    if a.length() != b.length():
+        raise ValueError("Column lengths must match: " + str(a.length()) + " vs " + str(b.length()))
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = DT_F64
+    av = a.valid
+    bv = b.valid
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] / bf[i])
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            r.f64s.append(af[i] / bf[i])
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_add_scalar(a: "Col", s: "f64") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            ri = r.i64s
+            for i in range(n):
+                ri.append(ai[i] + si)
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1:
+                r.i64s.append(ai[i] + si)
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] + s)
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(af[i] + s)
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_mul_scalar(a: "Col", s: "f64") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            ri = r.i64s
+            for i in range(n):
+                ri.append(ai[i] * si)
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1:
+                r.i64s.append(ai[i] * si)
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] * s)
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(af[i] * s)
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_abs(a: "Col") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = a.dtype
+    av = a.valid
+    if a.dtype == DT_I64:
+        r.i64s = []
+        ai = a.i64s
+        if av.all1() == 1:
+            ri = r.i64s
+            for i in range(n):
+                vi = ai[i]
+                if vi < 0:
+                    vi = -1 * vi
+                ri.append(vi)
+            mk = make_mask(n, 1)
+            mk.pc = n
+            r.valid = mk
+            return r
+        mk = make_mask(n, 0)
+        for i in range(n):
+            if av.bits[i] == 1:
+                vi = ai[i]
+                if vi < 0:
+                    vi = -1 * vi
+                r.i64s.append(vi)
+                mk.set(i, 1)
+            else:
+                r.i64s.append(0)
+        r.valid = mk
+        return r
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            vf = af[i]
+            if vf < 0.0:
+                vf = -1.0 * vf
+            rf.append(vf)
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            vf = af[i]
+            if vf < 0.0:
+                vf = -1.0 * vf
+            r.f64s.append(vf)
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_sqrt(a: "Col") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = DT_F64
+    av = a.valid
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] ** 0.5)
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(af[i] ** 0.5)
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_exp(a: "Col") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = DT_F64
+    av = a.valid
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(_tkv_exp(af[i]))
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(_tkv_exp(af[i]))
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_log(a: "Col") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = DT_F64
+    av = a.valid
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(_tkv_ln(af[i]))
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(_tkv_ln(af[i]))
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def vec_pow(a: "Col", exponent: "f64") -> "Col":
+    n = a.length()
+    r = make_col_f64([])
+    r.dtype = DT_F64
+    av = a.valid
+    af = a.f64s
+    if av.all1() == 1:
+        rf = r.f64s
+        for i in range(n):
+            rf.append(af[i] ** exponent)
+        mk = make_mask(n, 1)
+        mk.pc = n
+        r.valid = mk
+        return r
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if av.bits[i] == 1:
+            r.f64s.append(af[i] ** exponent)
+            mk.set(i, 1)
+        else:
+            r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def _tkv_exp(x: "f64") -> "f64":
+    # e^x qua chuoi Taylor voi Argument Reduction
+    if x < 0.0:
+        return 1.0 / _tkv_exp(-x)
+    if x > 1.0:
+        k = int(x / 0.6931471805599453) + 1
+        r = _tkv_exp(x - k * 0.6931471805599453)
+        e2 = 2.718281828459045
+        for i in range(k):
+            r = r * e2
+        return r
+    term = 1.0
+    s = 1.0
+    for i in range(1, 20):
+        term = term * x / i
+        s = s + term
+    return s
+
+
+def _tkv_ln(x: "f64") -> "f64":
+    if x <= 0.0:
+        raise ValueError("Log of non-positive value")
+    e = 2.718281828459045
+    k = 0
+    while x >= 2.0:
+        x = x / e
+        k = k + 1
+    while x < 0.5:
+        x = x * e
+        k = k - 1
+    y = (x - 1.0) / (x + 1.0)
+    y2 = y * y
+    s = 0.0
+    for i in range(30):
+        s = s + (y ** (2 * i + 1)) / (2 * i + 1)
+    return 2.0 * s + k
+
+
+
+def vec_gt(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] > bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] > bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] > bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] > bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_ge(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] >= bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] >= bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] >= bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] >= bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_lt(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] < bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] < bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] < bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] < bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_le(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] <= bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] <= bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] <= bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] <= bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_eq(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] == bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] == bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] == bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] == bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_ne(a: "Col", b: "Col") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    bv = b.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        bi = b.i64s
+        if av.all1() == 1 and bv.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] != bi[i]:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1 and bv.bits[i] == 1:
+                if ai[i] != bi[i]:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    bf = b.f64s
+    if av.all1() == 1 and bv.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] != bf[i]:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1 and bv.bits[i] == 1:
+            if af[i] != bf[i]:
+                m.set(i, 1)
+    return m
+
+
+def vec_gt_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] > si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] > si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] > s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] > s:
+                m.set(i, 1)
+    return m
+
+
+def vec_ge_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] >= si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] >= si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] >= s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] >= s:
+                m.set(i, 1)
+    return m
+
+
+def vec_lt_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] < si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] < si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] < s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] < s:
+                m.set(i, 1)
+    return m
+
+
+def vec_le_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] <= si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] <= si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] <= s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] <= s:
+                m.set(i, 1)
+    return m
+
+
+def vec_eq_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] == si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] == si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] == s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] == s:
+                m.set(i, 1)
+    return m
+
+
+def vec_ne_scalar(a: "Col", s: "f64") -> "Mask":
+    n = a.length()
+    m = make_mask(n, 0)
+    av = a.valid
+    if a.dtype == DT_I64:
+        ai = a.i64s
+        si = int(s)
+        if av.all1() == 1:
+            bits = m.bits
+            for i in range(n):
+                if ai[i] != si:
+                    bits[i] = 1
+            return m
+        for i in range(n):
+            if av.bits[i] == 1:
+                if ai[i] != si:
+                    m.set(i, 1)
+        return m
+    af = a.f64s
+    if av.all1() == 1:
+        bits = m.bits
+        for i in range(n):
+            if af[i] != s:
+                bits[i] = 1
+        return m
+    for i in range(n):
+        if av.bits[i] == 1:
+            if af[i] != s:
+                m.set(i, 1)
+    return m
+
+
+# ----------------------------- FilterEngine ----------------------------------
+def filter_evaluate_indices(n: "i32", truth: "list[i32]") -> "Mask":
+    # Bieu thich FilterEngine.EvaluatePredicate: duyet cac dong va lap mask
+    # tu bang truth 0/1 (predicate da duoc danh gia truoc do runner, vi
+    # tkvc truyen ham bang lambda tham so - runner build truth truoc).
+    if n < 0:
+        raise ValueError("rowCount must be non-negative")
+    m = make_mask(n, 0)
+    for i in range(n):
+        if truth[i] == 1:
+            m.set(i, 1)
+    return m
+
+
+def filter_and(a: "Mask", b: "Mask") -> "Mask":
+    return a.mask_and(b)
+
+
+def filter_or(a: "Mask", b: "Mask") -> "Mask":
+    return a.mask_or(b)
+
+
+# ----------------------------- Aggregations ----------------------------------
+def _col_valid_f64s(c: "Col") -> "list[f64]":
+    vals = []
+    for i in range(c.length()):
+        if c.is_null(i) == 0:
+            if c.dtype == DT_I64:
+                vals.append(float(c.i64s[i]))
+            elif c.dtype == DT_BOOL:
+                if c.bools[i] == 1:
+                    vals.append(1.0)
+                else:
+                    vals.append(0.0)
+            else:
+                vals.append(c.f64s[i])
+    return vals
+
+
+def agg_sum(c: "Col") -> "f64":
+    s = 0.0
+    for i in range(c.length()):
+        if c.is_null(i) == 0:
+            if c.dtype == DT_I64:
+                s = s + c.i64s[i]
+            elif c.dtype == DT_BOOL:
+                if c.bools[i] == 1:
+                    s = s + 1.0
+            else:
+                s = s + c.f64s[i]
+    return s
+
+
+def agg_mean(c: "Col") -> "f64":
+    n = c.length() - c.null_count()
+    if n == 0:
+        return float("nan")
+    return agg_sum(c) / n
+
+
+def agg_min(c: "Col") -> "f64":
+    vals = _col_valid_f64s(c)
+    if len(vals) == 0:
+        return float("nan")
+    return min(vals)
+
+
+def agg_max(c: "Col") -> "f64":
+    vals = _col_valid_f64s(c)
+    if len(vals) == 0:
+        return float("nan")
+    return max(vals)
+
+
+def agg_variance(c: "Col", ddof: "i32") -> "f64":
+    # Welford 1 pass thay cho 3 pass (agg_mean + valid-list + binh phuong)
+    n = c.length()
+    vm = c.valid
+    vb = vm.bits
+    pc = vm.pop_count()
+    dt = c.dtype
+    cnt = 0
+    fcnt = 0.0
+    mean = 0.0
+    m2 = 0.0
+    if dt == DT_I64:
+        ib = c.i64s
+        if pc == n:
+            for i in range(n):
+                x = float(ib[i])
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+        else:
+            for i in range(n):
+                if vb[i] == 1:
+                    x = float(ib[i])
+                    cnt = cnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - mean
+                    mean = mean + d / fcnt
+                    m2 = m2 + d * (x - mean)
+    elif dt == DT_BOOL:
+        bb = c.bools
+        for i in range(n):
+            if vb[i] == 1:
+                if bb[i] == 1:
+                    x = 1.0
+                else:
+                    x = 0.0
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+    else:
+        fb = c.f64s
+        if pc == n:
+            for i in range(n):
+                x = fb[i]
+                cnt = cnt + 1
+                fcnt = fcnt + 1.0
+                d = x - mean
+                mean = mean + d / fcnt
+                m2 = m2 + d * (x - mean)
+        else:
+            for i in range(n):
+                if vb[i] == 1:
+                    x = fb[i]
+                    cnt = cnt + 1
+                    fcnt = fcnt + 1.0
+                    d = x - mean
+                    mean = mean + d / fcnt
+                    m2 = m2 + d * (x - mean)
+    if cnt <= ddof:
+        return float("nan")
+    if ddof == 0:
+        return m2 / fcnt
+    one = 1.0
+    denom = fcnt - one
+    return m2 / denom
+
+
+def agg_std(c: "Col", ddof: "i32") -> "f64":
+    v = agg_variance(c, ddof)
+    if v != v:
+        return float("nan")
+    return v ** 0.5
+
+
+def agg_median(c: "Col") -> "f64":
+    return agg_quantile(c, 0.5)
+
+
+def agg_quantile(c: "Col", q: "f64") -> "f64":
+    if q < 0.0 or q > 1.0:
+        raise ValueError("Quantile q must be between 0.0 and 1.0")
+    vals = _col_valid_f64s(c)
+    n = len(vals)
+    if n == 0:
+        return float("nan")
+    if n == 1:
+        return vals[0]
+    svals = sorted(vals)
+    pos = q * (n - 1)
+    low = int(pos)
+    high = int(pos + 0.5)
+    if high < low:
+        high = low
+    frac = pos - low
+    if low == high:
+        return svals[low]
+    return svals[low] * (1.0 - frac) + svals[high] * frac
+
+
+# ---------------------------- WindowFunctions --------------------------------
+def win_rolling_mean(c: "Col", window: "i32", min_periods: "i32") -> "Col":
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    running = 0.0
+    valid = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            running = running + _col_f64_at(c, i)
+            valid = valid + 1
+        leaving = i - window
+        if leaving >= 0 and c.is_null(leaving) == 0:
+            running = running - _col_f64_at(c, leaving)
+            valid = valid - 1
+        if valid >= min_periods:
+            vals.append(running / valid)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def _win_valid_count(c: "Col", upto: "i32", window: "i32") -> "i32":
+    start = upto - window + 1
+    if start < 0:
+        start = 0
+    cnt = 0
+    for j in range(start, upto + 1):
+        if c.is_null(j) == 0:
+            cnt = cnt + 1
+    return cnt
+
+
+def _col_f64_at(c: "Col", i: "i32") -> "f64":
+    if c.dtype == DT_I64:
+        return float(c.i64s[i])
+    if c.dtype == DT_BOOL:
+        if c.bools[i] == 1:
+            return 1.0
+        return 0.0
+    return c.f64s[i]
+
+
+def win_rolling_sum(c: "Col", window: "i32", min_periods: "i32") -> "Col":
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    running = 0.0
+    valid = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            running = running + _col_f64_at(c, i)
+            valid = valid + 1
+        leaving = i - window
+        if leaving >= 0 and c.is_null(leaving) == 0:
+            running = running - _col_f64_at(c, leaving)
+            valid = valid - 1
+        if valid >= min_periods:
+            vals.append(running)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rolling_std(c: "Col", window: "i32", min_periods: "i32") -> "Col":
+    if window <= 1:
+        raise ValueError("Window size for std must be > 1")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    s = 0.0
+    s2 = 0.0
+    cnt = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            x = _col_f64_at(c, i)
+            s = s + x
+            s2 = s2 + x * x
+            cnt = cnt + 1
+        leaving = i - window
+        if leaving >= 0 and c.is_null(leaving) == 0:
+            x = _col_f64_at(c, leaving)
+            s = s - x
+            s2 = s2 - x * x
+            cnt = cnt - 1
+        if cnt >= min_periods and cnt > 1:
+            var = s2 / (cnt - 1) - (s * s) / ((cnt - 1) * cnt)
+            if var < 0.0:
+                var = 0.0
+            vals.append(var ** 0.5)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_shift(c: "Col", periods: "i32") -> "Col":
+    n = c.length()
+    r = make_col_f64([])
+    r.dtype = c.dtype
+    if c.dtype == DT_I64:
+        r.i64s = []
+    elif c.dtype == DT_BOOL:
+        r.bools = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        src = i - periods
+        if src >= 0 and src < n and c.is_null(src) == 0:
+            if c.dtype == DT_I64:
+                r.i64s.append(c.i64s[src])
+            elif c.dtype == DT_BOOL:
+                r.bools.append(c.bools[src])
+            else:
+                r.f64s.append(c.f64s[src])
+            mk.set(i, 1)
+        else:
+            if c.dtype == DT_I64:
+                r.i64s.append(0)
+            elif c.dtype == DT_BOOL:
+                r.bools.append(0)
+            else:
+                r.f64s.append(0.0)
+    r.valid = mk
+    return r
+
+
+def win_diff(c: "Col", periods: "i32") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        prev = i - periods
+        if prev >= 0 and c.is_null(i) == 0 and c.is_null(prev) == 0:
+            vals.append(_col_f64_at(c, i) - _col_f64_at(c, prev))
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_cumsum(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    running = 0.0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            running = running + _col_f64_at(c, i)
+            vals.append(running)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rank(c: "Col", ascending: "i32") -> "Col":
+    n = c.length()
+    vals = []
+    idxs = []
+    for i in range(n):
+        if c.is_null(i) == 0:
+            vals.append(_col_f64_at(c, i))
+            idxs.append(i)
+    pairs = []
+    for k in range(len(vals)):
+        p = PairItem(vals[k], idxs[k])
+        pairs.append(p)
+    if ascending == 1:
+        sorted_pairs = sort_pairs_asc(pairs)
+    else:
+        sorted_pairs = sort_pairs_desc(pairs)
+    out = []
+    for i in range(n):
+        out.append(0.0)
+    mk = make_mask(n, 0)
+    for k in range(len(sorted_pairs)):
+        p = sorted_pairs[k]
+        out[p.idx] = k + 1.0
+        mk.set(p.idx, 1)
+    r = make_col_f64(out)
+    r.valid = mk
+    return r
+
+
+class PairItem:
+    val: "f64"
+    idx: "i32"
+
+
+def sort_pairs_asc(items: "list[PairItem]") -> "list[PairItem]":
+    # insertion sort theo val tang dan
+    n = len(items)
+    arr = []
+    for i in range(n):
+        arr.append(items[i])
+    for i in range(1, n):
+        cur = arr[i]
+        j = i - 1
+        while j >= 0:
+            cj = arr[j]
+            if cj.val > cur.val:
+                arr[j + 1] = arr[j]
+                j = j - 1
+            else:
+                break
+        arr[j + 1] = cur
+    return arr
+
+
+def sort_pairs_desc(items: "list[PairItem]") -> "list[PairItem]":
+    n = len(items)
+    arr = []
+    for i in range(n):
+        arr.append(items[i])
+    for i in range(1, n):
+        cur = arr[i]
+        j = i - 1
+        while j >= 0:
+            cj = arr[j]
+            if cj.val < cur.val:
+                arr[j + 1] = arr[j]
+                j = j - 1
+            else:
+                break
+        arr[j + 1] = cur
+    return arr

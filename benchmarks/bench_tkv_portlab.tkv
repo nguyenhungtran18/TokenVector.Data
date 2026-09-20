@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+# Port lab: kernel thuần .tkv trên buffer cột THẬT 5M — tách chi phí đọc/ghi
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute"]
+
+REP = 20
+
+
+def _ms_ticks(t: "i64") -> "f64":
+    return float(t) / 10000.0
+
+
+def k1_compute() -> "i64":
+    # Baseline: compute thuần, KHÔNG đụng mảng (chất lượng JIT)
+    ta = datetime()
+    s = 0.0
+    for rep in range(REP):
+        s = 0.0
+        for i in range(5000000):
+            v = float(i % 10000) * 0.001
+            s = s + (v * 2.5 + v)
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+
+def k2_read(A: "Col", B: "Col") -> "i64":
+    # Fused a*2.5+b đọc buffer thật, KHÔNG cấp phát output (reduction)
+    ta = datetime()
+    s = 0.0
+    for rep in range(REP):
+        s = 0.0
+        for i in range(5000000):
+            s = s + (A.f64s[i] * 2.5 + B.f64s[i])
+    tb = datetime()
+    return datetime_ticks(tb - ta)
+
+
+def k3_fused_out(A: "Col", B: "Col") -> "i64":
+    # Fused + xuất ra list (điều kernel port BẮT BUỘC làm để trả cột)
+    ta = datetime()
+    chk = 0.0
+    for rep in range(REP):
+        out = []
+        for i in range(5000000):
+            out.append(A.f64s[i] * 2.5 + B.f64s[i])
+        chk = chk + out[10]
+    tb = datetime()
+    print("k3_chk=", chk)
+    return datetime_ticks(tb - ta)
+
+
+def k5_filter(A: "Col") -> "i64":
+    # Filter count đọc buffer thật, không cấp phát
+    ta = datetime()
+    c = 0
+    for rep in range(REP):
+        c = 0
+        for i in range(5000000):
+            if A.f64s[i] > 5.0:
+                c = c + 1
+    tb = datetime()
+    print("k5_cnt=", c)
+    return datetime_ticks(tb - ta)
+
+
+def run() -> "i32":
+    vals = []
+    for i in range(5000000):
+        vals.append(float(i % 10000) * 0.001)
+    A = make_col_f64(vals)
+    B = make_col_f64(vals)
+    print("cols ready n=", A.length())
+
+    t1 = k1_compute()
+    print("K1_compute_ms=", _ms_ticks(t1))
+
+    t2 = k2_read(A, B)
+    print("K2_read_fused_ms=", _ms_ticks(t2))
+
+    t3 = k3_fused_out(A, B)
+    print("K3_fused_out_ms=", _ms_ticks(t3))
+
+    t5 = k5_filter(A)
+    print("K5_filter_ms=", _ms_ticks(t5))
+
+    # Engine hiện tại: vec_add_scalar + vec_mul (1 pass, có null-check + append + mask)
+    te1 = datetime()
+    s1 = vec_add_scalar(A, 2.5)
+    s2 = vec_mul(s1, B)
+    te2 = datetime()
+    print("ENG_chain_ms=", _ms_ticks(datetime_ticks(te2 - te1)), " chk=", s2.f64s[10])
+    return 0

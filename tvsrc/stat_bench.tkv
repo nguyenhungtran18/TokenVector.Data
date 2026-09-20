@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational"]
+
+def _ms(t1, t2) -> "f64":
+    d = t2 - t1
+    ticks = datetime_ticks(d)
+    return float(ticks) / 10000.0
+
+def _fill(c: "Col", n: "i32", null_every: "i32") -> "Col":
+    vm = make_mask(n, 0)
+    for i in range(n):
+        c.f64s.append(1.0 + float(i % 7) * 0.5)
+        if null_every > 0 and i % null_every == 3:
+            vm.set(i, 0)
+        else:
+            vm.set(i, 1)
+    c.valid = vm
+    return c
+
+def _mk_ri(n: "i32") -> "list[i32]":
+    ri = make_idx_n(n)
+    for i in range(n):
+        ri[i] = i
+    return ri
+
+def main() -> "str":
+    n = 5000000
+    c = make_col_f64([])
+    c = _fill(c, n, 0)
+    c.valid = make_mask(n, 1)
+    s = make_series("x", c)
+    cn = make_col_f64([])
+    cn = _fill(cn, n, 10)
+    sn = make_series("xn", cn)
+    print("check_e1=" + str(c.f64s[1]) + " e7=" + str(c.f64s[7]) + " nonnull_n=" + str(sn.non_null_count()))
+    t1 = datetime()
+    r1 = 0.0
+    for k in range(3):
+        r1 = series_variance(s, 1)
+    t2 = datetime()
+    print("series_var_nonull_x3_ms=" + str(_ms(t1, t2)) + " r=" + str(r1))
+    t3 = datetime()
+    r2 = 0.0
+    for k in range(3):
+        r2 = series_variance(sn, 1)
+    t4 = datetime()
+    print("series_var_null_x3_ms=" + str(_ms(t3, t4)) + " r=" + str(r2))
+    t5 = datetime()
+    r3 = agg_variance(c, 1)
+    t6 = datetime()
+    print("agg_var_nonull_ms=" + str(_ms(t5, t6)) + " r=" + str(r3))
+    ri = _mk_ri(n)
+    # AGG_STD qua duong that: groupby_agg
+    gdf = DataFrame()
+    gk = make_col_i64([])
+    gv = make_col_f64([])
+    for i in range(n):
+        gk.i64s.append(i % 5)
+        gv.f64s.append(1.0 + float(i % 7) * 0.5)
+    gk.valid = make_mask(n, 1)
+    gv.valid = make_mask(n, 1)
+    gdf = gdf.with_column("k", make_series("k", gk))
+    gdf = gdf.with_column("v", make_series("v", gv))
+    exprs = [make_agg("v", AGG_STD, "sd"), make_agg("v", AGG_MEAN, "mn")]
+    t7 = datetime()
+    gres = groupby_agg(gdf, ["k"], exprs)
+    t8 = datetime()
+    print("groupby_std_5groups_ms=" + str(_ms(t7, t8)) + " rows=" + str(gres.row_count()))
+    return "ok"

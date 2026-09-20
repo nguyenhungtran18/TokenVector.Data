@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+# BENCH da luong OUTPUT THAT (moi sau fix compiler 2026-09-21):
+# worker tra ve list[f64] - truoc day bat kha thi (Gap A+B, KERNEL_LAB 6.2).
+# Moi worker build 1 chunk 1.25M phan tu (a*2.5+b pattern), do wall-clock.
+N = 5000000
+
+def w1() -> "list[f64]":
+    out = []
+    for i in range(0, 1250000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w2() -> "list[f64]":
+    out = []
+    for i in range(1250000, 2500000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w3() -> "list[f64]":
+    out = []
+    for i in range(2500000, 3750000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def w4() -> "list[f64]":
+    out = []
+    for i in range(3750000, 5000000):
+        v = float(i % 10000) * 0.001
+        out.append(v * 2.5 + v)
+    return out
+
+def _ms(t1: "i64", t2: "i64") -> "f64":
+    return float(t2 - t1) / 10000.0
+
+def run() -> "i32":
+    # warm-up JIT (1/4 kich thuoc)
+    w1()
+
+    # Serial: lan luot 4 worker
+    t1 = datetime()
+    a1 = w1()
+    a2 = w2()
+    a3 = w3()
+    a4 = w4()
+    t2 = datetime()
+    tot = len(a1) + len(a2) + len(a3) + len(a4)
+    print("serial total_ms=", str(_ms(datetime_ticks(t1), datetime_ticks(t2))), " n=", str(tot))
+
+    # Parallel: 4 worker cung luc
+    t3 = datetime()
+    h1 = thread_spawn(w1)
+    h2 = thread_spawn(w2)
+    h3 = thread_spawn(w3)
+    h4 = thread_spawn(w4)
+    b1 = thread_join(h1)
+    b2 = thread_join(h2)
+    b3 = thread_join(h3)
+    b4 = thread_join(h4)
+    t4 = datetime()
+    tot2 = len(b1) + len(b2) + len(b3) + len(b4)
+    chk = b1[0] + b4[len(b4) - 1]
+    print("parallel4 total_ms=", str(_ms(datetime_ticks(t3), datetime_ticks(t4))), " n=", str(tot2), " chk=", str(chk))
+    print("BENCH THREAD OUT DONE")
+    return 0

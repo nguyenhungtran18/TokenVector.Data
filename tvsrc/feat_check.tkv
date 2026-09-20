@@ -1,0 +1,124 @@
+# -*- coding: utf-8 -*-
+# feat_check - regression check cho cac tinh nang v1.0.2:
+#   - perf: sort O(n log n), asof binary search, rolling O(n)  (kiem tra qua cac check khac)
+#   - null propagation: vec_* (kiem tra o cuoi file)
+#   - Series: ffill, bfill, str_map_*, between, is_in_f64, is_in_str
+#   - DataFrame: drop_duplicates, duplicated_mask, value_counts
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute"]
+
+def run() -> "str":
+    # ffill / bfill
+    s = make_series_f64("v", [1.0, 0.0, 0.0, 4.0, 0.0])
+    sm = make_mask(5, 0)
+    sm.set(0, 1)
+    sm.set(3, 1)
+    s.valid = sm
+    f = s.ffill()
+    f1 = f.get_f64(1)
+    f2 = f.get_f64(2)
+    f4 = f.get_f64(4)
+    n4 = f.is_null(4)
+    print("ffill:", f1, f2, f4, "null4=", n4)
+    b = s.bfill()
+    b1 = b.get_f64(1)
+    b2 = b.get_f64(2)
+    b4 = b.get_f64(4)
+    n0 = b.is_null(0)
+    print("bfill:", b1, b2, b4, "null0=", n0)
+
+    # string API
+    strs = make_series_str("txt", ["Abc def", "hello", "xY"])
+    cc1 = strs.str_map_contains("bc")
+    k1 = cc1.get_bool(0)
+    k2 = cc1.get_bool(2)
+    print("contains:", k1, k2)
+    c2 = strs.str_map_startswith("Ab")
+    p1 = c2.get_bool(0)
+    p2 = c2.get_bool(1)
+    print("startswith:", p1, p2)
+    c3 = strs.str_map_endswith("lo")
+    e1 = c3.get_bool(1)
+    e2 = c3.get_bool(2)
+    print("endswith:", e1, e2)
+    up = strs.str_map_upper()
+    u0 = up.get_string(0)
+    u2 = up.get_string(2)
+    print("upper:", u0, u2)
+    lo = strs.str_map_lower()
+    l0 = lo.get_string(0)
+    l2 = lo.get_string(2)
+    print("lower:", l0, l2)
+    rp = strs.str_map_replace("Abc", "XYZ")
+    r0 = rp.get_string(0)
+    print("replace:", r0)
+
+    # between / is_in
+    nums = make_series_f64("n", [1.0, 5.0, 7.5, 12.0])
+    w1 = nums.between(5.0, 7.5, 1)
+    w2 = nums.between(5.0, 7.5, 0)
+    q1 = w1.get_bool(1)
+    q2 = w1.get_bool(0)
+    q3 = w2.get_bool(1)
+    print("between:", q1, q2, q3)
+    cand = [1.0, 12.0]
+    ii = nums.is_in_f64(cand)
+    i0 = ii.get_bool(0)
+    i1 = ii.get_bool(1)
+    print("is_in:", i0, i1)
+    cats = make_series_str("c", ["a", "b", "a"])
+    iis = cats.is_in_str(["a"])
+    s0 = iis.get_bool(0)
+    s1 = iis.get_bool(1)
+    print("is_in_str:", s0, s1)
+
+    # drop_duplicates + value_counts + duplicated_mask
+    df = make_df([
+        make_series_i64("id", [1, 2, 3, 2, 4]),
+        make_series_str("dep", ["IT", "HR", "IT", "HR", "SA"]),
+    ])
+    dd = df.drop_duplicates([])
+    dr = dd.row_count()
+    print("dedup rows:", dr)
+    dm = df.duplicated_mask([])
+    d1 = dm.get_bool(1)
+    d3 = dm.get_bool(3)
+    print("dup:", d1, d3)
+    dd2 = df.drop_duplicates(["dep"])
+    dr2 = dd2.row_count()
+    print("dedup dep rows:", dr2)
+    vc = df.value_counts("dep")
+    vcv = vc.col_by_name("dep")
+    vcc = vc.col_by_name("count")
+    v0 = vcv.get_string(0)
+    c0 = vcc.get_i64(0)
+    v1 = vcv.get_string(1)
+    cq1 = vcc.get_i64(1)
+    print("vc:", v0, c0, "|", v1, cq1)
+    np = _null_prop_check()
+    print("null_prop=", np)
+    return "SUCCESS"
+
+
+def _null_prop_check() -> "i32":
+    # null propagation: null vao -> null ra
+    a = make_col_f64([1.0, 0.0, 3.0])
+    b = make_col_f64([2.0, 4.0, 6.0])
+    mk = make_mask(3, 1)
+    mk.set(1, 0)
+    b.valid = mk
+    s = vec_add(a, b)
+    ok = 1
+    n1 = s.is_null(1)
+    if n1 == 0:
+        ok = 0
+    v0 = s.get_f64(0)
+    if v0 != 3.0:
+        ok = 0
+    sq = vec_mul_scalar(b, 2.0)
+    n2 = sq.is_null(1)
+    if n2 == 0:
+        ok = 0
+    v2 = sq.get_f64(0)
+    if v2 != 4.0:
+        ok = 0
+    return ok

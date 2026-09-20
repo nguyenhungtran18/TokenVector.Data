@@ -1,0 +1,75 @@
+# -*- coding: utf-8 -*-
+# BENCH da luong tren INPUT COT THAT 5M (apple-to-apple voi pandas B1):
+# 1 list[f64] 5M chia 4 chunk, moi worker (closure bat list) build output
+# chunk cua minh (a*2.5+b). So voi pandas 5M cung phien.
+N = 5000000
+
+def _ms(t1: "i64", t2: "i64") -> "f64":
+    return float(t2 - t1) / 10000.0
+
+def run() -> "i32":
+    # Input cot that 5M f64 (pattern giong bench.tkv)
+    inp = []
+    for i in range(N):
+        inp.append(float(i % 10000) * 0.001)
+
+    def w1() -> "list[f64]":
+        nonlocal inp
+        out = []
+        for i in range(0, 1250000):
+            out.append(inp[i] * 2.5 + inp[i])
+        return out
+
+    def w2() -> "list[f64]":
+        nonlocal inp
+        out = []
+        for i in range(1250000, 2500000):
+            out.append(inp[i] * 2.5 + inp[i])
+        return out
+
+    def w3() -> "list[f64]":
+        nonlocal inp
+        out = []
+        for i in range(2500000, 3750000):
+            out.append(inp[i] * 2.5 + inp[i])
+        return out
+
+    def w4() -> "list[f64]":
+        nonlocal inp
+        out = []
+        for i in range(3750000, 5000000):
+            out.append(inp[i] * 2.5 + inp[i])
+        return out
+
+    # warm-up
+    w1()
+
+    # Serial
+    t1 = datetime()
+    a1 = w1()
+    a2 = w2()
+    a3 = w3()
+    a4 = w4()
+    t2 = datetime()
+    print("serial total_ms=", str(_ms(datetime_ticks(t1), datetime_ticks(t2))))
+
+    # Parallel 4
+    best = 999999.0
+    for rep in range(3):
+        t3 = datetime()
+        h1 = thread_spawn(w1)
+        h2 = thread_spawn(w2)
+        h3 = thread_spawn(w3)
+        h4 = thread_spawn(w4)
+        b1 = thread_join(h1)
+        b2 = thread_join(h2)
+        b3 = thread_join(h3)
+        b4 = thread_join(h4)
+        t4 = datetime()
+        ms = _ms(datetime_ticks(t3), datetime_ticks(t4))
+        if ms < best:
+            best = ms
+    chk = b1[0] + b4[1249999]
+    print("parallel4 best_of3_ms=", str(best), " chk=", str(chk), " n=", str(len(b1) + len(b2) + len(b3) + len(b4)))
+    print("BENCH REAL INPUT DONE")
+    return 0
