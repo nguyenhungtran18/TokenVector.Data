@@ -193,6 +193,16 @@ def groupby_agg(df: "DataFrame", key_columns: "list[str]", exprs: "list[AggExpr]
         result_cols.append(make_series_f64(expr.output, agg_vals))
 
     return make_df(result_cols)
+
+def _rel_sort_f64(vals: "list[f64]") -> "list[f64]":
+    # sort tang dan - dung cho AGG_MEDIAN
+    out = []
+    for i in range(len(vals)):
+        out.append(vals[i])
+    out.sort()
+    return out
+
+
 def _compute_agg(series: "Series", row_indices: "list[i32]", agg_type: "i32") -> "f64":
     cnt = len(row_indices)
     if cnt == 0:
@@ -209,6 +219,33 @@ def _compute_agg(series: "Series", row_indices: "list[i32]", agg_type: "i32") ->
             if sb[r] == 1:
                 non_null = non_null + 1
         return float(non_null)
+    if agg_type == AGG_NUNIQUE:
+        # dem gia tri phan biet (chi hang khac null)
+        seen = {}
+        nu_cnt = 0
+        for i in range(cnt):
+            r = row_indices[i]
+            if sb[r] == 1:
+                k = series.get_string(r)
+                if k in seen:
+                    continue
+                seen[k] = 1
+                nu_cnt = nu_cnt + 1
+        return float(nu_cnt)
+    if agg_type == AGG_MEDIAN:
+        # median tren gia tri khac null (lay f64); sort nho tai cho
+        vals = []
+        for i in range(cnt):
+            r = row_indices[i]
+            if sb[r] == 1:
+                vals.append(series.get_f64(r))
+        if len(vals) == 0:
+            return float("nan")
+        sv = _rel_sort_f64(vals)
+        m = len(sv)
+        if m % 2 == 1:
+            return sv[m // 2]
+        return (sv[m // 2 - 1] + sv[m // 2]) / 2.0
     has_nulls = series.null_count() > 0
     # ===== f64 target =====
     if dt == DT_F64:

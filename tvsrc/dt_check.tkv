@@ -1,0 +1,119 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_datetime", "tokenvector_relational"]
+
+def run() -> "str":
+    # --- T1: parse round-trip ---
+    ms = dt_parse("2024-03-15 10:30:00.500")
+    print("t1 parse ms=", ms, " fmt=", dt_format(ms, ""))
+    if dt_format(ms, "") != "2024-03-15 10:30:00.500":
+        return "FAIL t1a: " + dt_format(ms, "")
+    if dt_format(ms, "%d/%m/%Y") != "15/03/2024":
+        return "FAIL t1b: " + dt_format(ms, "%d/%m/%Y")
+
+    # --- T2: parse date-only + Z + offset ---
+    m2 = dt_parse("2024-03-15")
+    if dt_format(m2, "%Y-%m-%d %H:%M:%S") != "2024-03-15 00:00:00":
+        return "FAIL t2a: " + dt_format(m2, "%Y-%m-%d %H:%M:%S")
+    m3 = dt_parse("2024-03-15T10:30:00Z")
+    if m3 != dt_parse("2024-03-15 10:30:00"):
+        return "FAIL t2b: Z khac khong Z"
+    m4 = dt_parse("2024-03-15 12:30:00+02:00")
+    if m4 != m3:
+        return "FAIL t2c: offset +/- khong quy ve UTC"
+
+    # --- T3: components ---
+    if dt_year(ms) != 2024 or dt_month(ms) != 3 or dt_day(ms) != 15:
+        return "FAIL t3a"
+    if dt_hour(ms) != 10 or dt_minute(ms) != 30 or dt_second(ms) != 0:
+        return "FAIL t3b"
+    if dt_millisecond(ms) != 500:
+        return "FAIL t3c"
+    # 2024-03-15 la Fri -> weekday=4
+    if dt_weekday(ms) != 4:
+        return "FAIL t3d weekday=" + str(dt_weekday(ms)) + " name=" + dt_day_name(ms)
+    if dt_day_name(ms) != "Fri" or dt_month_name(ms) != "Mar":
+        return "FAIL t3e"
+
+    # --- T4: leap year + mui thang ---
+    feb29 = dt_parse("2024-02-29")
+    if dt_format(feb29, "%Y-%m-%d") != "2024-02-29":
+        return "FAIL t4a"
+    nxt = dt_add_days(feb29, 1)
+    if dt_format(nxt, "%Y-%m-%d") != "2024-03-01":
+        return "FAIL t4b: " + dt_format(nxt, "%Y-%m-%d")
+
+    # --- T5: dt_range D / H / T ---
+    r1 = dt_range("2024-01-01", 5, "D")
+    if r1.length() != 5:
+        return "FAIL t5a"
+    if dt_format(r1.get_i64(3), "%Y-%m-%d") != "2024-01-04":
+        return "FAIL t5b: " + dt_format(r1.get_i64(3), "%Y-%m-%d")
+    r2 = dt_range("2024-01-01 00:00", 4, "90T")
+    if dt_format(r2.get_i64(1), "%H:%M") != "01:30":
+        return "FAIL t5c: " + dt_format(r2.get_i64(1), "%H:%M")
+
+    # --- T6: dt_range M (vi du thang cuoi) ---
+    r3 = dt_range("2024-01-31", 3, "M")
+    f3 = dt_format(r3.get_i64(0), "%Y-%m-%d") + "," + dt_format(r3.get_i64(1), "%Y-%m-%d") + "," + dt_format(r3.get_i64(2), "%Y-%m-%d")
+    if f3 != "2024-01-31,2024-02-29,2024-03-31":
+        return "FAIL t6: " + f3
+
+    # --- T7: resample 1T sum ---
+    tss = []
+    vss = []
+    for i in range(8):
+        tss.append(dt_parse("2024-01-01 00:00") + i * 30000)  # moi 30 giay
+        vss.append(float(i))
+    df = make_df([make_series_i64("ts", tss), make_series_f64("v", vss)])
+    rs = resample(df, "ts", "v", "1T", AGG_SUM)
+    print("resample rows=", rs.row_count())
+    # 8 diem trong 2 phut: bucket1 co ts[0..1] 0+1, bucket2 2+3, ...
+    rsc = rs.col_by_name("v")
+    if rs.row_count() != 4:
+        return "FAIL t7a rows=" + str(rs.row_count())
+    if rsc.get_f64(0) != 1.0 or rsc.get_f64(1) != 5.0 or rsc.get_f64(2) != 9.0 or rsc.get_f64(3) != 13.0:
+        return "FAIL t7b: " + str(rsc.get_f64(0)) + "," + str(rsc.get_f64(1)) + "," + str(rsc.get_f64(2)) + "," + str(rsc.get_f64(3))
+
+    # --- T8: resample mean + null duoc bo qua ---
+    v2 = [10.0, None, 30.0, None, 50.0, None, 70.0, None]
+    vals2 = []
+    for i in range(8):
+        vals2.append(v2[i])
+    df2 = make_df([make_series_i64("ts", tss), make_series_f64("v", vals2)])
+    rs2 = resample(df2, "ts", "v", "2T", AGG_MEAN)
+    rsv = rs2.col_by_name("v")
+    if rs2.row_count() != 2 or rsv.get_f64(0) != 20.0 or rsv.get_f64(1) != 60.0:
+        return "FAIL t8: rows=" + str(rs2.row_count()) + " v0=" + str(rsv.get_f64(0)) + " v1=" + str(rsv.get_f64(1))
+
+    # --- T9: resample M (bucket lich) ---
+    t9 = [dt_parse("2024-01-15"), dt_parse("2024-01-20"), dt_parse("2024-02-10"), dt_parse("2024-03-05")]
+    v9 = [1.0, 2.0, 3.0, 4.0]
+    df3 = make_df([make_series_i64("ts", t9), make_series_f64("v", v9)])
+    rs3 = resample(df3, "ts", "v", "1M", AGG_SUM)
+    rsv3 = rs3.col_by_name("v")
+    if rs3.row_count() != 3 or rsv3.get_f64(0) != 3.0 or rsv3.get_f64(1) != 3.0 or rsv3.get_f64(2) != 4.0:
+        return "FAIL t9"
+
+    # --- T10: series_dt_parse / dt_part / format ---
+    strs = ["2024-06-01", "2024-06-02 08:30", None]
+    df4 = make_df([make_series_str("s", strs)])
+    parsed = series_dt_parse(df4.col_by_name("s"))
+    if parsed.length() != 3 or parsed.is_null(2) != 1:
+        return "FAIL t10a"
+    mo = series_dt_part(parsed, "month")
+    if mo.get_i64(0) != 6 or mo.get_i64(1) != 6:
+        return "FAIL t10b"
+    back = series_dt_format(parsed, "%Y%m%d")
+    if back.get_string(0) != "20240601":
+        return "FAIL t10c: " + back.get_string(0)
+
+    # --- T11: asof_join voi cot datetime (i64) van chay ngon ---
+    left = make_df([make_series_str("sym", ["A", "A"]), make_series_i64("ts", [dt_parse("2024-01-01 09:30:01"), dt_parse("2024-01-01 09:30:05")])])
+    right = make_df([make_series_str("sym", ["A", "A"]), make_series_i64("ts", [dt_parse("2024-01-01 09:30:00"), dt_parse("2024-01-01 09:30:04")]), make_series_f64("px", [100.0, 101.0])])
+    joined = asof_join(left, right, "ts", "ts", "sym", ASOF_BACKWARD, 0 - 1.0, "_l", "_r")
+    jts = joined.col_by_name("px")
+    if joined.row_count() != 2 or jts.get_f64(0) != 100.0 or jts.get_f64(1) != 101.0:
+        return "FAIL t11"
+
+    print("dt_check: 11/11 PASS")
+    return "dt_check OK"

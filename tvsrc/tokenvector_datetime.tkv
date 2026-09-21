@@ -1,0 +1,606 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module DateTime
+# Nen thoi gian: i64 MILLISECONDS depuis Unix epoch (1970-01-01T00:00:00Z).
+# Ly do chon ms: - asof_join hien tai so sanh timestamp i64 (quy uoc ms la
+#   pho bien cho tick data); - khoang 292 ty nam phu kin; - nhan/chia nguyen
+#   an toan trong i64. `dt64` giu nguyen i64 nen toan bo engine (join, sort,
+#   groupby) hoat dong voi cot thoi gian KHONG can sua.
+# Moi ham THUAN (pure), khong trang thai, timezone duy nhat: UTC.
+# =============================================================================
+
+# --------------------- Ngay trong thang (khong nhuan) ------------------------
+# (tkvc: module-level list literal khong ho tro -> dung ham _mdays/_mnames/_dnames)
+def _mdays(m: "i32") -> "i32":
+    if m == 2:
+        return 28
+    if m == 4 or m == 6 or m == 9 or m == 11:
+        return 30
+    return 31
+
+
+def _mnames(m: "i32") -> "str":
+    names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return names[m - 1]
+
+
+def _dnames(d: "i32") -> "str":
+    # d: 0=Mon..6=Sun
+    names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    return names[d]
+
+# ------------------------------ Leap year ------------------------------------
+def _dt_is_leap(y: "i32") -> "i32":
+    if y % 4 != 0:
+        return 0
+    if y % 100 != 0:
+        return 1
+    if y % 400 == 0:
+        return 1
+    return 0
+
+
+def _dt_days_in_month(y: "i32", m: "i32") -> "i32":
+    if m == 2 and _dt_is_leap(y) == 1:
+        return 29
+    return _mdays(m)
+
+
+# So ngay depuis 1970-01-01 (proleptic Gregorian) -> (y, m, d)
+def _dt_civil_from_days(z: "i64") -> "list[i32]":
+    # Thuat toan Howard Hinnant (civil_from_days), i64; day 0 = 1970-01-01.
+    n = z + 719468
+    era = n // 146097
+    if n - era * 146097 < 0:
+        era = era - 1
+    doe = n - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    yy = yoe + era * 400
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    dd = doy - (153 * mp + 2) // 5 + 1
+    mm = mp + 3
+    if mp >= 10:
+        mm = mm - 12
+    if mm <= 2:
+        yy = yy + 1
+    return [yy, mm, dd]
+
+
+def _dt_days_from_civil(y: "i32", m: "i32", d: "i32") -> "i64":
+    # Howard Hinnant (algorithm days_from_civil), i64.
+    yy = y
+    if m <= 2:
+        yy = y - 1
+    era = yy // 400
+    if yy - era * 400 < 0:
+        era = era - 1
+    yoe = yy - era * 400
+    mp = m + 9
+    if m > 2:
+        mp = m - 3
+    doy = (153 * mp + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+
+# ============================ Parse & Format =================================
+# dt_parse("2024-03-15 10:30:00.500") -> i64 ms epoch
+# Chap nhan: "YYYY-MM-DD", "YYYY-MM-DD HH", "YYYY-MM-DD HH:MM",
+# "YYYY-MM-DD HH:MM:SS", them ".fff" (1-6 chu so) va phan cuoi "Z" / "+HH:MM"
+# (offset duoc tru di de tra ve UTC).
+def dt_parse(s: "str") -> "i64":
+    t = s.strip()
+    ln = len(t)
+    if ln < 10:
+        raise ValueError("dt_parse: chuoi qua ngan: " + s)
+    yy = int(t[0:4])
+    mm = int(t[5:7])
+    dd = int(t[8:10])
+    if mm < 1 or mm > 12 or dd < 1 or dd > _dt_days_in_month(yy, mm):
+        raise ValueError("dt_parse: ngay khong hop le: " + s)
+    hh = 0
+    mi = 0
+    ss = 0
+    ms = 0
+    off_ms = 0
+    i = 10
+    if i < ln and (t[i] == "T" or t[i] == " "):
+        i = i + 1
+        if i + 1 < ln:
+            hh = int(t[i:i + 2])
+            i = i + 2
+            if i < ln and t[i] == ":":
+                i = i + 1
+                mi = int(t[i:i + 2])
+                i = i + 2
+                if i < ln and t[i] == ":":
+                    i = i + 1
+                    ss = int(t[i:i + 2])
+                    i = i + 2
+                    if i < ln and t[i] == ".":
+                        j = i + 1
+                        while j < ln and t[j] >= "0" and t[j] <= "9":
+                            j = j + 1
+                        frac = t[i + 1:j]
+                        ms = int(frac)
+                        # 1 chu so -> x100, 2 chu so -> x10, 3+ -> lam tron ms
+                        fl = len(frac)
+                        if fl == 1:
+                            ms = ms * 100
+                        elif fl == 2:
+                            ms = ms * 10
+                        elif fl > 3:
+                            ms = int(frac[0:3])
+                        i = j
+        if i < ln:
+            c = t[i]
+            if c == "Z" or c == "z":
+                i = i + 1
+            elif c == "+" or c == "-":
+                sgn = 1
+                if c == "-":
+                    sgn = 0 - 1
+                oh = int(t[i + 1:i + 3])
+                om = 0
+                if i + 3 < ln and t[i + 3] == ":":
+                    om = int(t[i + 4:i + 6])
+                off_ms = sgn * (oh * 3600000 + om * 60000)
+                i = i + 6
+    if i < ln:
+        raise ValueError("dt_parse: ky tu du khong xac dinh: " + s)
+    if hh > 23 or mi > 59 or ss > 60:
+        raise ValueError("dt_parse: gio phut giay khong hop le: " + s)
+    days = _dt_days_from_civil(yy, mm, dd)
+    return days * 86400000 + hh * 3600000 + mi * 60000 + ss * 1000 + ms - off_ms
+
+
+def _dt_pad2(v: "i32") -> "str":
+    if v < 10:
+        return "0" + str(v)
+    return str(v)
+
+
+def _dt_pad3(v: "i32") -> "str":
+    if v < 10:
+        return "00" + str(v)
+    if v < 100:
+        return "0" + str(v)
+    return str(v)
+
+
+# dt_format(ms, fmt) - fmt giong Python strftime co ban:
+# %Y %m %d %H %M %S %f (ms 3 chu so) %b %p %Z(luon "UTC") %% ; "" -> ISO full
+def dt_format(ms: "i64", fmt: "str") -> "str":
+    day0 = ms // 86400000
+    rem = ms - day0 * 86400000
+    if rem < 0:
+        rem = rem + 86400000
+        day0 = day0 - 1
+    ymd = _dt_civil_from_days(day0)
+    yy = ymd[0]
+    mm = ymd[1]
+    dd = ymd[2]
+    hh = rem // 3600000
+    rem2 = rem - hh * 3600000
+    mi = rem2 // 60000
+    rem3 = rem2 - mi * 60000
+    ss = rem3 // 1000
+    msss = rem3 - ss * 1000
+    if fmt == "":
+        return str(yy) + "-" + _dt_pad2(mm) + "-" + _dt_pad2(dd) + " " + _dt_pad2(hh) + ":" + _dt_pad2(mi) + ":" + _dt_pad2(ss) + "." + _dt_pad3(msss)
+    out = ""
+    k = 0
+    ln = len(fmt)
+    while k < ln:
+        ch = fmt[k]
+        if ch == "%" and k + 1 < ln:
+            code = fmt[k + 1]
+            if code == "Y":
+                out = out + str(yy)
+            elif code == "m":
+                out = out + _dt_pad2(mm)
+            elif code == "d":
+                out = out + _dt_pad2(dd)
+            elif code == "H":
+                out = out + _dt_pad2(hh)
+            elif code == "M":
+                out = out + _dt_pad2(mi)
+            elif code == "S":
+                out = out + _dt_pad2(ss)
+            elif code == "f":
+                out = out + _dt_pad3(msss)
+            elif code == "b":
+                out = out + _mnames(mm)
+            elif code == "p":
+                if hh < 12:
+                    out = out + "AM"
+                else:
+                    out = out + "PM"
+            elif code == "Z":
+                out = out + "UTC"
+            elif code == "%":
+                out = out + "%"
+            else:
+                out = out + ch + code
+            k = k + 2
+        else:
+            out = out + ch
+            k = k + 1
+    return out
+
+
+# ISO mac dinh cho column repr
+def dt_format_iso(ms: "i64") -> "str":
+    return dt_format(ms, "")
+
+
+# ============================ Component access ===============================
+def dt_year(ms: "i64") -> "i32":
+    return _dt_civil_from_days(ms // 86400000)[0]
+
+
+def dt_month(ms: "i64") -> "i32":
+    return _dt_civil_from_days(ms // 86400000)[1]
+
+
+def dt_day(ms: "i64") -> "i32":
+    return _dt_civil_from_days(ms // 86400000)[2]
+
+
+def dt_hour(ms: "i64") -> "i32":
+    rem = ms % 86400000
+    if rem < 0:
+        rem = rem + 86400000
+    return rem // 3600000
+
+
+def dt_minute(ms: "i64") -> "i32":
+    rem = ms % 86400000
+    if rem < 0:
+        rem = rem + 86400000
+    return (rem // 60000) % 60
+
+
+def dt_second(ms: "i64") -> "i32":
+    rem = ms % 86400000
+    if rem < 0:
+        rem = rem + 86400000
+    return (rem // 1000) % 60
+
+
+def dt_millisecond(ms: "i64") -> "i32":
+    rem = ms % 86400000
+    if rem < 0:
+        rem = rem + 86400000
+    return rem % 1000
+
+
+# Thu trong tuan: 0=Mon .. 6=Sun (giong pandas dayofweek)
+def dt_weekday(ms: "i64") -> "i32":
+    day0 = ms // 86400000
+    wd = day0 % 7
+    if wd < 0:
+        wd = wd + 7
+    # 1970-01-01 = Thursday. Civil epoch -> weekday thu: Mon=0
+    wd = wd + 3
+    if wd >= 7:
+        wd = wd - 7
+    return wd
+
+
+def dt_day_name(ms: "i64") -> "str":
+    return _dnames(dt_weekday(ms))
+
+
+def dt_month_name(ms: "i64") -> "str":
+    return _mnames(dt_month(ms))
+
+
+# ============================== Arithmetic ===================================
+def dt_add_days(ms: "i64", k: "i32") -> "i64":
+    return ms + k * 86400000
+
+
+def dt_add_hours(ms: "i64", k: "i32") -> "i64":
+    return ms + k * 3600000
+
+
+def dt_add_minutes(ms: "i64", k: "i32") -> "i64":
+    return ms + k * 60000
+
+
+def dt_add_seconds(ms: "i64", k: "i32") -> "i64":
+    return ms + k * 1000
+
+
+def dt_diff_days(a: "i64", b: "i64") -> "i64":
+    return (a - b) // 86400000
+
+
+# ============================== dt_range =====================================
+# Sinh day moc thoi gian deu nhau tu start, buoc "n<unit>".
+# unit: "D" ngay, "H" gio, "T"/"min" phut, "S" giay, "W" tuan, "M" thang,
+# "Y" nam (M/Y theo lich - moi buoc tinh lai tu ngay dau, giong pandas).
+# Tra ve Series i64 ten "ts".
+def dt_range(start: "str", periods: "i32", freq: "str") -> "Series":
+    ms0 = dt_parse(start)
+    nu = len(freq)
+    if nu < 1:
+        raise ValueError("dt_range: freq rong")
+    num = 1
+    unit = freq
+    if nu > 1 and freq[0] >= "0" and freq[0] <= "9":
+        # so buoc nam truoc: "3D", "15T"...
+        j = 0
+        while j < nu and freq[j] >= "0" and freq[j] <= "9":
+            j = j + 1
+        num = int(freq[0:j])
+        unit = freq[j:]
+    vals = []
+    cur_y = dt_year(ms0)
+    cur_m = dt_month(ms0)
+    cur_d = dt_day(ms0)
+    tod = ms0 % 86400000  # thoi diem trong ngay (gio:phut:giay.ms)
+    cur = ms0
+    for i in range(periods):
+        vals.append(cur)
+        if unit == "M":
+            cur_m = cur_m + num
+            while cur_m > 12:
+                cur_m = cur_m - 12
+                cur_y = cur_y + 1
+            dmax = _dt_days_in_month(cur_y, cur_m)
+            d_eff = cur_d
+            if d_eff > dmax:
+                d_eff = dmax
+            cur = _dt_days_from_civil(cur_y, cur_m, d_eff) * 86400000 + tod
+        elif unit == "Y":
+            cur_y = cur_y + num
+            dmax = _dt_days_in_month(cur_y, cur_m)
+            d_eff = cur_d
+            if d_eff > dmax:
+                d_eff = dmax
+            cur = _dt_days_from_civil(cur_y, cur_m, d_eff) * 86400000 + tod
+        elif unit == "W":
+            cur = cur + num * 604800000
+        elif unit == "D":
+            cur = cur + num * 86400000
+        elif unit == "H":
+            cur = cur + num * 3600000
+        elif unit == "T" or unit == "min":
+            cur = cur + num * 60000
+        elif unit == "S":
+            cur = cur + num * 1000
+        else:
+            raise ValueError("dt_range: freq unit khong ho tro: " + unit)
+    return make_series_i64("ts", vals)
+
+
+# ============================== Resample =====================================
+# Gom cot thoi gian i64 "ts_col" + cot gia tri f64 "val_col" thanh cac bucket
+# freq (dt_range), moi bucket 1 gia tri agg. Mo moc moc bucket dong trai.
+# agg_type: AGG_SUM/MEAN/MIN/MAX/COUNT (dung bang hang so module relational).
+def resample(df: "DataFrame", ts_col: "str", val_col: "str", freq: "str", agg_type: "i32") -> "DataFrame":
+    tc = df.col_by_name(ts_col)
+    vc = df.col_by_name(val_col)
+    n = tc.length()
+    if n == 0:
+        return empty_df()
+    if tc.dtype != DT_I64:
+        raise ValueError("resample: cot thoi gian phai la i64 (epoch ms)")
+    t0 = tc.get_i64(0)
+    for i in range(1, n):
+        v = tc.get_i64(i)
+        if v < t0:
+            t0 = v
+    # mo moc bucket dau tien: khoi phuoc y/m/d de dua bucket ve ranh thuan
+    y = dt_year(t0)
+    m = dt_month(t0)
+    d = dt_day(t0)
+    h = dt_hour(t0)
+    unit = freq[len(freq) - 1]
+    num = 1
+    if len(freq) > 1 and freq[0] >= "0" and freq[0] <= "9":
+        num = int(freq[0:len(freq) - 1])
+    if unit == "M":
+        b0 = _dt_days_from_civil(y, m, 1) * 86400000
+    elif unit == "Y":
+        b0 = _dt_days_from_civil(y, 1, 1) * 86400000
+    elif unit == "D" or unit == "W":
+        b0 = _dt_days_from_civil(y, m, d) * 86400000
+    elif unit == "H":
+        b0 = _dt_days_from_civil(y, m, d) * 86400000 + h * 3600000
+    elif unit == "T" or unit == "min":
+        day0 = _dt_days_from_civil(y, m, d) * 86400000
+        b0 = t0 - ((t0 - day0) % (num * 60000))
+    elif unit == "S":
+        day0 = _dt_days_from_civil(y, m, d) * 86400000
+        b0 = t0 - ((t0 - day0) % (num * 1000))
+    else:
+        raise ValueError("resample: freq unit khong ho tro: " + unit)
+    # kich thuoc bucket giay/D/H/T/S la hang so; M/Y bien thien - xu ly rieng
+    if unit == "M" or unit == "Y":
+        # di tung bucket lich
+        out_t = []
+        out_v = []
+        cy = y
+        cm = m
+        if unit == "Y":
+            cm = 1
+        if unit == "M":
+            cm = ((cm - 1) // num) * num + 1
+        cap = 1
+        while cap == 1:
+            ny = cy
+            nm2 = cm
+            if unit == "Y":
+                ny = cy + num
+            else:
+                nm2 = cm + num
+                while nm2 > 12:
+                    nm2 = nm2 - 12
+                    ny = ny + 1
+            bend = _dt_days_from_civil(ny, nm2, 1) * 86400000
+            # gather rows in [b0, bend)
+            vals = []
+            for i in range(n):
+                tv = tc.get_i64(i)
+                if tv >= b0 and tv < bend and vc.is_null(i) == 0:
+                    vals.append(vc.get_f64(i))
+            if len(vals) > 0:
+                out_t.append(b0)
+                out_v.append(_dt_agg_reduce(vals, agg_type))
+            if bend > tc.get_i64(n - 1):
+                cap = 0
+            b0 = bend
+            cy = ny
+            cm = nm2
+        return make_df([make_series_i64("ts", out_t), make_series_f64(val_col, out_v)])
+    step = num * 1000
+    if unit == "T" or unit == "min":
+        step = num * 60000
+    elif unit == "H":
+        step = num * 3600000
+    elif unit == "D":
+        step = num * 86400000
+    elif unit == "W":
+        step = num * 604800000
+    # fixed-size: diem tung dong 1 lan (O(n))
+    total = (tc.get_i64(n - 1) - b0) // step + 1
+    sums = []
+    cnts = []
+    fmin = []
+    fmax = []
+    for i in range(total):
+        sums.append(0.0)
+        cnts.append(0)
+        fmin.append(0.0)
+        fmax.append(0.0)
+    for i in range(n):
+        tv = tc.get_i64(i)
+        if vc.is_null(i) == 1:
+            continue
+        b = (tv - b0) // step
+        if b < 0:
+            continue
+        x = vc.get_f64(i)
+        sums[b] = sums[b] + x
+        cnts[b] = cnts[b] + 1
+        if cnts[b] == 1:
+            fmin[b] = x
+            fmax[b] = x
+        else:
+            if x < fmin[b]:
+                fmin[b] = x
+            if x > fmax[b]:
+                fmax[b] = x
+    out_t = []
+    out_v = []
+    for b in range(total):
+        if cnts[b] > 0:
+            out_t.append(b0 + b * step)
+            if agg_type == AGG_SUM:
+                out_v.append(sums[b])
+            elif agg_type == AGG_MEAN:
+                out_v.append(sums[b] / float(cnts[b]))
+            elif agg_type == AGG_MIN:
+                out_v.append(fmin[b])
+            elif agg_type == AGG_MAX:
+                out_v.append(fmax[b])
+            elif agg_type == AGG_COUNT:
+                out_v.append(float(cnts[b]))
+            else:
+                out_v.append(sums[b] / float(cnts[b]))
+    return make_df([make_series_i64("ts", out_t), make_series_f64(val_col, out_v)])
+
+
+def _dt_agg_reduce(vals: "list[f64]", agg_type: "i32") -> "f64":
+    total = 0.0
+    smin = vals[0]
+    smax = vals[0]
+    for i in range(len(vals)):
+        x = vals[i]
+        total = total + x
+        if x < smin:
+            smin = x
+        if x > smax:
+            smax = x
+    if agg_type == AGG_SUM:
+        return total
+    if agg_type == AGG_MEAN:
+        return total / float(len(vals))
+    if agg_type == AGG_MIN:
+        return smin
+    if agg_type == AGG_MAX:
+        return smax
+    if agg_type == AGG_COUNT:
+        return float(len(vals))
+    return total / float(len(vals))
+
+
+# ======================= Series helpers (map per-row) ========================
+def series_dt_parse(s: "Series") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_dt_parse: cot dau vao phai la str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+        else:
+            vals.append(dt_parse(s.get_string(i)))
+            mk.set(i, 1)
+    out = make_series_i64_with_mask("ts", vals, mk)
+    return out
+
+
+def series_dt_format(s: "Series", fmt: "str") -> "Series":
+    if s.dtype != DT_I64:
+        raise ValueError("series_dt_format: cot dau vao phai la i64 epoch ms")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+        else:
+            vals.append(dt_format(s.get_i64(i), fmt))
+            mk.set(i, 1)
+    return make_series_str_with_mask("dt", vals, mk)
+
+
+def series_dt_part(s: "Series", which: "str") -> "Series":
+    # which: "year"|"month"|"day"|"hour"|"minute"|"second"|"weekday"|"ms"
+    if s.dtype != DT_I64:
+        raise ValueError("series_dt_part: cot dau vao phai la i64 epoch ms")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        v = s.get_i64(i)
+        mk.set(i, 1)
+        if which == "year":
+            vals.append(dt_year(v))
+        elif which == "month":
+            vals.append(dt_month(v))
+        elif which == "day":
+            vals.append(dt_day(v))
+        elif which == "hour":
+            vals.append(dt_hour(v))
+        elif which == "minute":
+            vals.append(dt_minute(v))
+        elif which == "second":
+            vals.append(dt_second(v))
+        elif which == "weekday":
+            vals.append(dt_weekday(v))
+        elif which == "ms":
+            vals.append(dt_millisecond(v))
+        else:
+            raise ValueError("series_dt_part: khong biet phan: " + which)
+    return make_series_i64_with_mask(s.name + "_" + which, vals, mk)
+

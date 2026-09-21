@@ -1,0 +1,196 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module Sort bo sung
+# sort_by_multi(df, [names], [asc]) - multi-key stable merge sort O(n log n).
+# Moi row duoc gom lai thanh 1 list key f64 (null thanh 1 cong voi +inf de
+# luon ve cuoi, giong sort_by hien tai). So sanh lexicographic tung cap key.
+# =============================================================================
+class RowKey2:
+    keys: "list[f64]"
+    idx: "i32"
+    n_null_lead: "i32"  # so key null lien tiep dau (de uu tien sap ve cuoi)
+
+
+def _sk2_before(a: "RowKey2", b: "RowKey2", asc: "list[i32]", nk: "i32") -> "i32":
+    # 1 neu a nen dung truoc b. Null key dua ve CUOI trong moi cap so sanh
+    # (moi key bi chuyen thanh +inf khi null nen inf > moi gia tri; voi
+    # ascending = 0 thi inf la be nhat tu nhien - van nam cuoi theo y nghia
+    # "null cuoi" chu khong theo chieu sap xep).
+    for k in range(nk):
+        av = a.keys[k]
+        bv = b.keys[k]
+        if av == bv:
+            continue
+        a_inf = 0
+        if av >= float("inf"):
+            a_inf = 1
+        b_inf = 0
+        if bv >= float("inf"):
+            b_inf = 1
+        if a_inf == 1 and b_inf == 1:
+            continue
+        if a_inf == 1:
+            return 0
+        if b_inf == 1:
+            return 1
+        if asc[k] == 1:
+            if av < bv:
+                return 1
+            return 0
+        if av > bv:
+            return 1
+        return 0
+    return a.idx <= b.idx
+
+
+def _ms_sk2(items: "list[RowKey2]", asc: "list[i32]", nk: "i32") -> "list[RowKey2]":
+    n = len(items)
+    if n <= 1:
+        return items
+    mid = n // 2
+    left = []
+    right = []
+    for i in range(mid):
+        left.append(items[i])
+    for i in range(mid, n):
+        right.append(items[i])
+    ls = _ms_sk2(left, asc, nk)
+    rs = _ms_sk2(right, asc, nk)
+    out = []
+    li = 0
+    ri = 0
+    nl = len(ls)
+    nr = len(rs)
+    while li < nl and ri < nr:
+        if _sk2_before(ls[li], rs[ri], asc, nk) == 1:
+            out.append(ls[li])
+            li = li + 1
+        else:
+            out.append(rs[ri])
+            ri = ri + 1
+    while li < nl:
+        out.append(ls[li])
+        li = li + 1
+    while ri < nr:
+        out.append(rs[ri])
+        ri = ri + 1
+    return out
+
+
+class RowKeyStr:
+    val: "str"
+    idx: "i32"
+    is_null: "i32"
+
+
+def _rks_before(a: "RowKeyStr", b: "RowKeyStr", ascending: "i32") -> "i32":
+    # 1 neu a dung truoc b; null ve cuoi; so sanh chuoi lexicographic (ascii)
+    if a.is_null == 1 and b.is_null == 1:
+        return a.idx <= b.idx
+    if a.is_null == 1:
+        return 0
+    if b.is_null == 1:
+        return 1
+    if ascending == 1:
+        if a.val <= b.val:
+            return 1
+        return 0
+    if a.val >= b.val:
+        return 1
+    return 0
+
+
+def _ms_rks(items: "list[RowKeyStr]", ascending: "i32") -> "list[RowKeyStr]":
+    n = len(items)
+    if n <= 1:
+        return items
+    mid = n // 2
+    left = []
+    right = []
+    for i in range(mid):
+        left.append(items[i])
+    for i in range(mid, n):
+        right.append(items[i])
+    ls = _ms_rks(left, ascending)
+    rs = _ms_rks(right, ascending)
+    out = []
+    li = 0
+    ri = 0
+    nl = len(ls)
+    nr = len(rs)
+    while li < nl and ri < nr:
+        if _rks_before(ls[li], rs[ri], ascending) == 1:
+            out.append(ls[li])
+            li = li + 1
+        else:
+            out.append(rs[ri])
+            ri = ri + 1
+    while li < nl:
+        out.append(ls[li])
+        li = li + 1
+    while ri < nr:
+        out.append(rs[ri])
+        ri = ri + 1
+    return out
+
+
+def _sort_df_by_col(df: "DataFrame", col: "Series", ascending: "i32") -> "DataFrame":
+    # 1 luot sort DF theo 1 cot da lay ra; ho tro key str (qua RowKeyStr)
+    # va numeric (delegates lai sort_by cua DataFrame de dung fast path).
+    n = df.row_count()
+    if col.dtype == DT_STR:
+        vals = []
+        for i in range(n):
+            if col.is_null(i) == 1:
+                vals.append(RowKeyStr("", i, 1))
+            else:
+                vals.append(RowKeyStr(col.get_string(i), i, 0))
+        sorted_pairs = _ms_rks(vals, ascending)
+        row_indices = []
+        for i in range(n):
+            rk_i = sorted_pairs[i]
+            row_indices.append(rk_i.idx)
+        new_cols = []
+        for i in range(len(df.cols)):
+            c = df.cols[i]
+            new_cols.append(c.take(row_indices))
+        out = DataFrame()
+        out.cols = new_cols
+        return out
+    return df.sort_by(col.name, ascending)
+
+
+def sort_by_multi(df: "DataFrame", names: "list[str]", ascending: "list[i32]") -> "DataFrame":
+    # Multi-key stable sort bang multi-pass: sort theo key CUOI truoc, roi lan
+    # luot ve key DAU (merge sort moi luot stable nen thu tu luot truoc duoc giu).
+    if len(names) != len(ascending):
+        raise ValueError("sort_by_multi: names va ascending phai bang nhau")
+    out = df.clone_df()
+    k = len(names)
+    while k > 0:
+        k = k - 1
+        out = _sort_df_by_col(out, out.col_by_name(names[k]), ascending[k])
+    return out
+
+
+# Convenience: top-n theo nhieu key (nlargest/nsmallest)
+def df_nlargest(df: "DataFrame", name: "str", n: "i32") -> "DataFrame":
+    names = []
+    names.append(name)
+    asc = []
+    asc.append(0)
+    sorted_df = sort_by_multi(df, names, asc)
+    if n >= sorted_df.row_count():
+        return sorted_df
+    return sorted_df.slice_df(0, n)
+
+
+def df_nsmallest(df: "DataFrame", name: "str", n: "i32") -> "DataFrame":
+    names = []
+    names.append(name)
+    asc = []
+    asc.append(1)
+    sorted_df = sort_by_multi(df, names, asc)
+    if n >= sorted_df.row_count():
+        return sorted_df
+    return sorted_df.slice_df(0, n)

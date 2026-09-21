@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module Stats bo sung
+# series_corr / series_cov / series_skew / series_kurt / series_nunique
+# - corr/cov: 1 pass Welford chap (mean x, mean y, co-variance cung luc)
+# - skew/kurt: adjusted Fisher-Pearson (khop pandas Series.skew()/kurt()
+#   mac dinh - bias correction G1/G2)
+# - nunique: dem gia tri phan biet (chuoi gia tri trong dict)
+# Can ham tu tokenvector_data: DT_I64/DT_F64/DT_BOOL, series_trim helper o day.
+# =============================================================================
+
+# Lay gia tri f64 tai i neu khac null, tra is_valid
+def _st_val_at(s: "Series", i: "i32") -> "list[f64]":
+    if s.is_null(i) == 1:
+        return [0.0, 0]
+    if s.dtype == DT_I64:
+        return [float(s.i64s[i]), 1]
+    if s.dtype == DT_BOOL:
+        if s.bools[i] == 1:
+            return [1.0, 1]
+        return [0.0, 1]
+    return [s.f64s[i], 1]
+
+
+def series_cov(a: "Series", b: "Series", ddof: "i32") -> "f64":
+    na = a.length()
+    if b.length() != na:
+        raise ValueError("series_cov: do dai 2 Series phai bang nhau")
+    cnt = 0
+    mx = 0.0
+    my = 0.0
+    cm2 = 0.0
+    for i in range(na):
+        ra = _st_val_at(a, i)
+        rb = _st_val_at(b, i)
+        if ra[1] == 1 and rb[1] == 1:
+            x = ra[0]
+            y = rb[0]
+            cnt = cnt + 1
+            dx = x - mx
+            my = my + (y - my) / float(cnt)
+            mx = mx + dx / float(cnt)
+            cm2 = cm2 + dx * (y - my)
+    if cnt <= ddof:
+        return float("nan")
+    return cm2 / float(cnt - ddof)
+
+
+def series_corr(a: "Series", b: "Series") -> "f64":
+    # Pearson r tu Welford chap: cov / (sx * sy)
+    na = a.length()
+    if b.length() != na:
+        raise ValueError("series_corr: do dai 2 Series phai bang nhau")
+    cnt = 0
+    mx = 0.0
+    my = 0.0
+    cm2 = 0.0
+    vx = 0.0
+    vy = 0.0
+    for i in range(na):
+        ra = _st_val_at(a, i)
+        rb = _st_val_at(b, i)
+        if ra[1] == 1 and rb[1] == 1:
+            x = ra[0]
+            y = rb[0]
+            cnt = cnt + 1
+            dx = x - mx
+            dy = y - my
+            my = my + dy / float(cnt)
+            mx = mx + dx / float(cnt)
+            cm2 = cm2 + dx * (y - my)
+            vx = vx + dx * (x - mx)
+            vy = vy + dy * (y - my)
+    if cnt < 2:
+        return float("nan")
+    if vx <= 0.0 or vy <= 0.0:
+        return float("nan")
+    return cm2 / (vx ** 0.5 * vy ** 0.5)
+
+
+# Thu tu thu 3/4: adjusted Fisher-Pearson giong pandas (bias=True nen G1/G2)
+def series_skew(s: "Series") -> "f64":
+    n = s.length()
+    cnt = 0
+    total = 0.0
+    for i in range(n):
+        r = _st_val_at(s, i)
+        if r[1] == 1:
+            cnt = cnt + 1
+            total = total + r[0]
+    if cnt < 3:
+        return float("nan")
+    fcnt = float(cnt)
+    mean = total / fcnt
+    m2 = 0.0
+    m3 = 0.0
+    for i in range(n):
+        r = _st_val_at(s, i)
+        if r[1] == 1:
+            d = r[0] - mean
+            d2 = d * d
+            m2 = m2 + d2
+            m3 = m3 + d2 * d
+    m2 = m2 / fcnt
+    m3 = m3 / fcnt
+    if m2 <= 0.0:
+        return float("nan")
+    # adjusted G1 = sqrt(n(n-1))/(n-2) * m3/m2^1.5
+    g1 = (fcnt * (fcnt - 1.0)) ** 0.5 / (fcnt - 2.0) * m3 / (m2 ** 1.5)
+    return g1
+
+
+def series_kurt(s: "Series") -> "f64":
+    n = s.length()
+    cnt = 0
+    total = 0.0
+    for i in range(n):
+        r = _st_val_at(s, i)
+        if r[1] == 1:
+            cnt = cnt + 1
+            total = total + r[0]
+    if cnt < 4:
+        return float("nan")
+    fcnt = float(cnt)
+    mean = total / fcnt
+    m2 = 0.0
+    m4 = 0.0
+    for i in range(n):
+        r = _st_val_at(s, i)
+        if r[1] == 1:
+            d = r[0] - mean
+            d2 = d * d
+            m2 = m2 + d2
+            m4 = m4 + d2 * d2
+    m2 = m2 / fcnt
+    m4 = m4 / fcnt
+    if m2 <= 0.0:
+        return float("nan")
+    # adjusted G2 = ((n+1)n/((n-1)(n-2)(n-3))) * m4/m2^2 - 3(n-1)^2/((n-2)(n-3))
+    a1 = ((fcnt + 1.0) * fcnt) / ((fcnt - 1.0) * (fcnt - 2.0) * (fcnt - 3.0))
+    a2 = 3.0 * (fcnt - 1.0) * (fcnt - 1.0) / ((fcnt - 2.0) * (fcnt - 3.0))
+    return a1 * m4 / (m2 * m2) - a2
+
+
+def series_nunique(s: "Series") -> "i32":
+    n = s.length()
+    seen = {}
+    total = 0
+    for i in range(n):
+        if s.is_null(i) == 1:
+            continue
+        k = s.get_string(i)
+        if k in seen:
+            continue
+        seen[k] = 1
+        total = total + 1
+    return total
+
+
+# DataFrame-level helpers
+def df_corr_matrix(df: "DataFrame") -> "DataFrame":
+    # Correlation matrix giua cac cot numeric (i64/f64) - Output: DataFrame
+    # cot "col" (ten) + 1 cot moi cho tung cot numeric (theo thu tu).
+    names = []
+    num_cols = []
+    for i in range(df.column_count()):
+        c = df.col_at(i)
+        if c.dtype == DT_F64 or c.dtype == DT_I64:
+            names.append(c.name)
+            num_cols.append(c)
+    nk = len(num_cols)
+    out_cols = [make_series_str("col", names)]
+    for j in range(nk):
+        row = []
+        cj = num_cols[j]
+        for i in range(nk):
+            ci = num_cols[i]
+            if i == j:
+                row.append(1.0)
+            else:
+                row.append(series_corr(ci, cj))
+        out_cols.append(make_series_f64(names[j], row))
+    return make_df(out_cols)
