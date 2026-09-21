@@ -110,7 +110,7 @@
 | :--- | :--- | :--- |
 | `df.groupby([k1,k2]).agg({...})` | `groupby_agg(df, [keys], [make_agg…])` | ✅ đa key, đa agg |
 | `groupby().transform` | ❌ | Thiếu |
-| `groupby().apply(func)` | ❌ | Thiếu |
+| `groupby().apply(func)` | `groupby_apply(df, keys, f, keep_key_cols)` — gọi hàm TKV/lambda trên sub-DF mỗi nhóm, tự chèn lại key nếu f bỏ | ✅ (v1.3) |
 | `groupby().filter` | ❌ | Thiếu |
 | `groupby().size / nunique` | ❌ (count có qua agg) | nunique thiếu |
 | `groupby().head/tail` | ❌ | Thiếu |
@@ -260,6 +260,20 @@ Regression: 15/15 suite xanh. DLL v1.2 rebuild + verify reflection
 `cond ? a : b` (Python `a if c else b` chỉ hợp lệ ở tầng parse, không parse
 ở tầng IL); chain-method trên kết quả gọi hàm (`f(x).m()`) phải gán biến
 trung gian. Cả 2 đã tránh trong code library.
+
+## 3c. v1.3 — 2026-09-21: groupby().apply + string API trọn bộ
+
+| Thay đổi | Chi tiết |
+| :--- | :--- |
+| `groupby_apply` (relational) | pandas `groupby(keys).apply(f)` — sub-DataFrame mỗi nhóm, f trả DF tùy ý, `concat_vertical` kết quả; `keep_key_cols=1` tự chèn lại key khi f bỏ key; hỗ trợ multi-key + lambda |
+| String ops mới (strings) | `series_str_title/capitalize/lower/upper`, `series_str_rsplit_get`, `series_str_join`, `series_str_isdigit/isalpha/isalnum`, `series_str_startswith/endswith`, `series_str_replace` (literal) |
+| **Fix bug `Series.take`** (data) | bản cũ khởi tạo thiếu buffer cho I64/STR/BOOL qua đường ctor trực tiếp — giá trị bị lạc khi gọi lại `col_by_name`; giờ dựng qua helper `make_series_*_with_mask` đủ 4 buffer + mask đúng |
+| **Compiler tkvc: `func()` nhận record type** | `func(DataFrame)->DataFrame` trước đây chỉ scalar; giờ parser (typed_dsl_parser) + il_type_str/`_il_scalar_or_handle`/`_compile_funcref_arg`/`_compile_funcref_call` nhận record/extern_class — mở khóa callback truyền nhận object |
+
+Tests: `apply_check` 9/9 (thêm A7–A9 groupby_apply), `strings_check` 10/10
+(thêm T9–T10). Regression 15/15 suite xanh. DLL v1.3 rebuild (167KB), verify
+reflection: `re_test`, `series_str_title`, `groupby_apply`. Tổng parity ước
+tính **~70–75%** pandas cho workload tabular.
 
 ## 4. Cách kiểm chứng lại
 

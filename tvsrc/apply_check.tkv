@@ -40,6 +40,27 @@ def _mk_v() -> "Series":
     return make_series_f64_with_mask("v", [1.0, 0.0, 3.0, -4.0, 5.0], mk)
 
 
+def _sum_group_w(g: "DataFrame") -> "DataFrame":
+    total = series_sum(g.col_by_name("w"))
+    out_vals = []
+    out_vals.append(total)
+    return make_df([make_series_f64("v_sum", out_vals)])
+
+
+def _sum_group(g: "DataFrame") -> "DataFrame":
+    # tra ve DF 1 dong: tong cot v cua nhom
+    total = series_reduce(g.col_by_name("v"), _add, 0.0)
+    out_vals = []
+    out_vals.append(total)
+    return make_df([make_series_f64("v_sum", out_vals)])
+
+
+def _keep_filter(g: "DataFrame") -> "DataFrame":
+    # giu chi hang v > 0 (test f GIU cot khoa)
+    ks2 = []
+    ks2.append("v")
+    return df_filter_rows(g, "v", _is_pos)
+
 def run() -> "str":
     s = _mk_v()
 
@@ -103,5 +124,45 @@ def run() -> "str":
     if vs.get_string(0) != "[ab]" or vs.is_null(1) != 1 or vs.get_string(2) != "[cde]":
         return "FAIL a6"
 
-    print("apply_check: 6/6 PASS")
+    # --- A7: groupby_apply (f bo cot khoa -> tu chen lai) ---
+    df7 = make_df([
+        make_series_str("k", ["a", "a", "b", "b", "b"]),
+        _mk_v(),
+    ])
+    keys7 = []
+    keys7.append("k")
+    g1 = groupby_apply(df7, keys7, _sum_group, 1)
+    if g1.row_count() != 2 or g1.column_count() != 2:
+        return "FAIL a7 rows=" + str(g1.row_count())
+    g1k = g1.col_by_name("k")
+    g1v = g1.col_by_name("v_sum")
+    # nhom a = [1.0, NULL] -> sum 1.0 ; nhom b = [3.0, -4.0, 5.0] -> sum 4.0
+    if g1k.get_string(0) != "a" or g1v.get_f64(0) != 1.0:
+        return "FAIL a7a k=" + g1k.get_string(0) + " v=" + str(g1v.get_f64(0))
+    if g1k.get_string(1) != "b" or g1v.get_f64(1) != 4.0:
+        return "FAIL a7b"
+    # --- A8: groupby_apply voi lambda + f GIU cot khoa ---
+    g2 = groupby_apply(df7, keys7, lambda g: _keep_filter(g), 1)
+    if g2.row_count() != 3:
+        return "FAIL a8 rows=" + str(g2.row_count())
+    # --- A9: groupby_apply multi-key ---
+    df9 = make_df([
+        make_series_str("k1", ["a", "a", "b", "b"]),
+        make_series_str("k2", ["x", "x", "x", "y"]),
+        make_series_f64("w", [1.0, 2.0, 3.0, 4.0]),
+    ])
+    keys9 = []
+    keys9.append("k1")
+    keys9.append("k2")
+    g3 = groupby_apply(df9, keys9, _sum_group_w, 1)
+    if g3.row_count() != 3:
+        return "FAIL a9 rows=" + str(g3.row_count())
+    g3k2 = g3.col_by_name("k2")
+    g3w = g3.col_by_name("v_sum")
+    if g3w.get_f64(0) != 3.0 or g3w.get_f64(1) != 3.0 or g3w.get_f64(2) != 4.0:
+        return "FAIL a9 vals"
+    if g3k2.get_string(2) != "y":
+        return "FAIL a9 key"
+
+    print("apply_check: 9/9 PASS")
     return "apply_check OK"

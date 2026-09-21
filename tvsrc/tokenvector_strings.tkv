@@ -298,6 +298,212 @@ def series_str_repeat(s: "Series", times: "i32") -> "Series":
     return make_series_str_with_mask(s.name + "_rep", vals, mk)
 
 
+# ---------------------- title / is-classes / rsplit / join -------------------
+def _str_cap_one(t: "str") -> "str":
+    # capitalize: ky dau hoa, con lai thuong (Python str.capitalize)
+    n = len(t)
+    if n == 0:
+        return t
+    return t[0].upper() + t[1:n].lower()
+
+
+def series_str_capitalize(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: _str_cap_one(t))
+
+
+def _str_title_one(t: "str") -> "str":
+    # title: hoa chu cai DAU cua moi tu (ky tu truoc do khong la chu cai)
+    n = len(t)
+    out = ""
+    prev_alpha = 0
+    for i in range(n):
+        ch = t[i]
+        c = ch.lower()
+        is_alpha = 0
+        if c >= "a" and c <= "z":
+            is_alpha = 1
+        if prev_alpha == 0:
+            out = out + ch.upper()
+        else:
+            out = out + c
+        prev_alpha = is_alpha
+    return out
+
+
+def series_str_title(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: _str_title_one(t))
+
+
+def series_str_lower(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: t.lower())
+
+
+def series_str_upper(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: t.upper())
+
+
+def _str_rsplit_once(t: "str", sep: "str") -> "list[str]":
+    # Tach tu ben PHAI: [head, tail]; khong gap sep -> [None, t]
+    if sep == "":
+        raise ValueError("rsplit: separator rong")
+    idx = t.rfind(sep)
+    if idx < 0:
+        parts = []
+        parts.append(None)
+        parts.append(t)
+        return parts
+    parts2 = []
+    parts2.append(t[0:idx])
+    parts2.append(t[idx + len(sep):])
+    return parts2
+
+
+def series_str_rsplit_get(s: "Series", sep: "str", part: "i32") -> "Series":
+    # part: 0 = phan truoc lan xuat hien CUOI cung, 1 = phan sau
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_rsplit_get: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        p = _str_rsplit_once(s.get_string(i), sep)
+        v = p[part]
+        if v == None:
+            vals.append("")
+            continue
+        vals.append(v)
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_rsplit", vals, mk)
+
+
+def series_str_join(s: "Series", sep: "str") -> "str":
+    # noi toan bo cot chuoi bang sep (null bo qua)
+    n = s.length()
+    out = ""
+    for i in range(n):
+        if i > 0:
+            out = out + sep
+        if s.is_null(i) == 0:
+            out = out + s.get_string(i)
+    return out
+
+
+def _str_all_class(t: "str", mode: "i32") -> "i32":
+    # mode 1=isdigit 2=isalpha 3=isalnum: 1 neu TAT CA ky tu thu lop va khong rong
+    ln = len(t)
+    if ln == 0:
+        return 0
+    j = 0
+    while j < ln:
+        c = t[j]
+        if mode == 1:
+            ok = c >= "0" and c <= "9"
+        elif mode == 2:
+            cl = c.lower()
+            ok = cl >= "a" and cl <= "z"
+        else:
+            cl = c.lower()
+            ok = (cl >= "a" and cl <= "z") or (c >= "0" and c <= "9")
+        if ok == 0:
+            return 0
+        j = j + 1
+    return 1
+
+
+def series_str_isdigit(s: "Series") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_isdigit: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(_str_all_class(s.get_string(i), 1))
+        mk.set(i, 1)
+    return make_series_bool_with_mask("isdigit", vals, mk)
+
+
+def series_str_isalpha(s: "Series") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_isalpha: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(_str_all_class(s.get_string(i), 2))
+        mk.set(i, 1)
+    return make_series_bool_with_mask("isalpha", vals, mk)
+
+
+def series_str_isalnum(s: "Series") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_isalnum: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(_str_all_class(s.get_string(i), 3))
+        mk.set(i, 1)
+    return make_series_bool_with_mask("isalnum", vals, mk)
+
+
+def series_str_startswith(s: "Series", prefix: "str") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_startswith: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(s.get_string(i).startswith(prefix))
+        mk.set(i, 1)
+    return make_series_bool_with_mask("startswith", vals, mk)
+
+
+def series_str_endswith(s: "Series", suffix: "str") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_endswith: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(s.get_string(i).endswith(suffix))
+        mk.set(i, 1)
+    return make_series_bool_with_mask("endswith", vals, mk)
+
+
+def series_str_replace(s: "Series", old: "str", new: "str") -> "Series":
+    # thay chuoi dung (khong regex) - pandas .str.replace dang literal
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_replace: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        vals.append(s.get_string(i).replace(old, new))
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_rep", vals, mk)
+
+
 # =============================================================================
 #   Regex API - dan tren builtin re_* cua compiler (.NET Regex, C speed)
 # =============================================================================

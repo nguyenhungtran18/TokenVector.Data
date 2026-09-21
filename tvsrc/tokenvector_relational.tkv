@@ -194,6 +194,95 @@ def groupby_agg(df: "DataFrame", key_columns: "list[str]", exprs: "list[AggExpr]
 
     return make_df(result_cols)
 
+
+def groupby_apply(df: "DataFrame", key_columns: "list[str]", f: "func(DataFrame)->DataFrame", keep_key_cols: "i32") -> "DataFrame":
+    # pandas groupby(keys).apply(f): moi nhom thanh 1 sub-DataFrame, goi f
+    # tren nhom do, gop ket qua (concatVertical). Neu f giu cot khoa thi
+    # giu nguyen; neu f bo cot khoa va keep_key_cols=1 thi Chen lai cot
+    # khoa (gia tri cua dong dau nhom) vao moi ket qua.
+    # Mac dinh (keep_key_cols=1) DAM BAO cot khoa xuat hien trong ket qua
+    # 1 lan duy nhat: neu f da tra lai cot khoa (giu nguyen) thi khong chen.
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    n = df.row_count()
+    nk = len(key_columns)
+    key_series = []
+    for k in range(nk):
+        key_series.append(df.col_by_name(key_columns[k]))
+    # Gom nhom bang key string (giong truong hop tong quat cua groupby_agg)
+    group_keys = []
+    group_rows = []
+    gmap = {}
+    gcount = 0
+    for i in range(n):
+        parts = []
+        for k in range(nk):
+            ks = key_series[k]
+            parts.append(ks.get_string(i))
+        key = parts[0]
+        for k in range(1, nk):
+            key = key + "" + parts[k]
+        gg = 0 - 1
+        if key in gmap:
+            gg = gmap[key]
+        if gg < 0:
+            gmap[key] = gcount
+            gcount = gcount + 1
+            gnew = make_idx([])
+            gnew.append(i)
+            group_rows.append(gnew)
+        else:
+            gcur = group_rows[gg]
+            gcur.append(i)
+    # Goi f tren sub-DF cua tung nhom, thu ket qua
+    results = []
+    for gx in range(gcount):
+        rows = group_rows[gx]
+        nr = len(rows)
+        sub_cols = []
+        nc = df.column_count()
+        for c in range(nc):
+            sc = df.col_at(c)
+            sub_cols.append(sc.take(rows))
+        sub_df = make_df(sub_cols)
+        r = f(sub_df)
+        if keep_key_cols == 1:
+            rk = 0
+            for k in range(nk):
+                if r.has_col(key_columns[k]) == 1:
+                    rk = rk + 1
+            if rk < nk:
+                # f da bo cot khoa -> chen lai cot khoa vao DAU
+                key_cols = []
+                for k in range(nk):
+                    kn = key_columns[k]
+                    sc = df.col_by_name(kn)
+                    s0 = rows[0]
+                    if sc.dtype == DT_STR:
+                        one = []
+                        one.append(sc.get_string(s0))
+                        key_cols.append(make_series_str(kn, one))
+                    elif sc.dtype == DT_I64:
+                        one2 = []
+                        one2.append(sc.get_i64(s0))
+                        key_cols.append(make_series_i64(kn, one2))
+                    else:
+                        one3 = []
+                        one3.append(sc.get_f64(s0))
+                        key_cols.append(make_series_f64(kn, one3))
+                rcols = []
+                for k in range(nk):
+                    rcols.append(key_cols[k])
+                rc = r.column_count()
+                for c in range(rc):
+                    rcols.append(r.col_at(c))
+                r = make_df(rcols)
+        results.append(r)
+    if len(results) == 0:
+        return empty_df()
+    return concat_vertical(results)
+
+
 def _rel_sort_f64(vals: "list[f64]") -> "list[f64]":
     # sort tang dan - dung cho AGG_MEDIAN
     out = []

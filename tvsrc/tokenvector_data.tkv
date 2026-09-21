@@ -722,23 +722,43 @@ class Series:
         cnt = len(indices)
         vm = self.valid
         r = Series(self.name, self.dtype, make_mask(cnt, 0))
-        r.f64s = []
-        r.i64s = []
-        r.bools = []
-        r.strings = []
+        # 2026-09-21 (groupby_apply): KHOI TAO DU 4 buffer bang make_series
+        # *_with_mask chuoi khoi tao r.f64s=[] ma thieu thay viec gan r.i64s =
+        # 1 LIST MOI sau vong lap. Neu goi Series(nm, DT_I64, ...) truc
+        # tiep thi 3 buffer con lai bi share voi OBJECT Series vua tao
+        # (cung 1 list-instance rong) - khi append vao r.i64s co the anh
+        # huong lan le. Cach an toan dung helper co san.
+        if self.dtype == DT_STR:
+            strs = []
+            nul = make_mask(cnt, 0)
+            for i in range(cnt):
+                src_idx = indices[i]
+                strs.append(self.strings[src_idx])
+                nul.set(i, vm.get(src_idx))
+            return make_series_str_with_mask(self.name, strs, nul)
+        if self.dtype == DT_I64:
+            ivals = []
+            nul2 = make_mask(cnt, 0)
+            for i in range(cnt):
+                src_idx = indices[i]
+                ivals.append(self.i64s[src_idx])
+                nul2.set(i, vm.get(src_idx))
+            return make_series_i64_with_mask(self.name, ivals, nul2)
+        if self.dtype == DT_BOOL:
+            bvals = []
+            nul3 = make_mask(cnt, 0)
+            for i in range(cnt):
+                src_idx = indices[i]
+                bvals.append(self.bools[src_idx])
+                nul3.set(i, vm.get(src_idx))
+            return make_series_bool_with_mask(self.name, bvals, nul3)
+        fvals = []
+        nul4 = make_mask(cnt, 0)
         for i in range(cnt):
             src_idx = indices[i]
-            if self.dtype == DT_STR:
-                r.strings.append(self.strings[src_idx])
-            elif self.dtype == DT_I64:
-                r.i64s.append(self.i64s[src_idx])
-            elif self.dtype == DT_BOOL:
-                r.bools.append(self.bools[src_idx])
-            else:
-                r.f64s.append(self.f64s[src_idx])
-            rv = r.valid
-            rv.set(i, vm.get(src_idx))
-        return r
+            fvals.append(self.f64s[src_idx])
+            nul4.set(i, vm.get(src_idx))
+        return make_series_f64_with_mask(self.name, fvals, nul4)
 
     def clone_series(self) -> "Series":
         vm = self.valid

@@ -140,5 +140,48 @@ def run() -> "str":
     if clean.get_string(0) != "12 kg":
         return "FAIL t8b"
 
-    print("strings_check: 8/8 PASS")
+    # --- T9: title/capitalize/lower/upper + rsplit/join/is-class ---
+    s9 = make_series_str("t", ["hello world", "AB cd", None, "x"])
+    tt = series_str_title(s9)
+    if tt.get_string(0) != "Hello World" or tt.get_string(1) != "Ab Cd":
+        return "FAIL t9a title: '" + tt.get_string(0) + "','" + tt.get_string(1) + "'"
+    cp = series_str_capitalize(s9)
+    if cp.get_string(0) != "Hello world" or cp.get_string(1) != "Ab cd":
+        return "FAIL t9b cap"
+    lo = series_str_lower(s9)
+    up = series_str_upper(s9)
+    if lo.get_string(1) != "ab cd" or up.get_string(1) != "AB CD":
+        return "FAIL t9c lower/upper"
+    s10 = make_series_str("p", ["a/b/c", "one", None])
+    rs0 = series_str_rsplit_get(s10, "/", 0)
+    rs1 = series_str_rsplit_get(s10, "/", 1)
+    if rs0.get_string(0) != "a/b" or rs1.get_string(0) != "c":
+        return "FAIL t9d rsplit: '" + rs0.get_string(0) + "','" + rs1.get_string(0) + "'"
+    if rs0.is_null(1) != 1 or rs1.get_string(1) != "one":
+        return "FAIL t9e rsplit no-sep"
+    jn = series_str_join(s10, "-")
+    if jn != "a/b/c-one-":
+        return "FAIL t9f join: '" + jn + "'"
+    s11 = make_series_str("d", ["123", "12a", "", None, "abc"])
+    dg = series_str_isdigit(s11)
+    alp = series_str_isalpha(s11)
+    anum = series_str_isalnum(s11)
+    if dg.get_bool(0) != 1 or dg.get_bool(1) != 0 or dg.get_bool(2) != 0 or dg.is_null(3) != 1:
+        return "FAIL t9g isdigit"
+    if alp.get_bool(0) != 0 or alp.get_bool(4) != 1:
+        return "FAIL t9h isalpha"
+    if anum.get_bool(0) != 1 or anum.get_bool(1) != 1 or anum.get_bool(2) != 0:
+        return "FAIL t9i isalnum"
+    # --- T10: startswith/endswith/replace literal ---
+    sw = series_str_startswith(s10, "a")
+    ew = series_str_endswith(s10, "c")
+    if sw.get_bool(0) != 1 or sw.get_bool(1) != 0:
+        return "FAIL t10a startswith"
+    if ew.get_bool(0) != 1 or ew.get_bool(1) != 0:
+        return "FAIL t10b endswith"
+    rp = series_str_replace(s10, "/", "_")
+    if rp.get_string(0) != "a_b_c" or rp.get_string(1) != "one":
+        return "FAIL t10c replace"
+
+    print("strings_check: 10/10 PASS")
     return "strings_check OK"
