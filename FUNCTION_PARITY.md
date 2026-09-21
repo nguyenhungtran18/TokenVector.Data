@@ -152,12 +152,13 @@
 | :--- | :--- | :--- |
 | `contains/startswith/endswith` | ✅ (+ map variants) | — |
 | `upper/lower/replace` | ✅ | — |
-| `len / strip / lstrip / rstrip` | ❌ | Thiếu |
-| `split / rsplit / join / get` | ❌ | Thiếu |
-| `slice / slice_replace` | ❌ | Thiếu |
-| `find / match / fullmatch` | ❌ | Thiếu |
-| `extract / extractall` (regex) | ❌ | Thiếu — pandas mạnh vì có re2/regex C |
-| `cat / repeat / pad / zfill` | ❌ | Thiếu |
+| `len / strip / lstrip / rstrip` | `series_str_len/strip/lstrip/rstrip` | ✅ (v1.2) |
+| `split / get` | `series_str_split_get / df_str_split_expand / series_str_nsplit` | ✅ (v1.2, expand 2 cột) |
+| `slice / slice_replace` | `series_str_slice` (Python-style âm) | 🟡 (thiếu slice_replace) |
+| `find / match / fullmatch` | `series_str_find / series_str_contains / series_str_re_test` | ✅ match=search ngữ nghĩa (v1.2) |
+| `extract / extractall` (regex) | `series_str_extract` + `re_find_all` (full .NET regex, C speed) | ✅ (v1.2, extract=match đầu) |
+| `cat / repeat / pad / zfill` | `series_str_repeat / series_str_pad / series_str_zfill` | ✅ (v1.2) |
+| `sub` (regex replace) | `series_str_replace_re` | ✅ (v1.2, không backref) |
 | `isalnum/isdigit/…` | ❌ | Thiếu |
 | `astype(str) / to_numeric` | `to_string_col` có | 🟡 |
 
@@ -212,14 +213,16 @@ Mat. Nhóm hẳn sẽ có sau vài ngày làm: missing ops liệt kê ở mục 
 
 **Gap lớn nhất (datetime) + stats + multi-key sort đã đóng (v1.1, 2026-09-21).** Gap còn lại:
 
-1. **`apply`/`transform` nhận hàm TKV** — mở khóa custom agg, custom window,
-   groupby-apply; gần như không thêm code vì compiler đã có delegate.
-2. **String ops còn thiếu** (split/len/strip/regex) — khối việc tiếp theo.
-3. **Parquet/Feather thật** nếu cần trao đổi với hệ sinh thái Python.
+1. **Parquet/Feather thật** nếu cần trao đổi với hệ sinh thái Python.
+2. `rsplit / join / slice_replace / isalnum…` — nốt còn lại của string.
+3. `groupby().apply(func)` — đã có delegate + apply block, chỉ còn nối vào
+   groupby pipeline.
 
 **Không nên làm (đánh đổi không đáng):** MultiIndex (chỉ pandas dùng tốt),
-Parquet thật (cần spec lớn — giữ ARROW1 nội bộ, thêm Parquet sau), regex trên
-string (tốn công lớn, pandas chỉ thắng nhờ libc regex).
+Parquet thật (cần spec lớn — giữ ARROW1 nội bộ, thêm Parquet sau).
+Regex không còn là điểm yếu: v1.2 dùng builtin `re_*` của compiler (bọc
+System.Text.RegularExpressions .NET) — full syntax, chạy C speed, không phải
+tự viết engine.
 
 ---
 
@@ -239,6 +242,24 @@ Nền tảng datetime: **i64 epoch milliseconds UTC** (khớp quy ước asof_jo
 chuẩn (skew(1..5)=0, kurt(1..5)=-5.875 adjusted). Regression: 12/12 suite cũ
 vẫn xanh. DLL `TokenVector.Data.dll` (v1.1) đã rebuild + xác minh qua .NET
 reflection (`dt_parse`/`dt_format`/`series_corr` từ C#).
+
+## 3b. v1.2 — 2026-09-21: apply/transform nhận hàm + string ops đầy đủ
+
+| Module | Nội dung | Test |
+| :--- | :--- | :--- |
+| `tokenvector_apply.tkv` | `series_apply` (f64 + str), `df_apply_col`, `df_transform`, `df_apply_col_str`, `df_filter_rows` (numeric/str), `series_filter_fn`, `series_reduce`, `series_sort_by_key` — nhận top-level func lẫn **lambda** (delegate compiler) | `apply_check` 6/6 |
+| `tokenvector_strings.tkv` | `len/strip/lstrip/rstrip/split_get/split_expand/nsplit/slice/find/contains/zfill/pad/repeat` + regex API `re_test/re_find/re_count/re_find_all/series_str_extract/series_str_re_test/series_str_replace_re` | `strings_check` 8/8 |
+
+Regex chạy trên builtin `re_search/re_findall/re_sub` của compiler (.NET
+Regex — full syntax `\d \w \s [class] {m,n} (alt)`, C speed, vượt mục tiêu
+"regex không làm"). apply giữ null-mask đúng (null đầu vào -> null đầu ra).
+Regression: 15/15 suite xanh. DLL v1.2 rebuild + verify reflection
+(`re_test`, `re_find_all`, `series_apply`, `series_str_len`).
+
+**Lưu ý compiler (2 giới hạn gặp khi viết):** ternary chỉ hỗ trợ dạng C
+`cond ? a : b` (Python `a if c else b` chỉ hợp lệ ở tầng parse, không parse
+ở tầng IL); chain-method trên kết quả gọi hàm (`f(x).m()`) phải gán biến
+trung gian. Cả 2 đã tránh trong code library.
 
 ## 4. Cách kiểm chứng lại
 

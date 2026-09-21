@@ -1,0 +1,144 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_apply", "tokenvector_strings"]
+
+def _nonempty(t: "str") -> "i32":
+    if len(t) > 0:
+        return 1
+    return 0
+
+
+def run() -> "str":
+    # --- T1: len/strip/lstrip/rstrip ---
+    s = make_series_str("t", ["  ab  ", None, "cd"])
+    l1 = series_str_len(s)
+    if l1.get_i64(0) != 6 or l1.is_null(1) != 1 or l1.get_i64(2) != 2:
+        return "FAIL t1 len"
+    p1 = series_str_strip(s)
+    if p1.get_string(0) != "ab" or p1.get_string(2) != "cd":
+        return "FAIL t1 strip: " + p1.get_string(0)
+    p2 = series_str_lstrip(s)
+    if p2.get_string(0) != "ab  ":
+        return "FAIL t1 lstrip: '" + p2.get_string(0) + "'"
+    p3 = series_str_rstrip(s)
+    if p3.get_string(0) != "  ab":
+        return "FAIL t1 rstrip: '" + p3.get_string(0) + "'"
+
+    # --- T2: split_get / nsplit / split_expand ---
+    s2 = make_series_str("path", ["a/b/c", "no-sep", None, "x/y"])
+    g1 = series_str_split_get(s2, "/", 0)
+    g2 = series_str_split_get(s2, "/", 1)
+    if g1.get_string(0) != "a" or g2.get_string(0) != "b/c":
+        return "FAIL t2a: " + g1.get_string(0) + "," + g2.get_string(0)
+    if g1.get_string(1) != "no-sep" or g2.is_null(1) != 1:
+        return "FAIL t2b"
+    ns = series_str_nsplit(s2, "/")
+    if ns.get_i64(0) != 3 or ns.get_i64(1) != 1:
+        return "FAIL t2c nsplit"
+    df2 = make_df([make_series_str("path", ["a/b", "solo"])])
+    ex = df_str_split_expand(df2, "path", "/")
+    e1 = ex.col_by_name("path_0")
+    e2 = ex.col_by_name("path_1")
+    if e1.get_string(0) != "a" or e2.get_string(0) != "b" or e2.is_null(1) != 1:
+        return "FAIL t2d expand"
+
+    # --- T3: slice / find / contains ---
+    s3 = make_series_str("t", ["hello world", "hi", None])
+    sl = series_str_slice(s3, 0, 5)
+    if sl.get_string(0) != "hello" or sl.get_string(1) != "hi":
+        return "FAIL t3a slice"
+    sl2 = series_str_slice(s3, 0 - 5, 0 - 1)
+    if sl2.get_string(0) != "worl":
+        return "FAIL t3b slice neg: " + sl2.get_string(0)
+    fd = series_str_find(s3, "o")
+    if fd.get_i64(0) != 4 or fd.get_i64(1) != 0 - 1:
+        return "FAIL t3c find"
+    ct = series_str_contains(s3, "world")
+    if ct.get_bool(0) != 1 or ct.get_bool(1) != 0:
+        return "FAIL t3d contains"
+
+    # --- T4: zfill / pad / repeat ---
+    s4 = make_series_str("n", ["7", "42", "12345"])
+    zf = series_str_zfill(s4, 4)
+    if zf.get_string(0) != "0007" or zf.get_string(1) != "0042" or zf.get_string(2) != "12345":
+        return "FAIL t4a zfill: " + zf.get_string(0)
+    pd1 = series_str_pad(s4, 3, "left", "*")
+    if pd1.get_string(0) != "**7":
+        return "FAIL t4b pad left"
+    pd2 = series_str_pad(s4, 3, "right", "*")
+    if pd2.get_string(0) != "7**":
+        return "FAIL t4c pad right"
+    pd3 = series_str_pad(s4, 4, "both", "*")
+    if pd3.get_string(0) != "*7**" and pd3.get_string(0) != "**7*":
+        return "FAIL t4d pad both: " + pd3.get_string(0)
+    rp = series_str_repeat(s4, 2)
+    if rp.get_string(0) != "77" or rp.get_string(2) != "1234512345":
+        return "FAIL t4e repeat"
+
+    # --- T5: regex co ban ---
+    if re_test("\\d+", "abc123") != 1:
+        return "FAIL t5a"
+    if re_test("^\\d+$", "abc123") != 0:
+        return "FAIL t5b"
+    if re_test("^[a-z]+$", "abc") != 1:
+        return "FAIL t5c"
+    if re_find("\\d+", "abc123def45") != "123":
+        return "FAIL t5d: " + str(re_find("\\d+", "abc123def45"))
+    if re_count("\\d+", "a1b22c333") != 3:
+        return "FAIL t5e count=" + str(re_count("\\d+", "a1b22c333"))
+    al = re_find_all("\\d+", "a1b22c333")
+    if len(al) != 3 or al[0] != "1" or al[2] != "333":
+        return "FAIL t5f find_all"
+
+    # --- T6: regex class + alt + quantifier ---
+    if re_test("[A-Z]{2,3}-\\d{3}", "AB-123") != 1:
+        return "FAIL t6a"
+    if re_test("[A-Z]{2,3}-\\d{3}", "A-123") != 0:
+        return "FAIL t6b"
+    if re_test("(cat|dog)s?", "hotdogs") != 1:
+        return "FAIL t6c"
+    if re_test("(cat|dog)s?", "hotfish") != 0:
+        return "FAIL t6d"
+    if re_find("a.c", "abc axc a9c") != "abc":
+        return "FAIL t6e"
+    if re_test("\\s\\S+\\s", " x ") != 1:
+        return "FAIL t6f"
+    if re_test("\\w+@\\w+\\.com", "user@site.com") != 1:
+        return "FAIL t6g email"
+    if re_test("\\w+@\\w+\\.com", "user-site.com") != 0:
+        return "FAIL t6h email neg"
+
+    # --- T7: regex tren Series ---
+    s7 = make_series_str("email", ["a@x.com", "bad-email", None, "c@y.org"])
+    mt = series_str_re_test(s7, "^[\\w.]+@[\\w.]+$")
+    if mt.get_bool(0) != 1 or mt.get_bool(1) != 0 or mt.is_null(2) != 1 or mt.get_bool(3) != 1:
+        return "FAIL t7a re_test"
+    ex7 = series_str_extract(s7, "@([\\w.]+)")
+    # extract tra toan bo match (chua ho tro group rieng)
+    if ex7.get_string(0) != "@x.com" or ex7.is_null(1) != 1:
+        return "FAIL t7b extract: " + ex7.get_string(0)
+    rp7 = series_str_replace_re(s7, "[aeiou]", "*")
+    if rp7.get_string(0) != "*@x.c*m":
+        return "FAIL t7c replace_re: " + rp7.get_string(0)
+
+    # --- T8: regex + apply chain ---
+    d8 = make_df([
+        make_series_str("raw", ["  12 kg", "  35 kg", None]),
+        make_series_f64("w", [1.0, 2.0, 3.0]),
+    ])
+    nums = series_str_extract(d8.col_by_name("raw"), "\\d+")
+    d9 = make_df([
+        d8.col_by_name("w"),
+        nums,
+    ])
+    # extract + loc null
+    kept = df_filter_rows_str(d9, "raw_re", _nonempty)
+    kr = kept.col_by_name("raw_re")
+    if kept.row_count() != 2 or kr.get_string(0) != "12":
+        return "FAIL t8"
+    # ket hop apply: cat chuoi "  12 kg" -> "12"
+    clean = series_apply_str(d8.col_by_name("raw"), lambda t: _str_strip_one_side(t, 1, 1))
+    if clean.get_string(0) != "12 kg":
+        return "FAIL t8b"
+
+    print("strings_check: 8/8 PASS")
+    return "strings_check OK"

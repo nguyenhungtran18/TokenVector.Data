@@ -1,0 +1,376 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module String ops bo sung (v1.2)
+# series_str_len / strip / lstrip / rstrip / split / split_get / split_df /
+# slice (substring) / find / zfill / pad / repeat
+# + Regex API dan tren BUILTIN re_* cua compiler (System.Text.RegularExpressions
+#   .NET - full syntax, chay C speed): re_test / re_find / re_find_all /
+#   re_count / series_str_extract / series_str_re_test / series_str_replace_re
+# Theo idiom pandas .str.* nhung la ham tu do (tkv khong co method namespace).
+__tkv_import__ = ["tokenvector_data", "tokenvector_apply"]
+
+# ------------------------------ len / trim -----------------------------------
+def series_str_len(s: "Series") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_len: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+        else:
+            vals.append(len(s.get_string(i)))
+            mk.set(i, 1)
+    return make_series_i64_with_mask("len", vals, mk)
+
+
+def _str_strip_one_side(t: "str", left: "i32", right: "i32") -> "str":
+    a = 0
+    b = len(t)
+    if left == 1:
+        while a < b:
+            ch = t[a]
+            if ch == " " or ch == "\t" or ch == "\r" or ch == "\n":
+                a = a + 1
+            else:
+                break
+    if right == 1:
+        while b > a:
+            ch = t[b - 1]
+            if ch == " " or ch == "\t" or ch == "\r" or ch == "\n":
+                b = b - 1
+            else:
+                break
+    if a == 0 and b == len(t):
+        return t
+    return t[a:b]
+
+
+def series_str_strip(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: _str_strip_one_side(t, 1, 1))
+
+
+def series_str_lstrip(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: _str_strip_one_side(t, 1, 0))
+
+
+def series_str_rstrip(s: "Series") -> "Series":
+    return series_apply_str(s, lambda t: _str_strip_one_side(t, 0, 1))
+
+
+# ------------------------------ split ---------------------------------------
+def _str_split_once(t: "str", sep: "str") -> "list[str]":
+    # Tach thanh 2 phan [head, tail]; neu khong gap sep -> [t, None]
+    if sep == "":
+        raise ValueError("split: separator rong")
+    idx = t.find(sep)
+    if idx < 0:
+        parts = []
+        parts.append(t)
+        parts.append(None)
+        return parts
+    parts2 = []
+    parts2.append(t[0:idx])
+    parts2.append(t[idx + len(sep):])
+    return parts2
+
+
+def series_str_split_get(s: "Series", sep: "str", part: "i32") -> "Series":
+    # part: 0 = phan dau, 1 = phan sau lan xuat hien dau tien
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_split_get: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        p = _str_split_once(s.get_string(i), sep)
+        v = p[part]
+        if v == None:
+            vals.append("")
+            continue
+        vals.append(v)
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_split", vals, mk)
+
+
+def df_str_split_expand(df: "DataFrame", name: "str", sep: "str") -> "DataFrame":
+    # pandas .str.split(sep, expand=True) cho toi da 2 cot (head/tail).
+    # Lan chua duoc tach (khong co sep) -> tail = null.
+    c = df.col_by_name(name)
+    n = c.length()
+    heads = []
+    tails = []
+    hmk = make_mask(n, 0)
+    tmk = make_mask(n, 0)
+    for i in range(n):
+        if c.is_null(i) == 1:
+            heads.append("")
+            tails.append("")
+            continue
+        p = _str_split_once(c.get_string(i), sep)
+        heads.append(p[0])
+        hmk.set(i, 1)
+        if p[1] == None:
+            tails.append("")
+        else:
+            tails.append(p[1])
+            tmk.set(i, 1)
+    cols = []
+    nc = df.column_count()
+    for j in range(nc):
+        cj = df.col_at(j)
+        cols.append(cj.clone_series())
+    cols.append(make_series_str_with_mask(name + "_0", heads, hmk))
+    cols.append(make_series_str_with_mask(name + "_1", tails, tmk))
+    return make_df(cols)
+
+
+def series_str_nsplit(s: "Series", sep: "str") -> "Series":
+    # So phan tu neu tach theo sep (= so lan xuat hien sep + 1)
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_nsplit: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        t = s.get_string(i)
+        cnt = 1
+        pos = 0
+        cap1 = 1
+        while cap1 == 1:
+            j = t.find(sep, pos)
+            if j < 0:
+                cap1 = 0
+            else:
+                cnt = cnt + 1
+                pos = j + len(sep)
+        vals.append(cnt)
+        mk.set(i, 1)
+    return make_series_i64_with_mask("nsplit", vals, mk)
+
+
+# ------------------------------ slice / find ---------------------------------
+def series_str_slice(s: "Series", start: "i32", stop: "i32") -> "Series":
+    # Python-style: am tinh tu cuoi; stop khong bao gom
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_slice: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        t = s.get_string(i)
+        ln = len(t)
+        a = start
+        b = stop
+        if a < 0:
+            a = ln + a
+        if b < 0:
+            b = ln + b
+        if a < 0:
+            a = 0
+        if b > ln:
+            b = ln
+        if a >= b:
+            vals.append("")
+        else:
+            vals.append(t[a:b])
+            mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_slice", vals, mk)
+
+
+def series_str_find(s: "Series", needle: "str") -> "Series":
+    # Vi tri xuat hien dau tien; -1 neu khong co; null -> null
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_find: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0 - 1)
+            continue
+        vals.append(s.get_string(i).find(needle))
+        mk.set(i, 1)
+    return make_series_i64_with_mask("find", vals, mk)
+
+
+def series_str_contains(s: "Series", needle: "str") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_contains: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        if s.get_string(i).find(needle) >= 0:
+            vals.append(1)
+        else:
+            vals.append(0)
+        mk.set(i, 1)
+    return make_series_bool_with_mask("contains", vals, mk)
+
+
+# ------------------------------ pad / zfill / repeat -------------------------
+def series_str_zfill(s: "Series", width: "i32") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_zfill: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        t = s.get_string(i)
+        ln = len(t)
+        if ln >= width:
+            vals.append(t)
+        else:
+            k = width - ln
+            out = ""
+            for j in range(k):
+                out = out + "0"
+            vals.append(out + t)
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_z", vals, mk)
+
+
+def series_str_pad(s: "Series", width: "i32", side: "str", fill: "str") -> "Series":
+    # side: "left" | "right" | "both"
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_pad: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        t = s.get_string(i)
+        ln = len(t)
+        if ln >= width:
+            vals.append(t)
+            mk.set(i, 1)
+            continue
+        k = width - ln
+        pads = ""
+        for j in range(k):
+            pads = pads + fill
+        if side == "left":
+            vals.append(pads + t)
+        elif side == "right":
+            vals.append(t + pads)
+        else:
+            half = k // 2
+            vals.append(pads[0:half] + t + pads[half:])
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_pad", vals, mk)
+
+
+def series_str_repeat(s: "Series", times: "i32") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_repeat: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        t = s.get_string(i)
+        out = ""
+        for j in range(times):
+            out = out + t
+        vals.append(out)
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_rep", vals, mk)
+
+
+# =============================================================================
+#   Regex API - dan tren builtin re_* cua compiler (.NET Regex, C speed)
+# =============================================================================
+def re_test(pattern: "str", t: "str") -> "i32":
+    # 1 neu pattern khop 1 phan nao do cua t (ngu nghia re.search)
+    return re_search(pattern, t)
+
+
+def re_find(pattern: "str", t: "str") -> "str":
+    # match dau tien (toan bo match) hoac None
+    ms = re_findall(pattern, t)
+    if len(ms) == 0:
+        return None
+    return ms[0]
+
+
+def re_count(pattern: "str", t: "str") -> "i32":
+    ms = re_findall(pattern, t)
+    return len(ms)
+
+
+def re_find_all(pattern: "str", t: "str") -> "list[str]":
+    return re_findall(pattern, t)
+
+
+# ------------------------ Series-level regex API -----------------------------
+def series_str_extract(s: "Series", pattern: "str") -> "Series":
+    # pandas .str.extract: lay match dau tien (toan bo match); khong match -> null
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_extract: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        ms = re_findall(pattern, s.get_string(i))
+        if len(ms) > 0:
+            vals.append(ms[0])
+            mk.set(i, 1)
+        else:
+            vals.append("")
+    return make_series_str_with_mask(s.name + "_re", vals, mk)
+
+
+def series_str_re_test(s: "Series", pattern: "str") -> "Series":
+    # bool col: 1 neu khop (pandas .str.match/contains dang regex)
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_re_test: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(re_search(pattern, s.get_string(i)))
+        mk.set(i, 1)
+    return make_series_bool_with_mask(s.name + "_match", vals, mk)
+
+
+def series_str_replace_re(s: "Series", pattern: "str", repl: "str") -> "Series":
+    # thay toan bo match bang chuoi repl (khong backref)
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_replace_re: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+            continue
+        vals.append(re_sub(pattern, repl, s.get_string(i)))
+        mk.set(i, 1)
+    return make_series_str_with_mask(s.name + "_repl", vals, mk)

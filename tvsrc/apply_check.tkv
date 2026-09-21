@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_apply", "tokenvector_relational"]
+
+def _dbl(x: "f64") -> "f64":
+    return x * 2.0
+
+
+def _is_pos(x: "f64") -> "i32":
+    if x > 0:
+        return 1
+    return 0
+
+
+def _mul(a2: "f64", b2: "f64") -> "f64":
+    return a2 * b2
+
+
+def _is_neg(y: "f64") -> "i32":
+    if y < 0:
+        return 1
+    return 0
+
+
+def _add(x: "f64", y: "f64") -> "f64":
+    return x + y
+
+
+def _key_neg(x: "f64") -> "f64":
+    return 0.0 - x
+
+
+def _tag(s: "str") -> "str":
+    return "[" + s + "]"
+
+
+def _mk_v() -> "Series":
+    # v = [1.0, NULL, 3.0, -4.0, 5.0] - null bang mask tuong minh
+    mk = make_mask(5, 1)
+    mk.set(1, 0)
+    return make_series_f64_with_mask("v", [1.0, 0.0, 3.0, -4.0, 5.0], mk)
+
+
+def run() -> "str":
+    s = _mk_v()
+
+    # --- A1: series_apply (top-level func + lambda), giu null ---
+    a1 = series_apply(s, _dbl)
+    if a1.get_f64(0) != 2.0 or a1.is_null(1) != 1 or a1.get_f64(2) != 6.0:
+        return "FAIL a1"
+    a1b = series_apply(s, lambda x: x + 100.0)
+    if a1b.get_f64(0) != 101.0 or a1b.get_f64(4) != 105.0:
+        return "FAIL a1b"
+
+    # --- A2: series_filter_fn + pred ---
+    a2 = series_filter_fn(s, _is_pos)
+    if a2.length() != 3 or a2.get_f64(0) != 1.0 or a2.get_f64(2) != 5.0:
+        return "FAIL a2 len=" + str(a2.length())
+    a2b = series_filter_fn(s, _is_neg)
+    if a2b.length() != 1 or a2b.get_f64(0) != -4.0:
+        return "FAIL a2b"
+
+    # --- A3: series_reduce ---
+    total = series_reduce(s, _add, 0.0)
+    if total != 5.0:
+        return "FAIL a3 total=" + str(total)
+    prod = series_reduce(s, _mul, 1.0)
+    if prod != -60.0:
+        return "FAIL a3b prod=" + str(prod)
+
+    # --- A4: series_sort_by_key ---
+    a4 = series_sort_by_key(s, _key_neg, 1)
+    # sort theo -x tang dan = x giam dan: 5, 3, 1, -4, null cuoi
+    if a4.get_f64(0) != 5.0 or a4.get_f64(1) != 3.0 or a4.get_f64(2) != 1.0:
+        return "FAIL a4"
+
+    # --- A5: df_apply_col / df_transform / df_filter_rows ---
+    df = make_df([
+        make_series_str("name", ["a", "b", "c", "d", "e"]),
+        _mk_v(),
+    ])
+    d1 = df_apply_col(df, "v", _dbl)
+    d1v = d1.col_by_name("v")
+    if d1v.get_f64(0) != 2.0 or d1v.is_null(1) != 1 or d1v.get_f64(2) != 6.0:
+        return "FAIL a5a"
+    d1n = d1.col_by_name("name")
+    if d1n.get_string(0) != "a":
+        return "FAIL a5a-name"
+    d2 = df_transform(df, "v", lambda x: x + 1.0)
+    d2v = d2.col_by_name("v")
+    if d2v.get_f64(2) != 4.0 or d2v.is_null(1) != 1:
+        return "FAIL a5b"
+    d3 = df_filter_rows(df, "v", _is_pos)
+    d3n = d3.col_by_name("name")
+    if d3.row_count() != 3 or d3n.get_string(0) != "a" or d3n.get_string(2) != "e":
+        return "FAIL a5c rows=" + str(d3.row_count())
+
+    # --- A6: str apply qua apply module ---
+    mk3 = make_mask(3, 1)
+    mk3.set(1, 0)
+    df4 = make_df([make_series_str_with_mask("s", ["ab", "", "cde"], mk3)])
+    d5 = df_apply_col_str(df4, "s", _tag)
+    vs = d5.col_by_name("s")
+    if vs.get_string(0) != "[ab]" or vs.is_null(1) != 1 or vs.get_string(2) != "[cde]":
+        return "FAIL a6"
+
+    print("apply_check: 6/6 PASS")
+    return "apply_check OK"

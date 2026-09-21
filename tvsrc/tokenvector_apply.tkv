@@ -1,0 +1,174 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data"]
+# =============================================================================
+# TokenVector.Data - Module Apply/Transform (nhan ham)
+# Mo rong API theo huong pandas: apply/transform/map nhan 1 HAM TKV
+# (top-level func, nested func hoac lambda truyen thang - compiler hoat dong
+#  dung voi tham so kieu "func(...)->...").
+# - series_apply(s, f):        f: func(f64)->f64, cot numeric -> Series f64 moi
+# - series_apply_str(s, f):    f: func(str)->str, cot str   -> Series str moi
+# - series_filter_fn(s, pred): pred: func(f64)->i32 (0/1), giu row pred!=0
+# - series_filter_fn_str(s, pred): pred: func(str)->i32
+# - series_reduce(s, f, init): f: func(f64,f64)->f64 fold 2 tham so
+# - series_sort_by_key(s, key): key: func(f64)->f64, sort theo gia tri key
+# - df_apply_col(df, name, f): thay/tao cot = f(value) (numeric)
+# - df_transform(df, name, f): giong df_apply_col (alias ro nghia pandas)
+# - df_filter_rows(df, name, pred): giu row ma pred(value) != 0 (numeric)
+# - df_filter_rows_str(df, name, pred): nhu tren cho cot str
+# Luu y: moi ham LAY 1 GIA TRI duy nhat (null -> khong goi f, giu null).
+# =============================================================================
+def series_apply(s: "Series", f: "func(f64)->f64") -> "Series":
+    if s.dtype == DT_STR:
+        raise ValueError("series_apply: cot str dung series_apply_str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        notnull = 1 - s.is_null(i)
+        if notnull == 0:
+            vals.append(0.0)
+        else:
+            x = s.get_f64(i)
+            vals.append(f(x))
+        mk.set(i, notnull)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_apply_str(s: "Series", f: "func(str)->str") -> "Series":
+    if s.dtype != DT_STR:
+        raise ValueError("series_apply_str: cot khong phai str")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+        else:
+            vals.append(f(s.get_string(i)))
+            mk.set(i, 1)
+    return make_series_str_with_mask(s.name, vals, mk)
+
+
+def _filter_idx_fn(s: "Series", pred: "func(f64)->i32") -> "list[i32]":
+    n = s.length()
+    keep = make_idx([])
+    for i in range(n):
+        notnull = 1 - s.is_null(i)
+        if notnull == 1:
+            x = s.get_f64(i)
+            pv = pred(x)
+            if pv == 1:
+                keep.append(i)
+    return keep
+
+
+def series_filter_fn(s: "Series", pred: "func(f64)->i32") -> "Series":
+    keep = _filter_idx_fn(s, pred)
+    return s.take(keep)
+
+
+def _filter_idx_fn_str(s: "Series", pred: "func(str)->i32") -> "list[i32]":
+    n = s.length()
+    keep = make_idx([])
+    for i in range(n):
+        notnull = 1 - s.is_null(i)
+        if notnull == 1:
+            pv = pred(s.get_string(i))
+            if pv == 1:
+                keep.append(i)
+    return keep
+
+
+def series_filter_fn_str(s: "Series", pred: "func(str)->i32") -> "Series":
+    keep = _filter_idx_fn_str(s, pred)
+    return s.take(keep)
+
+
+def series_reduce(s: "Series", f: "func(f64,f64)->f64", init: "f64") -> "f64":
+    n = s.length()
+    acc = init
+    for i in range(n):
+        notnull = 1 - s.is_null(i)
+        if notnull == 1:
+            acc = f(acc, s.get_f64(i))
+    return acc
+
+
+def series_sort_by_key(s: "Series", key: "func(f64)->f64", ascending: "i32") -> "Series":
+    # Sort gia tri cua Series theo gia tri key(v) (merge sort O(n log n))
+    n = s.length()
+    items = []
+    for i in range(n):
+        notnull = 1 - s.is_null(i)
+        if notnull == 0:
+            items.append(RowKey(0.0, i, 1))
+        else:
+            items.append(RowKey(key(s.get_f64(i)), i, 0))
+    sorted_items = sort_rows(items, ascending)
+    idx = make_idx([])
+    for i in range(n):
+        rk = sorted_items[i]
+        idx.append(rk.idx)
+    return s.take(idx)
+
+
+def df_apply_col(df: "DataFrame", name: "str", f: "func(f64)->f64") -> "DataFrame":
+    # Tra DF moi voi cot name da qua f (cot khac giu nguyen)
+    idx = df.col_index(name)
+    cols = []
+    nc = df.column_count()
+    for i in range(nc):
+        c = df.col_at(i)
+        if i == idx:
+            cols.append(series_apply(c, f))
+        else:
+            cols.append(c.clone_series())
+    return make_df(cols)
+
+
+def df_transform(df: "DataFrame", name: "str", f: "func(f64)->f64") -> "DataFrame":
+    # Alias ro nghia cua pandas transform: ap dung f tren toan bo cot name
+    return df_apply_col(df, name, f)
+
+
+def df_filter_rows(df: "DataFrame", name: "str", pred: "func(f64)->i32") -> "DataFrame":
+    c = df.col_by_name(name)
+    keep = make_idx([])
+    n = c.length()
+    for i in range(n):
+        if c.is_null(i) == 0 and pred(c.get_f64(i)) != 0:
+            keep.append(i)
+    cols = []
+    nc = df.column_count()
+    for j in range(nc):
+        cj = df.col_at(j)
+        cols.append(cj.take(keep))
+    return make_df(cols)
+
+
+def df_filter_rows_str(df: "DataFrame", name: "str", pred: "func(str)->i32") -> "DataFrame":
+    c = df.col_by_name(name)
+    keep = make_idx([])
+    n = c.length()
+    for i in range(n):
+        if c.is_null(i) == 0 and pred(c.get_string(i)) != 0:
+            keep.append(i)
+    cols = []
+    nc = df.column_count()
+    for j in range(nc):
+        cj = df.col_at(j)
+        cols.append(cj.take(keep))
+    return make_df(cols)
+
+
+def df_apply_col_str(df: "DataFrame", name: "str", f: "func(str)->str") -> "DataFrame":
+    idx = df.col_index(name)
+    cols = []
+    nc = df.column_count()
+    for i in range(nc):
+        c = df.col_at(i)
+        if i == idx:
+            cols.append(series_apply_str(c, f))
+        else:
+            cols.append(c.clone_series())
+    return make_df(cols)
