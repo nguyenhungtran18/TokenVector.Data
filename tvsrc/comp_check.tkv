@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 __tkv_import__ = ["tokenvector_data", "tokenvector_compute"]
 
+def _seg_sum_v14(xs: "list[f64]") -> "f64":
+    total = 0.0
+    for x in xs:
+        total = total + x
+    return total
+
+def _seg_max_v14(xs: "list[f64]") -> "f64":
+    mx = xs[0]
+    for x in xs:
+        if x > mx:
+            mx = x
+    return mx
+
+
 def run() -> "str":
     a = make_col_f64([1.0, 2.0, 3.0])
     b = make_col_f64([10.0, 20.0, 30.0])
@@ -31,4 +45,61 @@ def run() -> "str":
     print("log: " + str(l.get_f64(0)) + "," + str(l.get_f64(1)))
     ab = vec_abs(make_col_f64([-3.0, 4.0]))
     print("abs: " + str(ab.get_f64(0)) + "," + str(ab.get_f64(1)))
+
+    # --- v14: interpolate / where / expanding / ewm / pct_change / cumprod / win_apply ---
+    sn = make_series_f64("s", [0.0, 0.0, 0.0, 0.0, 0.0])
+    sm = make_mask(5, 1)
+    sm.set(1, 0)
+    sm.set(3, 0)
+    sn = make_series_f64_with_mask("s", [1.0, 0.0, 3.0, 0.0, 9.0], sm)
+    ip = series_interpolate(sn, "linear")
+    if ip.get_f64(1) != 2.0 or ip.get_f64(3) != 6.0 or ip.is_null(1) != 0:
+        return "FAIL v14-interp"
+    ff = series_interpolate(sn, "ffill")
+    if ff.get_f64(3) != 3.0:
+        return "FAIL v14-ffill"
+
+    cond = make_mask(3, 1)
+    cond.set(2, 0)
+    sa = make_series_f64("a", [1.0, 2.0, 3.0])
+    sb = make_series_f64("b", [10.0, 20.0, 30.0])
+    w = series_where(sa, cond, sb)
+    if w.get_f64(0) != 1.0 or w.get_f64(2) != 30.0:
+        return "FAIL v14-where"
+
+    cc = make_col_f64([1.0, 2.0, 3.0, 4.0])
+    ex = win_expanding_sum(cc)
+    if ex.get_f64(2) != 6.0 or ex.get_f64(3) != 10.0:
+        return "FAIL v14-expsum"
+    exm = win_expanding_mean(cc)
+    if exm.get_f64(3) != 2.5:
+        return "FAIL v14-expmean"
+    exd = win_expanding_std(cc, 1)
+    print("expstd=" + str(exd.get_f64(3)))
+
+    ew = win_ewm_mean(cc, 3, 1)   # adjust=True: [1, 1.667, 2.429, 3.267]
+    if ew.get_f64(0) != 1.0 or ew.get_f64(1) < 1.66 or ew.get_f64(3) < 3.26 or ew.get_f64(3) > 3.27:
+        return "FAIL v14-ewm " + str(ew.get_f64(3))
+    ew0 = win_ewm_mean(cc, 3, 0)  # adjust=False: [1, 1.5, 2.25, 3.125]
+    if ew0.get_f64(1) != 1.5 or ew0.get_f64(3) < 3.12 or ew0.get_f64(3) > 3.13:
+        return "FAIL v14-ewm0 " + str(ew0.get_f64(3))
+
+    pc = win_pct_change(cc)
+    if pc.get_f64(1) != 1.0 or pc.get_f64(2) != 0.5 or pc.get_f64(3) < 0.33 or pc.get_f64(3) > 0.34 or pc.is_null(0) != 1:
+        return "FAIL v14-pct"
+    cp = win_cumprod(cc)
+    if cp.get_f64(3) != 24.0:
+        return "FAIL v14-cumprod"
+    cmx = win_cummax(cc)
+    cmn = win_cummin(make_col_f64([4.0, 3.0, 5.0, 1.0]))
+    if cmx.get_f64(2) != 3.0 or cmn.get_f64(3) != 1.0:
+        return "FAIL v14-cummaxmin"
+
+    wa = win_apply(cc, 2, _seg_sum_v14, 1)
+    if wa.get_f64(0) != 1.0 or wa.get_f64(1) != 3.0 or wa.get_f64(3) != 7.0:
+        return "FAIL v14-winapply"
+    wa2 = win_apply(cc, 3, _seg_max_v14, 2)
+    if wa2.get_f64(0) != 0.0 or wa2.is_null(0) != 1 or wa2.get_f64(2) != 3.0:
+        return "FAIL v14-winapply2"
+    print("v14 compute OK: interp/where/expanding/ewm/pct/cumprod/win_apply")
     return "SUCCESS"

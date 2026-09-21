@@ -1290,3 +1290,494 @@ def sort_pairs_desc(items: "list[PairItem]") -> "list[PairItem]":
                 break
         arr[j + 1] = cur
     return arr
+
+# ================== v1.4: interpolate/where/expanding/ewm ====================
+def series_interpolate(s: "Series", method: "str") -> "Series":
+    # pandas Series.interpolate(method='linear'|'ffill'|'bfill')
+    # linear: noi suy tuyen tinh giua 2 diem valid gan nhat.
+    # Null o DAU giu null (pandas default forward); null o CUOI giu null.
+    if s.dtype == DT_STR:
+        raise ValueError("series_interpolate: chi ho tro cot numeric")
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    if method == "ffill":
+        last_val = 0.0
+        has_last = 0
+        for i in range(n):
+            if s.is_null(i) == 0:
+                last_val = s.get_f64(i)
+                has_last = 1
+                vals.append(last_val)
+                mk.set(i, 1)
+            elif has_last == 1:
+                vals.append(last_val)
+                mk.set(i, 1)
+            else:
+                vals.append(0.0)
+        return make_series_f64_with_mask(s.name, vals, mk)
+    if method == "bfill":
+        nxt_val = 0.0
+        nxt_idx = 0 - 1
+        for i in range(n):
+            if s.is_null(i) == 0:
+                nxt_val = s.get_f64(i)
+                nxt_idx = i
+                break
+        cur = nxt_val
+        has_cur = 0
+        if nxt_idx >= 0:
+            has_cur = 1
+        for i in range(n):
+            if s.is_null(i) == 0:
+                cur = s.get_f64(i)
+                has_cur = 1
+                vals.append(cur)
+                mk.set(i, 1)
+            elif has_cur == 1:
+                vals.append(cur)
+                mk.set(i, 1)
+            else:
+                vals.append(0.0)
+        return make_series_f64_with_mask(s.name, vals, mk)
+    if method != "linear":
+        raise ValueError("series_interpolate: method phai linear|ffill|bfill")
+    # linear: quet theo doan [prev_valid .. next_valid]
+    i = 0
+    prev_pos = 0 - 1
+    prev_val = 0.0
+    while i < n:
+        if s.is_null(i) == 0:
+            vals.append(s.get_f64(i))
+            mk.set(i, 1)
+            prev_pos = i
+            prev_val = s.get_f64(i)
+            i = i + 1
+            continue
+        # doan null: tim next_valid
+        j = i
+        while j < n:
+            if s.is_null(j) == 0:
+                break
+            j = j + 1
+        if prev_pos < 0:
+            # null o DAU -> giu null
+            for k in range(i, j):
+                vals.append(0.0)
+        elif j >= n:
+            # null o CUOI -> giu null
+            for k in range(i, j):
+                vals.append(0.0)
+        else:
+            nv = s.get_f64(j)
+            span = j - prev_pos
+            # BUG THAT (2026-09-21): t phai duoc khai kieu f64 TU DAU (khoi
+            # tao 0.0) - neu de compiler suy dien tu phep chia (k-prev_pos)
+            # / span thi bien mang kieu int va ket qua bi ep thanh 0/1
+            # (interpolate tra ve gia tri dau mut thay vi noi suy).
+            t = 0.0
+            for k in range(i, j):
+                t = (k - prev_pos) / span
+                vals.append(prev_val + (nv - prev_val) * t)
+                mk.set(k, 1)
+        if j < n:
+            vals.append(s.get_f64(j))
+            mk.set(j, 1)
+            prev_pos = j
+            prev_val = s.get_f64(j)
+            i = j + 1
+        else:
+            i = j
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_where(s: "Series", cond: "Mask", other: "Series") -> "Series":
+    # pandas Series.where(cond, other): giu khi cond=1, thay bang other khi cond=0
+    n = s.length()
+    if other.length() != n:
+        raise ValueError("series_where: other phai cung do dai")
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        keep = cond.get(i)
+        if keep == 1 and s.is_null(i) == 0:
+            vals.append(s.get_f64(i))
+            mk.set(i, 1)
+        elif keep == 1:
+            vals.append(0.0)
+        elif other.is_null(i) == 0:
+            vals.append(other.get_f64(i))
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_mask(s: "Series", cond: "Mask", other: "Series") -> "Series":
+    # pandas Series.mask(cond, other): NGUOC where - thay khi cond=1
+    n = s.length()
+    if other.length() != n:
+        raise ValueError("series_mask: other phai cung do dai")
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        repl = cond.get(i)
+        if repl == 0 and s.is_null(i) == 0:
+            vals.append(s.get_f64(i))
+            mk.set(i, 1)
+        elif repl == 0:
+            vals.append(0.0)
+        elif other.is_null(i) == 0:
+            vals.append(other.get_f64(i))
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def win_expanding_sum(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    run = 0.0
+    has_v = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            run = run + _col_f64_at(c, i)
+            has_v = 1
+        if has_v == 1:
+            vals.append(run)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_expanding_mean(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    run = 0.0
+    cnt = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            run = run + _col_f64_at(c, i)
+            cnt = cnt + 1
+        if cnt > 0:
+            vals.append(run / cnt)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_expanding_min(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    cur = 0.0
+    has_v = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            v = _col_f64_at(c, i)
+            if has_v == 0:
+                cur = v
+                has_v = 1
+            elif v < cur:
+                cur = v
+        if has_v == 1:
+            vals.append(cur)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_expanding_max(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    cur = 0.0
+    has_v = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            v = _col_f64_at(c, i)
+            if has_v == 0:
+                cur = v
+                has_v = 1
+            elif v > cur:
+                cur = v
+        if has_v == 1:
+            vals.append(cur)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_expanding_std(c: "Col", ddof: "i32") -> "Col":
+    # ddof=1 (pandas default) hoac 0 - Welford 1-pass
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    mean = 0.0
+    m2 = 0.0
+    cnt = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            x = _col_f64_at(c, i)
+            cnt = cnt + 1
+            d = x - mean
+            mean = mean + d / cnt
+            m2 = m2 + d * (x - mean)
+        if cnt > ddof:
+            vals.append((m2 / (cnt - ddof)) ** 0.5)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_ewm_mean(c: "Col", span: "i32", adjust: "i32") -> "Col":
+    # pandas ewm(span=s, adjust=bool).mean() - KHOP XAC pandas (da doi chieu
+    # python -c pandas tren may that, 2026-09-21):
+    #   adjust=1 (True, mac dinh): num_t = (1-a)*num_{t-1} + x_t ;
+    #     den_t = (1-a)*den_{t-1} + 1  (trong so MOI nhat = 1, lich su decay).
+    #     Null GIUA: bo qua x nhung den VAN decay (pandas ignore_na=False).
+    #     Ket qua x=[1,2,3,4], s=3: [1, 1.667, 2.429, 3.267].
+    #   adjust=0 (False): de quy y_t = a*x_t + (1-a)*y_{t-1}, a=2/(s+1);
+    #     null giua GIU y (pandas khong update). Ket qua: [1, 1.5, 2.25, 3.125].
+    if span <= 0:
+        raise ValueError("win_ewm_mean: span phai > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    alpha = 2.0 / (span + 1.0)
+    y = 0.0
+    num = 0.0
+    den = 0.0
+    started = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            x = _col_f64_at(c, i)
+            if started == 0:
+                started = 1
+                num = x
+                den = 1.0
+                y = x
+            elif adjust == 1:
+                num = (1.0 - alpha) * num + x
+                den = (1.0 - alpha) * den + 1.0
+                y = num / den
+            else:
+                y = alpha * x + (1.0 - alpha) * y
+            vals.append(y)
+            mk.set(i, 1)
+        else:
+            # null: adjust=1 decay den (ignore_na=False); adjust=0 giu y.
+            if started == 1 and adjust == 1:
+                den = (1.0 - alpha) * den
+            if started == 1:
+                vals.append(y)
+                mk.set(i, 1)
+            else:
+                vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_pct_change(c: "Col") -> "Col":
+    # (x_t - x_{t-1}) / x_{t-1} - null o dau / khi canh co null
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if i == 0 or c.is_null(i) == 1 or c.is_null(i - 1) == 1:
+            vals.append(0.0)
+            continue
+        prev = _col_f64_at(c, i - 1)
+        if prev == 0.0:
+            vals.append(0.0)
+            continue
+        vals.append((_col_f64_at(c, i) - prev) / prev)
+        mk.set(i, 1)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_cumprod(c: "Col") -> "Col":
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    run = 1.0
+    has_v = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            run = run * _col_f64_at(c, i)
+            has_v = 1
+        if has_v == 1:
+            vals.append(run)
+            mk.set(i, 1)
+        else:
+            vals.append(1.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_cummax(c: "Col") -> "Col":
+    return win_expanding_max(c)
+
+
+def win_cummin(c: "Col") -> "Col":
+    return win_expanding_min(c)
+
+
+def win_apply(c: "Col", window: "i32", f: "func(list[f64])->f64", min_periods: "i32") -> "Col":
+    # pandas rolling(window).apply(f) - f nhan list gia tri VALID cua cua so
+    if window <= 0:
+        raise ValueError("win_apply: window phai > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        start = i - window + 1
+        if start < 0:
+            start = 0
+        seg = []
+        for j in range(start, i + 1):
+            if c.is_null(j) == 0:
+                seg.append(_col_f64_at(c, j))
+        if len(seg) >= min_periods and len(seg) > 0:
+            vals.append(f(seg))
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rolling_min(c: "Col", window: "i32", min_periods: "i32") -> "Col":
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        start = i - window + 1
+        if start < 0:
+            start = 0
+        cur = 0.0
+        cnt = 0
+        for j in range(start, i + 1):
+            if c.is_null(j) == 0:
+                v = _col_f64_at(c, j)
+                if cnt == 0:
+                    cur = v
+                    cnt = 1
+                elif v < cur:
+                    cur = v
+        if cnt >= min_periods and cnt > 0:
+            vals.append(cur)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rolling_max(c: "Col", window: "i32", min_periods: "i32") -> "Col":
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        start = i - window + 1
+        if start < 0:
+            start = 0
+        cur = 0.0
+        cnt = 0
+        for j in range(start, i + 1):
+            if c.is_null(j) == 0:
+                v = _col_f64_at(c, j)
+                if cnt == 0:
+                    cur = v
+                    cnt = 1
+                elif v > cur:
+                    cur = v
+        if cnt >= min_periods and cnt > 0:
+            vals.append(cur)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rolling_count(c: "Col", window: "i32") -> "Col":
+    # dem so gia tri VALID trong cua so (pandas rolling().count())
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        start = i - window + 1
+        if start < 0:
+            start = 0
+        cnt = 0
+        for j in range(start, i + 1):
+            if c.is_null(j) == 0:
+                cnt = cnt + 1
+        vals.append(cnt)
+        mk.set(i, 1)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r
+
+
+def win_rolling_var(c: "Col", window: "i32", min_periods: "i32", ddof: "i32") -> "Col":
+    # Welford sliding (pandas rolling().var(ddof))
+    if window <= 0:
+        raise ValueError("Window size must be > 0")
+    n = c.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        start = i - window + 1
+        if start < 0:
+            start = 0
+        mean = 0.0
+        m2 = 0.0
+        cnt = 0
+        for j in range(start, i + 1):
+            if c.is_null(j) == 0:
+                x = _col_f64_at(c, j)
+                cnt = cnt + 1
+                d = x - mean
+                mean = mean + d / cnt
+                m2 = m2 + d * (x - mean)
+        if cnt > ddof:
+            vals.append(m2 / (cnt - ddof))
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    r = make_col_f64(vals)
+    r.valid = mk
+    return r

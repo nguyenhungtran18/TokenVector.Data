@@ -17,7 +17,7 @@
 | GroupBy / agg | ✅ | 🟡 | Đủ 8 agg phổ biến; thiếu `nunique`, `first/last`, agg tự định nghĩa, transform, iterating |
 | Join / AsOf / pivot / melt | ✅ | 🟡 | Đủ 5+1 loại join; thiếu `merge_on_index`, `merge_multi` nhiều cột phức tạp |
 | Sort | ✅ | ✅ (v1.1) | `sort_by_multi` multi-key stable (multi-pass, hỗ trợ key str), `nlargest/nsmallest` |
-| Window / rolling | ✅ | 🟡 | Có rolling mean/sum/std, shift, diff, cumsum, rank; thiếu ewm, expanding, pct_change |
+| Window / rolling | ✅ | ✅ (v1.4) | + `win_apply(f)` (rolling.apply — **func(list[f64])**, min_periods), expanding sum/mean/min/max/std, `win_ewm_mean` (khớp pandas adjust=True/False, verify từng chữ số), `win_pct_change`, `win_cumprod/cummax/cummin` |
 | Thống kê | ✅ | ✅ (v1.1) | + corr (Pearson Welford 1-pass), cov, skew, kurt (adjusted G1/G2 khớp pandas), `df_corr_matrix` |
 | Chuỗi (string) | ✅ | 🟡 | 7 str ops; pandas có ~30; thiếu `extract/regex`, `split`, `pad`, `find`, `len` |
 | Datetime | ✅ | ✅ (v1.1) | `dt_parse/format` ISO-8601, 8 component accessor, `dt_range`, `resample` (D/H/T/S/M/Y) — UTC, epoch ms |
@@ -26,7 +26,7 @@
 | I/O Arrow thực (Parquet/Feather) | ✅ | 🟡 | `ARROW1` stream format **tự chế**, không tương thích Arrow thật; OOC có |
 | Thống kê đa luồng | ✅ (bản 3.x) | ❌ (engine) | Engine 1T; nhưng ngôn ngữ TKV đã có thread 8T output thật |
 | Index alignment (set_index, reindex) | ✅ | ❌ | Không có khái niệm index — chỉ vị trí |
-| Missing data nâng cao | 🟡 | 🟡 | Có fill/drop/ffill/bfill; thiếu interpolate, missing-joins, isna trên DF |
+| Missing data nâng cao | ✅ | 🟡 | + `series_interpolate` (linear/ffill/bfill), `series_where` (pandas `Series.where`), `series_mask`; còn thiếu missing-joins, isna trên DF |
 | Interop (NumPy/tensor) | ✅ | ✅ | Mat zero-copy bridge — điểm mạnh riêng, pandas không có sẵn |
 
 ---
@@ -137,12 +137,12 @@
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
 | `rolling().mean/sum/std` | ✅ 3 | — |
-| `rolling().min/max/count/var/quantile/apply` | ❌ | Thiếu |
-| `expanding()` | ❌ | Thiếu |
-| `ewm()` | ❌ | Thiếu — quan trọng với finance |
+| `rolling().min/max/count/var/quantile/apply` | `win_rolling_min/max/count/var`, `agg_quantile` (trên cửa sổ), `win_apply(f, window, min_periods)` | ✅ (v1.4, apply nhận hàm TKV `func(list[f64])->f64` — top-level func lẫn lambda) |
+| `expanding()` | `win_expanding_sum/mean/min/max/std(ddof)` | ✅ (v1.4) |
+| `ewm()` | `win_ewm_mean(c, span, adjust)` — adjust=True (weighted, ignore_na=False) + adjust=False (recursive), **khớp pandas từng chữ số** | ✅ (v1.4) |
 | `shift(freq)` | `win_shift` | ✅ (không freq) |
-| `pct_change / diff(periods=k)` | `win_diff` (k=1), ❌ pct_change | 🟡 |
-| `cumsum / cummax / cummin / cumprod` | `win_cumsum` có, còn lại ❌ | 🟡 |
+| `pct_change / diff(periods=k)` | `win_diff` (k=1), `win_pct_change` | ✅ (v1.4, pct k=1) |
+| `cumsum / cummax / cummin / cumprod` | `win_cumsum`, `win_cummax`, `win_cummin`, `win_cumprod` | ✅ (v1.4) |
 | `rank(method=…)` | `win_rank` | 🟡 (1 method) |
 | `groupby().rolling` | ❌ | Thiếu |
 
@@ -178,8 +178,8 @@
 | `fillna(scalar)` | `fill_null_f64 / fill_null_str` | ✅ (per-type) |
 | `fillna(method=)` | `ffill / bfill` | ✅ |
 | `dropna(axis=0/1)` | `drop_null / drop_null_rows` | ✅ |
-| `interpolate` | ❌ | Thiếu |
-| `mask.where(cond, other)` | ❌ | Thiếu |
+| `interpolate` | `series_interpolate(s, "linear"|"ffill"|"bfill")` | ✅ (v1.4) |
+| `mask.where(cond, other)` | `series_where(s, cond, other)`, `series_mask(s, cond)` | ✅ (v1.4) |
 | NaT/None semantic đầy đủ | bitmask per-column (Arrow-style) | Kiểu null khác pandas (NaN-là-null) — gần Arrow hơn, **không có NaT** |
 
 ### 2.12 Sort / Rank
@@ -273,8 +273,24 @@ trung gian. Cả 2 đã tránh trong code library.
 Tests: `apply_check` 9/9 (thêm A7–A9 groupby_apply), `strings_check` 10/10
 (thêm T9–T10). Regression 15/15 suite xanh. DLL v1.3 rebuild (167KB), verify
 reflection: `re_test`, `series_str_title`, `groupby_apply`. Tổng parity ước
-tính **~70–75%** pandas cho workload tabular.
+tính **~75–80%** pandas cho workload tabular (v1.4).
 
+## 3d. v1.4 — 2026-09-21: window/ewm/interpolate + compiler func(list[T])
+
+| Thay đổi | Chi tiết |
+| :--- | :--- |
+| **Compiler tkvc: `func(list[f64])`** | callback nhận container — parser func() lưu spec chuỗi (`list[f64]`) nhưng chữ ký hàm là TypeAnn shape='list'; thêm `_norm_param_dtype` chuẩn hoá 2 phía (đệ quy elem_ta cho container lồng). Mở khóa rolling.apply-style callback |
+| `win_apply` (compute) | pandas `rolling(w).apply(f, min_periods)` — f nhận list giá trị VALID của cửa sổ, trả f64; top-level func lẫn lambda |
+| expanding family | `win_expanding_sum/mean/min/max/std(ddof)` |
+| `win_ewm_mean` | **Fix 2 bug**: (1) 2 nhánh adjust bị đảo ngược so với pandas; (2) công thức adjust=True decay nhầm trọng số của giá trị MỚI thay vì lịch sử. Giờ khớp pandas từng chữ số: x=[1..4], span=3 → adj=True [1, 1.6667, 2.4286, 3.2667], adj=False [1, 1.5, 2.25, 3.125] (đối chiếu pandas thật trên máy) |
+| `win_pct_change/cumprod/cummax/cummin` | đầy đủ family cum* |
+| `series_interpolate` | linear/ffill/bfill — **Fix bug compiler-level**: biến `t` suy diễn i32 từ phép chia int/int khiến kết quả nội suy bị cắt phần thập phân (trả đầu mút thay vì nội suy); khai f64 tường minh |
+| `series_where/mask` | pandas `Series.where(cond, other)` + mask bool |
+
+Tests: `comp_check` mở rộng khối v14 (interpolate/where/expanding/ewm/pct/cumprod/win_apply) —
+PASS. Regression **15/15 suite xanh**. DLL v1.4 rebuild (176KB) + verify reflection từ C#:
+`win_ewm_mean(span=3, adjust=True)([1,2,3,4]) = [_, 1.6667, _, 3.2667]` khớp pandas. Tổng
+parity ước tính **~75–80%** pandas cho workload tabular.
 ## 4. Cách kiểm chứng lại
 
 ```bash
