@@ -1,4 +1,4 @@
-__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io", "tokenvector_datetime"]
 
 def _gsum(g: "DataFrame") -> "DataFrame":
     v = g.col_by_name("v")

@@ -4043,38 +4043,72 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
     return dtypes
 
 
-def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
-    # Single-pass v2: split moi dong DUY NHAT 1 lan thang vao grid (khong qua
-    # csv_parse_rows -> bo join US + split US quay lai); infer 1 pass short-circuit;
-    # parse truc tiep theo dtype da biet (khong re-validate).
+# --------------------- read_csv flags (pandas parity) ------------------------
+# csv_read_ex(text, sep, header, names, dtype, na_values, skiprows)
+# - header: 0 = khong co dong header, 1 = co dong header (mac dinh)
+# - names:  list ten cot; khac rong -> override header (header duoc bo qua,
+#           giong pandas khi truyen names) hoac dat ten khi header=0
+# - dtype:  list dtype theo THU TU cot ("", "i64", "f64", "str") - khac rong
+#           bo qua infer; cot nho hon list -> infer; dai hon -> DT_STR
+# - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
+# - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
+# Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
+def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
     if csv_text == "":
         return empty_df()
+    if skiprows > 0:
+        all_lines = csv_text.split("\n")
+        if skiprows >= len(all_lines):
+            return empty_df()
+        kept = []
+        for i in range(skiprows, len(all_lines)):
+            kept.append(all_lines[i])
+        csv_text = kept[0]
+        for i in range(1, len(kept)):
+            csv_text = csv_text + "\n" + kept[i]
     lines = csv_text.split("\n")
     n_lines = len(lines)
     column_names = []
     data_start = 0
-    if has_header == 1:
-        header_line = lines[0]
-        hl = len(header_line)
-        if hl > 0 and header_line[hl - 1] == "\r":
-            header_line = header_line[0:hl - 1]
-        header_fields = _split_csv_line(header_line, delimiter, "\"")
-        for f in range(len(header_fields)):
-            column_names.append(header_fields[f])
-        data_start = 1
-    else:
-        if n_lines > 0:
-            first_line = lines[0]
-            fl = len(first_line)
-            if fl > 0 and first_line[fl - 1] == "\r":
-                first_line = first_line[0:fl - 1]
-            first_fields = _split_csv_line(first_line, delimiter, "\"")
-            n_first = len(first_fields)
-            for i in range(n_first):
-                column_names.append("column_" + str(i))
+    use_names = 0
+    if names != None:
+        if len(names) > 0:
+            use_names = 1
+    if use_names == 0:
+        if has_header == 1:
+            header_line = lines[0]
+            hl = len(header_line)
+            if hl > 0 and header_line[hl - 1] == "\r":
+                header_line = header_line[0:hl - 1]
+            header_fields = _split_csv_line(header_line, delimiter, "\"")
+            for f in range(len(header_fields)):
+                column_names.append(header_fields[f])
+            data_start = 1
         else:
-            column_names.append("column_0")
+            if n_lines > 0:
+                first_line = lines[0]
+                fl = len(first_line)
+                if fl > 0 and first_line[fl - 1] == "\r":
+                    first_line = first_line[0:fl - 1]
+                first_fields = _split_csv_line(first_line, delimiter, "\"")
+                n_first = len(first_fields)
+                for i in range(n_first):
+                    column_names.append("column_" + str(i))
+            else:
+                column_names.append("column_0")
+    else:
+        # names override: header=1 -> bo qua dong header; header=0 -> data tu dong 0
+        for i in range(len(names)):
+            column_names.append(names[i])
+        if has_header == 1:
+            data_start = 1
     n_cols = len(column_names)
+    n_spec = 0
+    if dtypes_spec != None:
+        n_spec = len(dtypes_spec)
+    n_na = 0
+    if na_values != None:
+        n_na = len(na_values)
     if data_start >= n_lines:
         result_cols = []
         for c in range(n_cols):
@@ -4105,70 +4139,364 @@ def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_v
         for c in range(n_cols):
             result_cols.append(make_series_str(column_names[c], []))
         return make_df(result_cols)
-    dtypes = _infer_dtypes_grid(grid, n_cols, total_data, null_value)
     result_cols = []
     for c in range(n_cols):
         col_name = column_names[c]
-        dt = dtypes[c]
+        # resolve dtype: spec roi roi -> infer
+        dt = 0 - 1
+        if c < n_spec:
+            spec = dtypes_spec[c]
+            if spec == "i64":
+                dt = DT_I64
+            elif spec == "f64":
+                dt = DT_F64
+            elif spec == "str":
+                dt = DT_STR
+        if dt == 0 - 1:
+            sub = _csv_grid_subcol(grid, c, n_cols, total_data)
+            dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
         if dt == DT_I64:
             ivals = []
             vm = make_mask(total_data, 1)
             for i in range(total_data):
                 raw = grid[i * n_cols + c].strip()
-                if raw == "" or raw == null_value:
+                if _csv_is_null(raw, null_value, na_values, n_na):
                     ivals.append(0)
                     vm.set(i, 0)
                 else:
-                    # infer da dam bao pure-int; int() nhanh hon manual per-char
                     ivals.append(int(raw))
-            c2 = make_col_i64_with_mask(ivals, vm)
-            result_cols.append(make_series(col_name, c2))
+            result_cols.append(make_series(col_name, make_col_i64_with_mask(ivals, vm)))
+        elif dt == DT_F64:
+            fvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    fvals.append(0.0)
+                    vm.set(i, 0)
+                else:
+                    fvals.append(float(raw))
+            result_cols.append(make_series(col_name, make_col_f64_with_mask(fvals, vm)))
         elif dt == DT_BOOL:
             bvals = []
             vm = make_mask(total_data, 1)
             for i in range(total_data):
                 raw = grid[i * n_cols + c].strip().lower()
-                if raw == "true":
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    bvals.append(0)
+                    vm.set(i, 0)
+                elif raw == "true":
                     bvals.append(1)
                 elif raw == "false":
                     bvals.append(0)
                 else:
                     bvals.append(0)
                     vm.set(i, 0)
-            c2 = make_col_bool_with_mask(bvals, vm)
-            result_cols.append(make_series(col_name, c2))
-        elif dt == DT_F64:
-            fvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if raw == "" or raw == null_value:
-                    fvals.append(0.0)
-                    vm.set(i, 0)
-                else:
-                    fvals.append(float(raw))
-            c2 = make_col_f64_with_mask(fvals, vm)
-            result_cols.append(make_series(col_name, c2))
+            result_cols.append(make_series(col_name, make_col_bool_with_mask(bvals, vm)))
         else:
             strs = []
+            vm = make_mask(total_data, 1)
             for i in range(total_data):
                 val = grid[i * n_cols + c]
-                if val == null_value:
-                    strs.append(None)
+                if _csv_is_null(val.strip(), null_value, na_values, n_na):
+                    strs.append("")
+                    vm.set(i, 0)
                 else:
                     strs.append(val)
-            result_cols.append(make_series_str(col_name, strs))
+            result_cols.append(make_series_str_with_mask(col_name, strs, vm))
+    # parse_dates: doi cot str/other -> i64 epoch ms qua dt_parse (pandas to_datetime)
+    n_pd = 0
+    if parse_dates != None:
+        n_pd = len(parse_dates)
+    if n_pd > 0:
+        for pi in range(n_pd):
+            pname = parse_dates[pi]
+            for c in range(n_cols):
+                if column_names[c] == pname:
+                    # goi qua bien trung gian: compiler khong chap nhan method
+                    # call tren ket qua ham truc tiep (rename tren Series)
+                    ts_col = series_dt_parse(result_cols[c])
+                    result_cols[c] = ts_col.rename(pname)
+                    break
     return make_df(result_cols)
 
 
-def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+def _csv_grid_subcol(grid: "list[str]", c: "i32", n_cols: "i32", total_data: "i32") -> "list[str]":
+    sub = []
+    for i in range(total_data):
+        sub.append(grid[i * n_cols + c])
+    return sub
+
+
+def _csv_is_null(raw: "str", null_value: "str", na_values: "list[str]", n_na: "i32") -> "i32":
+    if raw == "":
+        return 1
+    if raw == null_value:
+        return 1
+    for i in range(n_na):
+        if raw == na_values[i]:
+            return 1
+    return 0
+
+
+def csv_read_file_ex(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
     if file_exists(file_path) == 0:
         raise ValueError("File not found: " + file_path)
-    text = read_file(file_path)
-    return csv_read_string(text, delimiter, has_header, null_value)
+    return csv_read_ex(read_file(file_path), delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, [])
+
+def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0, [])
 
 
-# ------------------------------ CSV writing -----------------------------------
+def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    return csv_read_file_ex(file_path, delimiter, has_header, null_value, [], [], [], 0)
+
+
+# ------------------------ chunked read (pandas chunksize) --------------------
+# csv_read_chunks: doc CSV thanh cac khoi n dong (pandas read_csv(chunksize=n)
+# tra iterator; tkv chua co iterator nen tra list[DataFrame] theo thu tu).
+# DUNG TREN cung duong parse csv_read_ex - khong nhan ban parser. Gioi han:
+# toan bo file duoc read_file nap vao bo nho (chunk o tang dong, khong
+# streaming that) - ghi ro trong FUNCTION_PARITY.md.
+# flags (names/dtypes_spec/na_values/skiprows) co dinh cho moi chunk; header
+# chi dung 1 lan o chunk dau; skiprows ap dung 1 lan truoc khi chia khoi.
+def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
+    out = []
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    all_lines = csv_text.split("\n")
+    n_all = len(all_lines)
+    if n_all > 0:
+        last = all_lines[n_all - 1]
+        if last == "" or last == "\r":
+            all_lines.pop()
+            n_all = n_all - 1
+    if skiprows > 0:
+        if skiprows >= n_all:
+            out.append(empty_df())
+            return out
+        kept = []
+        for i in range(skiprows, n_all):
+            kept.append(all_lines[i])
+        all_lines = kept
+        n_all = len(all_lines)
+    # data_start: has_header=1 -> dong dau la header (dung lam ten cot hoac bi
+    # bo qua khi truyen names), KHONG tinh vao so dong moi chunk (pandas dem
+    # data rows). Header chi ton tai o chunk dau.
+    data_start = 0
+    if has_header == 1:
+        data_start = 1
+    n_data = n_all - data_start
+    if n_data <= 0:
+        if data_start == 1 and n_all > 0:
+            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates))
+        else:
+            out.append(empty_df())
+        return out
+    start = 0
+    while start < n_data:
+        end = start + chunksize
+        if end > n_data:
+            end = n_data
+        if start == 0 and data_start == 1:
+            body = all_lines[0]
+            k = 0
+            while k < end:
+                body = body + "\n" + all_lines[data_start + k]
+                k = k + 1
+            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+        else:
+            body = all_lines[data_start + start]
+            k = start + 1
+            while k < end:
+                body = body + "\n" + all_lines[data_start + k]
+                k = k + 1
+            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+        out.append(df)
+        start = end
+    return out
+
+def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
+
+    if chunksize <= 0:
+
+        raise ValueError("chunksize phai > 0")
+
+    out = []
+
+    if file_exists(file_path) == 0:
+
+        raise ValueError("File not found: " + file_path)
+
+    # STREAM THAT: chi giu trong bo nho toi da chunksize+1 dong; khong doc
+
+    # toan bo file. Parse tung khooi qua csv_read_ex (dung duong parse chung).
+
+    with open(file_path, "r") as f:
+
+        first = 1
+
+        more = 1
+
+        while more == 1:
+
+            # bo skiprows dong dau (1 lan, truoc khooi dau)
+
+            sr = 0
+
+            while sr < skiprows and more == 1:
+
+                jline = f.readline()
+
+                if jline == "":
+
+                    more = 0
+
+                else:
+
+                    if jline[len(jline) - 1] == "\n":
+
+                        jline = jline[0:len(jline) - 1]
+
+                    skip_tmp = jline
+
+                    sr = sr + 1
+
+            if more == 0:
+
+                break
+
+            # gom chunksize dong DATA (dong dau co the la header cua chunk dau)
+
+            lines_acc = []
+
+            if first == 1 and has_header == 1:
+
+                hline = f.readline()
+
+                if hline == "":
+
+                    more = 0
+
+                else:
+
+                    if hline[len(hline) - 1] == "\n":
+
+                        hline = hline[0:len(hline) - 1]
+
+                    if hline[len(hline) - 1] == "\r":
+
+                        hline = hline[0:len(hline) - 1]
+
+                    lines_acc.append(hline)
+
+            got = 0
+
+            while got < chunksize and more == 1:
+
+                dline = f.readline()
+
+                if dline == "":
+
+                    more = 0
+
+                else:
+
+                    if dline[len(dline) - 1] == "\n":
+
+                        dline = dline[0:len(dline) - 1]
+
+                    if dline[len(dline) - 1] == "\r":
+
+                        dline = dline[0:len(dline) - 1]
+
+                    lines_acc.append(dline)
+
+                    got = got + 1
+
+            if len(lines_acc) == 0:
+
+                break
+
+            if first == 1 and has_header == 1:
+
+                cbody = lines_acc[0]
+
+                k = 1
+
+                while k < len(lines_acc):
+
+                    cbody = cbody + "\n" + lines_acc[k]
+
+                    k = k + 1
+
+                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
+            else:
+
+                cbody = lines_acc[0]
+
+                k = 1
+
+                while k < len(lines_acc):
+
+                    cbody = cbody + "\n" + lines_acc[k]
+
+                    k = k + 1
+
+                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
+            out.append(cdf)
+
+            first = 0
+
+    return out
+
+
+def _read_all_enc(file_path: "str", encoding: "str") -> "str":
+    # Doc CA FILE voi encoding cu the (chi 'utf-8'/'latin-1') - compiler chi
+    # nhan encoding LITERAL trong 'with open' nen phai la 2 nhanh rieng.
+    # LUU Y: f.readline() khong tra '\n' cuoi dong -> phai gan lai '\n' sau
+    # moi dong (dong '\n' cuoi cung bi csv_read_chunks bo qua an toan).
+    parts = []
+    if encoding == "latin-1" or encoding == "latin1":
+        with open(file_path, "r", encoding="latin-1") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    else:
+        with open(file_path, "r", encoding="utf-8") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    text = ""
+    for pi in range(len(parts)):
+        if pi > 0:
+            text = text + "\n"
+        text = text + parts[pi]
+    return text
+
+
+def csv_read_chunks_file_enc(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", encoding: "str", parse_dates: "list[str]") -> "list[DataFrame]":
+    # encoding tuy chon (pandas encoding=...):
+    # - "latin-1"/"latin1": doc CA FILE qua _read_all_enc (byte-per-char, khong
+    #   loi voi file khong utf-8) roi delegate csv_read_chunks - khong stream
+    #   (han che chap nhan duoc; file latin-1 thuong nho). Giong pandas: BOM
+    #   khong bi strip o che do latin-1 (giu 3 ky tu nhieu).
+    # - "utf-8"/"utf8"/""/khac: delegate csv_read_chunks_file (STREAM THAT,
+    #   mo default; runtime tu strip BOM EF BB BF khi mo file - da probe).
+    # Compiler chi nhan encoding LITERAL trong 'with open' nen khong the goi
+    # chung 1 ham helper voi handle truyen vao (param file handle khong co kieu).
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    if encoding == "latin-1" or encoding == "latin1":
+        text = _read_all_enc(file_path, encoding)
+        return csv_read_chunks(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
+    return csv_read_chunks_file(file_path, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
         out = quote
@@ -4763,6 +5091,69 @@ def mat_square_sum(m: "Mat") -> "Mat":
     mr = Mat(m.rank, m.rows, m.cols, 0)
     mr.f64s = out
     return mr
+
+
+
+# ================== v1.5F: DataFrame -> JSON (write) ==================
+def _json_escape_str(s: "str") -> "str":
+    # escape JSON: backslash, quote, newline, tab, CR
+    out = ""
+    n = len(s)
+    for i in range(n):
+        ch = s[i]
+        if ch == "\\":
+            out = out + "\\\\"
+        elif ch == "\"":
+            out = out + "\\\""
+        elif ch == "\n":
+            out = out + "\n"
+        elif ch == "\t":
+            out = out + "\t"
+        elif ch == "\r":
+            out = out + "\r"
+        else:
+            out = out + ch
+    return out
+
+
+def json_array_write_string(df: "DataFrame") -> "str":
+    # pandas df.to_json(orient="records") - [{col:val,...},...] ho tro
+    # f64/i64/bool/str; null -> null. Giong nguoc lai json_array_read_string.
+    nc = df.column_count()
+    names = df_column_names(df)
+    n = df.row_count()
+    out = "["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + "{"
+        for c in range(nc):
+            if c > 0:
+                out = out + ","
+            col = df.col_at(c)
+            nm = names[c]
+            if col.is_null(r) == 1:
+                out = out + "\"" + _json_escape_str(nm) + "\":null"
+                continue
+            if col.dtype == DT_STR:
+                out = out + "\"" + _json_escape_str(nm) + "\":\"" + _json_escape_str(col.get_string(r)) + "\""
+            elif col.dtype == DT_I64:
+                out = out + "\"" + _json_escape_str(nm) + "\":" + str(col.get_i64(r))
+            elif col.dtype == DT_BOOL:
+                if col.get_bool(r) == 1:
+                    out = out + "\"" + _json_escape_str(nm) + "\":true"
+                else:
+                    out = out + "\"" + _json_escape_str(nm) + "\":false"
+            else:
+                out = out + "\"" + _json_escape_str(nm) + "\":" + str(col.get_f64(r))
+        out = out + "}"
+    out = out + "]"
+    return out
+
+
+def json_array_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    write_file(file_path, json_array_write_string(df))
+    return 0
 
 # ==================== tokenvector_relational ====================
 # -*- coding: utf-8 -*-

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_datetime"]
 
 def run() -> "str":
     # Test 1: CSV co quoted field

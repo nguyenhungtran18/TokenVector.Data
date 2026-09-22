@@ -7,7 +7,7 @@
 #   mask?, dtype data, footer magic
 # OutOfCoreDataFrame.Persist/Open/ReadBatch -> ooc_persist / ooc_open / ooc_read_batch
 # ==============================================================================
-__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_datetime"]
 
 def arrow_dtype_code(dt: "i32") -> "i32":
     # ma hoa dtype -> code byte (giong (byte)field.Type ben C#)

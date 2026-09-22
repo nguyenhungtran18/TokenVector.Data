@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # BENCHMARK TokenVector.Data (tkv) - doi chieu voi BENCHMARK.md cua ban C# cu
-__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io", "tokenvector_arrow"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io", "tokenvector_datetime", "tokenvector_arrow"]
 
 def _ms(t1, t2) -> "f64":
     d = t2 - t1

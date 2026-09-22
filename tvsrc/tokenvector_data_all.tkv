@@ -7613,7 +7613,6 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
     return dtypes
 
 
-# ==================== v1.6: read_csv flags (csv_read_ex) ====================
 # --------------------- read_csv flags (pandas parity) ------------------------
 # csv_read_ex(text, sep, header, names, dtype, na_values, skiprows)
 # - header: 0 = khong co dong header, 1 = co dong header (mac dinh)
@@ -7624,7 +7623,7 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
 # - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
 # - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
 # Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
-def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
+def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
     if csv_text == "":
         return empty_df()
     if skiprows > 0:
@@ -7775,6 +7774,20 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
                 else:
                     strs.append(val)
             result_cols.append(make_series_str_with_mask(col_name, strs, vm))
+    # parse_dates: doi cot str/other -> i64 epoch ms qua dt_parse (pandas to_datetime)
+    n_pd = 0
+    if parse_dates != None:
+        n_pd = len(parse_dates)
+    if n_pd > 0:
+        for pi in range(n_pd):
+            pname = parse_dates[pi]
+            for c in range(n_cols):
+                if column_names[c] == pname:
+                    # goi qua bien trung gian: compiler khong chap nhan method
+                    # call tren ket qua ham truc tiep (rename tren Series)
+                    ts_col = series_dt_parse(result_cols[c])
+                    result_cols[c] = ts_col.rename(pname)
+                    break
     return make_df(result_cols)
 
 
@@ -7799,12 +7812,10 @@ def _csv_is_null(raw: "str", null_value: "str", na_values: "list[str]", n_na: "i
 def csv_read_file_ex(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
     if file_exists(file_path) == 0:
         raise ValueError("File not found: " + file_path)
-    text = read_file(file_path)
-    return csv_read_ex(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows)
+    return csv_read_ex(read_file(file_path), delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, [])
 
 def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
-    # Wrapper: infer dtypes, khong flag (pandas read_csv mac dinh)
-    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0)
+    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0, [])
 
 
 def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
@@ -7819,7 +7830,7 @@ def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_va
 # streaming that) - ghi ro trong FUNCTION_PARITY.md.
 # flags (names/dtypes_spec/na_values/skiprows) co dinh cho moi chunk; header
 # chi dung 1 lan o chunk dau; skiprows ap dung 1 lan truoc khi chia khoi.
-def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
     out = []
     if chunksize <= 0:
         raise ValueError("chunksize phai > 0")
@@ -7848,7 +7859,7 @@ def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_v
     n_data = n_all - data_start
     if n_data <= 0:
         if data_start == 1 and n_all > 0:
-            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0))
+            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates))
         else:
             out.append(empty_df())
         return out
@@ -7863,87 +7874,199 @@ def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_v
             while k < end:
                 body = body + "\n" + all_lines[data_start + k]
                 k = k + 1
-            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
         else:
             body = all_lines[data_start + start]
             k = start + 1
             while k < end:
                 body = body + "\n" + all_lines[data_start + k]
                 k = k + 1
-            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
         out.append(df)
         start = end
     return out
 
-def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
+
     if chunksize <= 0:
+
         raise ValueError("chunksize phai > 0")
+
     out = []
+
     if file_exists(file_path) == 0:
+
         raise ValueError("File not found: " + file_path)
+
     # STREAM THAT: chi giu trong bo nho toi da chunksize+1 dong; khong doc
+
     # toan bo file. Parse tung khooi qua csv_read_ex (dung duong parse chung).
+
     with open(file_path, "r") as f:
+
         first = 1
+
         more = 1
+
         while more == 1:
+
             # bo skiprows dong dau (1 lan, truoc khooi dau)
+
             sr = 0
+
             while sr < skiprows and more == 1:
+
                 jline = f.readline()
+
                 if jline == "":
+
                     more = 0
+
                 else:
+
                     if jline[len(jline) - 1] == "\n":
+
                         jline = jline[0:len(jline) - 1]
+
                     skip_tmp = jline
+
                     sr = sr + 1
+
             if more == 0:
+
                 break
+
             # gom chunksize dong DATA (dong dau co the la header cua chunk dau)
+
             lines_acc = []
+
             if first == 1 and has_header == 1:
+
                 hline = f.readline()
+
                 if hline == "":
+
                     more = 0
+
                 else:
+
                     if hline[len(hline) - 1] == "\n":
+
                         hline = hline[0:len(hline) - 1]
+
                     if hline[len(hline) - 1] == "\r":
+
                         hline = hline[0:len(hline) - 1]
+
                     lines_acc.append(hline)
+
             got = 0
+
             while got < chunksize and more == 1:
+
                 dline = f.readline()
+
                 if dline == "":
+
                     more = 0
+
                 else:
+
                     if dline[len(dline) - 1] == "\n":
+
                         dline = dline[0:len(dline) - 1]
+
                     if dline[len(dline) - 1] == "\r":
+
                         dline = dline[0:len(dline) - 1]
+
                     lines_acc.append(dline)
+
                     got = got + 1
+
             if len(lines_acc) == 0:
+
                 break
+
             if first == 1 and has_header == 1:
+
                 cbody = lines_acc[0]
+
                 k = 1
+
                 while k < len(lines_acc):
+
                     cbody = cbody + "\n" + lines_acc[k]
+
                     k = k + 1
-                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+
+                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
             else:
+
                 cbody = lines_acc[0]
+
                 k = 1
+
                 while k < len(lines_acc):
+
                     cbody = cbody + "\n" + lines_acc[k]
+
                     k = k + 1
-                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+
+                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
             out.append(cdf)
+
             first = 0
+
     return out
 
+
+def _read_all_enc(file_path: "str", encoding: "str") -> "str":
+    # Doc CA FILE voi encoding cu the (chi 'utf-8'/'latin-1') - compiler chi
+    # nhan encoding LITERAL trong 'with open' nen phai la 2 nhanh rieng.
+    # LUU Y: f.readline() khong tra '\n' cuoi dong -> phai gan lai '\n' sau
+    # moi dong (dong '\n' cuoi cung bi csv_read_chunks bo qua an toan).
+    parts = []
+    if encoding == "latin-1" or encoding == "latin1":
+        with open(file_path, "r", encoding="latin-1") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    else:
+        with open(file_path, "r", encoding="utf-8") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    text = ""
+    for pi in range(len(parts)):
+        if pi > 0:
+            text = text + "\n"
+        text = text + parts[pi]
+    return text
+
+
+def csv_read_chunks_file_enc(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", encoding: "str", parse_dates: "list[str]") -> "list[DataFrame]":
+    # encoding tuy chon (pandas encoding=...):
+    # - "latin-1"/"latin1": doc CA FILE qua _read_all_enc (byte-per-char, khong
+    #   loi voi file khong utf-8) roi delegate csv_read_chunks - khong stream
+    #   (han che chap nhan duoc; file latin-1 thuong nho). Giong pandas: BOM
+    #   khong bi strip o che do latin-1 (giu 3 ky tu nhieu).
+    # - "utf-8"/"utf8"/""/khac: delegate csv_read_chunks_file (STREAM THAT,
+    #   mo default; runtime tu strip BOM EF BB BF khi mo file - da probe).
+    # Compiler chi nhan encoding LITERAL trong 'with open' nen khong the goi
+    # chung 1 ham helper voi handle truyen vao (param file handle khong co kieu).
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    if encoding == "latin-1" or encoding == "latin1":
+        text = _read_all_enc(file_path, encoding)
+        return csv_read_chunks(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
+    return csv_read_chunks_file(file_path, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
         out = quote
@@ -8601,220 +8724,6 @@ def json_array_write_string(df: "DataFrame") -> "str":
 def json_array_write_file(df: "DataFrame", file_path: "str") -> "i32":
     write_file(file_path, json_array_write_string(df))
     return 0
-
-# ==============================================================================
-# TOKENVECTOR.DATA - ARROW IPC / OUT-OF-CORE MODULE
-# (port tu ArrowIpcEngine.cs + OutOfCoreDataFrame.cs)
-# Arrow IPC stream format: magic "ARROW1" + schema + column data + footer magic.
-# tkv khong co byte buffer nen luu dang JSON text; cau truc du lieu tuong duong:
-#   magic | col_count | row_count | per col: name, dtype, nullable | per col:
-#   mask?, dtype data, footer magic
-# OutOfCoreDataFrame.Persist/Open/ReadBatch -> ooc_persist / ooc_open / ooc_read_batch
-# ==============================================================================
-
-def arrow_dtype_code(dt: "i32") -> "i32":
-    # ma hoa dtype -> code byte (giong (byte)field.Type ben C#)
-    return dt
-
-def arrow_write_string(df: "DataFrame") -> "str":
-    # Serializes a DataFrame into an Arrow IPC "stream" (chuoi JSON hoan doi)
-    parts = []
-    parts.append("ARROW1")
-    nc = df.column_count()
-    nr = df.row_count()
-    parts.append(str(nc))
-    parts.append(str(nr))
-    # schema: name + dtype + nullable moi cot
-    for c in range(nc):
-        s = df.col_at(c)
-        parts.append(s.name)
-        parts.append(str(s.dtype))
-        nullable = 1
-        if s.dtype == DT_STR or s.dtype == DT_F64:
-            parts.append(str(nullable))
-        else:
-            parts.append(str(nullable))
-    # column data
-    for c in range(nc):
-        s = df.col_at(c)
-        vm = s.valid
-        if s.dtype == DT_STR:
-            parts.append("S")
-            parts.append(str(len(s.strings)))
-            for i in range(len(s.strings)):
-                has_null = 0
-                if vm.get(i) == 0:
-                    has_null = 1
-                parts.append(str(has_null) + "|" + s.strings[i])
-        else:
-            parts.append("V")
-            parts.append(str(s.dtype))
-            # sentinel -1 = all-valid: bo toan bo dong mask (tia kich thuoc stream)
-            if vm.all1() == 1:
-                parts.append("-1")
-            else:
-                parts.append(str(len(vm.bits)))
-                for i in range(len(vm.bits)):
-                    parts.append(str(vm.bits[i]))
-            if s.dtype == DT_F64:
-                parts.append(str(len(s.f64s)))
-                for i in range(len(s.f64s)):
-                    v = s.f64s[i]
-                    parts.append(str(v))
-            elif s.dtype == DT_I64:
-                parts.append(str(len(s.i64s)))
-                for i in range(len(s.i64s)):
-                    v2 = s.i64s[i]
-                    parts.append(str(v2))
-            elif s.dtype == DT_BOOL:
-                parts.append(str(len(s.bools)))
-                for i in range(len(s.bools)):
-                    v4 = s.bools[i]
-                    parts.append(str(v4))
-    parts.append("ARROW1")
-    row_text = ""
-    for p in range(len(parts)):
-        row_text = row_text + parts[p]
-        if p < len(parts) - 1:
-            row_text = row_text + "\n"
-    return row_text
-
-def arrow_read_string(stream_text: "str") -> "DataFrame":
-    # Deserializes a DataFrame from an Arrow IPC "stream"
-    lines = stream_text.split("\n")
-    if len(lines) < 4:
-        return empty_df()
-    if lines[0] != "ARROW1":
-        return empty_df()
-    nc = int(lines[1])
-    nr = int(lines[2])
-    pos = 3
-    names = []
-    dtypes = []
-    for c in range(nc):
-        names.append(lines[pos])
-        dtypes.append(int(lines[pos + 1]))
-        pos = pos + 3
-    result_cols = []
-    for c in range(nc):
-        dt = dtypes[c]
-        vm = make_mask(nr, 1)
-        if lines[pos] == "S":
-            pos = pos + 1
-            cnt = int(lines[pos])
-            pos = pos + 1
-            svals = []
-            for i in range(cnt):
-                cell = lines[pos]
-                pos = pos + 1
-                bar = cell.find("|")
-                has_null = int(cell[0:bar])
-                txt = cell[bar + 1:len(cell)]
-                if has_null == 1:
-                    vm.set(i, 0)
-                    svals.append("")
-                else:
-                    svals.append(txt)
-            result_cols.append(make_series_str_with_mask(names[c], svals, vm))
-        else:
-            pos = pos + 1
-            col_dt = int(lines[pos])
-            pos = pos + 1
-            mbits = int(lines[pos])
-            pos = pos + 1
-            if mbits < 0:
-                # sentinel all-valid: dung san mask, khong co dong bit nao
-                vm.pc = nr
-            else:
-                for i in range(mbits):
-                    bv = int(lines[pos])
-                    pos = pos + 1
-                    if bv == 0:
-                        vm.set(i, 0)
-            nvals = int(lines[pos])
-            pos = pos + 1
-            if col_dt == DT_F64:
-                fvals = []
-                for i in range(nvals):
-                    fvals.append(float(lines[pos]))
-                    pos = pos + 1
-                result_cols.append(make_series_f64_with_mask(names[c], fvals, vm))
-            elif col_dt == DT_I64:
-                ivals = []
-                for i in range(nvals):
-                    ivals.append(int(lines[pos]))
-                    pos = pos + 1
-                result_cols.append(make_series_i64_with_mask(names[c], ivals, vm))
-            elif col_dt == DT_BOOL:
-                bvals = []
-                for i in range(nvals):
-                    bvals.append(int(lines[pos]))
-                    pos = pos + 1
-                result_cols.append(make_series_bool_with_mask(names[c], bvals, vm))
-            else:
-                pos = pos + nvals
-                result_cols.append(make_series_f64(names[c], []))
-    if lines[pos] != "ARROW1":
-        return empty_df()
-    return make_df(result_cols)
-
-def arrow_write_file(df: "DataFrame", file_path: "str") -> "i32":
-    write_file(file_path, arrow_write_string(df))
-    return 0
-
-def arrow_read_file(file_path: "str") -> "DataFrame":
-    return arrow_read_string(read_file(file_path))
-
-# ---------------- OutOfCoreDataFrame (persist / open / read batch) ----------------
-
-class Ooc:
-    file_path: "str"
-    row_count_v: "i32"
-    col_count_v: "i32"
-    names: "list[str]"
-    dtypes: "list[i32]"
-
-def ooc_persist(df: "DataFrame", file_path: "str") -> "i32":
-    arrow_write_file(df, file_path)
-    return 0
-
-def ooc_open(file_path: "str") -> "Ooc":
-    header = arrow_read_string(read_file(file_path))
-    nc = header.column_count()
-    nr = header.row_count()
-    nm = []
-    dtl = []
-    for c in range(nc):
-        s = header.col_at(c)
-        nm.append(s.name)
-        dtl.append(s.dtype)
-    o = Ooc(file_path, nr, nc)
-    o.names = nm
-    o.dtypes = dtl
-    return o
-
-def ooc_row_count(o: "Ooc") -> "i32":
-    return o.row_count_v
-
-def ooc_col_count(o: "Ooc") -> "i32":
-    return o.col_count_v
-
-def ooc_read_batch(o: "Ooc", offset: "i32", length: "i32") -> "DataFrame":
-    # doc toan bo file, lay dong [offset, offset+length) - ung voi batch reader
-    all_df = arrow_read_file(o.file_path)
-    nr = all_df.row_count()
-    nc = all_df.column_count()
-    if offset < 0 or offset + length > nr:
-        return empty_df()
-    keep = []
-    for i in range(length):
-        keep.append(offset + i)
-    picked_cols = []
-    for c in range(nc):
-        s = all_df.col_at(c)
-        picked_cols.append(s.slice_series(offset, length))
-    return make_df(picked_cols)
-
 # ==============================================================================
 # TOKENVECTOR.DATA - NUMERICS INTEROP MODULE (port tu NumericsInterop.cs)
 # Bridge giua Series/DataFrame va NDArray/Tensor cua TokenVector.Numerics.

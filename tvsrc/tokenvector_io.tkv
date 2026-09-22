@@ -235,7 +235,7 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
 # - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
 # - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
 # Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
-def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
+def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
     if csv_text == "":
         return empty_df()
     if skiprows > 0:
@@ -386,6 +386,20 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
                 else:
                     strs.append(val)
             result_cols.append(make_series_str_with_mask(col_name, strs, vm))
+    # parse_dates: doi cot str/other -> i64 epoch ms qua dt_parse (pandas to_datetime)
+    n_pd = 0
+    if parse_dates != None:
+        n_pd = len(parse_dates)
+    if n_pd > 0:
+        for pi in range(n_pd):
+            pname = parse_dates[pi]
+            for c in range(n_cols):
+                if column_names[c] == pname:
+                    # goi qua bien trung gian: compiler khong chap nhan method
+                    # call tren ket qua ham truc tiep (rename tren Series)
+                    ts_col = series_dt_parse(result_cols[c])
+                    result_cols[c] = ts_col.rename(pname)
+                    break
     return make_df(result_cols)
 
 
@@ -410,12 +424,10 @@ def _csv_is_null(raw: "str", null_value: "str", na_values: "list[str]", n_na: "i
 def csv_read_file_ex(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
     if file_exists(file_path) == 0:
         raise ValueError("File not found: " + file_path)
-    text = read_file(file_path)
-    return csv_read_ex(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows)
+    return csv_read_ex(read_file(file_path), delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, [])
 
 def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
-    # Wrapper: infer dtypes, khong flag (pandas read_csv mac dinh)
-    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0)
+    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0, [])
 
 
 def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
@@ -430,7 +442,7 @@ def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_va
 # streaming that) - ghi ro trong FUNCTION_PARITY.md.
 # flags (names/dtypes_spec/na_values/skiprows) co dinh cho moi chunk; header
 # chi dung 1 lan o chunk dau; skiprows ap dung 1 lan truoc khi chia khoi.
-def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
     out = []
     if chunksize <= 0:
         raise ValueError("chunksize phai > 0")
@@ -459,7 +471,7 @@ def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_v
     n_data = n_all - data_start
     if n_data <= 0:
         if data_start == 1 and n_all > 0:
-            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0))
+            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates))
         else:
             out.append(empty_df())
         return out
@@ -474,87 +486,199 @@ def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_v
             while k < end:
                 body = body + "\n" + all_lines[data_start + k]
                 k = k + 1
-            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
         else:
             body = all_lines[data_start + start]
             k = start + 1
             while k < end:
                 body = body + "\n" + all_lines[data_start + k]
                 k = k + 1
-            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
         out.append(df)
         start = end
     return out
 
-def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", parse_dates: "list[str]") -> "list[DataFrame]":
+
     if chunksize <= 0:
+
         raise ValueError("chunksize phai > 0")
+
     out = []
+
     if file_exists(file_path) == 0:
+
         raise ValueError("File not found: " + file_path)
+
     # STREAM THAT: chi giu trong bo nho toi da chunksize+1 dong; khong doc
+
     # toan bo file. Parse tung khooi qua csv_read_ex (dung duong parse chung).
+
     with open(file_path, "r") as f:
+
         first = 1
+
         more = 1
+
         while more == 1:
+
             # bo skiprows dong dau (1 lan, truoc khooi dau)
+
             sr = 0
+
             while sr < skiprows and more == 1:
+
                 jline = f.readline()
+
                 if jline == "":
+
                     more = 0
+
                 else:
+
                     if jline[len(jline) - 1] == "\n":
+
                         jline = jline[0:len(jline) - 1]
+
                     skip_tmp = jline
+
                     sr = sr + 1
+
             if more == 0:
+
                 break
+
             # gom chunksize dong DATA (dong dau co the la header cua chunk dau)
+
             lines_acc = []
+
             if first == 1 and has_header == 1:
+
                 hline = f.readline()
+
                 if hline == "":
+
                     more = 0
+
                 else:
+
                     if hline[len(hline) - 1] == "\n":
+
                         hline = hline[0:len(hline) - 1]
+
                     if hline[len(hline) - 1] == "\r":
+
                         hline = hline[0:len(hline) - 1]
+
                     lines_acc.append(hline)
+
             got = 0
+
             while got < chunksize and more == 1:
+
                 dline = f.readline()
+
                 if dline == "":
+
                     more = 0
+
                 else:
+
                     if dline[len(dline) - 1] == "\n":
+
                         dline = dline[0:len(dline) - 1]
+
                     if dline[len(dline) - 1] == "\r":
+
                         dline = dline[0:len(dline) - 1]
+
                     lines_acc.append(dline)
+
                     got = got + 1
+
             if len(lines_acc) == 0:
+
                 break
+
             if first == 1 and has_header == 1:
+
                 cbody = lines_acc[0]
+
                 k = 1
+
                 while k < len(lines_acc):
+
                     cbody = cbody + "\n" + lines_acc[k]
+
                     k = k + 1
-                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+
+                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
             else:
+
                 cbody = lines_acc[0]
+
                 k = 1
+
                 while k < len(lines_acc):
+
                     cbody = cbody + "\n" + lines_acc[k]
+
                     k = k + 1
-                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+
+                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0, parse_dates)
+
             out.append(cdf)
+
             first = 0
+
     return out
 
+
+def _read_all_enc(file_path: "str", encoding: "str") -> "str":
+    # Doc CA FILE voi encoding cu the (chi 'utf-8'/'latin-1') - compiler chi
+    # nhan encoding LITERAL trong 'with open' nen phai la 2 nhanh rieng.
+    # LUU Y: f.readline() khong tra '\n' cuoi dong -> phai gan lai '\n' sau
+    # moi dong (dong '\n' cuoi cung bi csv_read_chunks bo qua an toan).
+    parts = []
+    if encoding == "latin-1" or encoding == "latin1":
+        with open(file_path, "r", encoding="latin-1") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    else:
+        with open(file_path, "r", encoding="utf-8") as f:
+            ln = f.readline()
+            while ln != "":
+                parts.append(ln)
+                ln = f.readline()
+    text = ""
+    for pi in range(len(parts)):
+        if pi > 0:
+            text = text + "\n"
+        text = text + parts[pi]
+    return text
+
+
+def csv_read_chunks_file_enc(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32", encoding: "str", parse_dates: "list[str]") -> "list[DataFrame]":
+    # encoding tuy chon (pandas encoding=...):
+    # - "latin-1"/"latin1": doc CA FILE qua _read_all_enc (byte-per-char, khong
+    #   loi voi file khong utf-8) roi delegate csv_read_chunks - khong stream
+    #   (han che chap nhan duoc; file latin-1 thuong nho). Giong pandas: BOM
+    #   khong bi strip o che do latin-1 (giu 3 ky tu nhieu).
+    # - "utf-8"/"utf8"/""/khac: delegate csv_read_chunks_file (STREAM THAT,
+    #   mo default; runtime tu strip BOM EF BB BF khi mo file - da probe).
+    # Compiler chi nhan encoding LITERAL trong 'with open' nen khong the goi
+    # chung 1 ham helper voi handle truyen vao (param file handle khong co kieu).
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    if encoding == "latin-1" or encoding == "latin1":
+        text = _read_all_enc(file_path, encoding)
+        return csv_read_chunks(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
+    return csv_read_chunks_file(file_path, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize, parse_dates)
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
         out = quote

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__tkv_import__ = ["tokenvector_data", "tokenvector_io"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_datetime"]
 
 def _ms(t1, t2) -> "f64":
     d = t2 - t1
@@ -123,17 +123,17 @@ def main() -> "i32":
         print("t6 FAIL names override")
     # names + sep (header=0)
     headless = "1;x\n2;y\n"
-    dfe = csv_read_ex(headless, ";", 0, "", ["id", "tag"], [], [], 0)
+    dfe = csv_read_ex(headless, ";", 0, "", ["id", "tag"], [], [], 0, [])
     if dfe.row_count() != 2 or dfe.col_at(0).get_i64(1) != 2 or dfe.col_at(1).get_string(1) != "y":
         fails = fails + 1
         print("t6 FAIL names+sep")
     # skiprows: "junk line" + header + 2 dong
     t4 = "junk line\nname,score\nA,1\nB,2\n"
-    dff = csv_read_ex(t4, ",", 1, "", [], [], [], 1)
+    dff = csv_read_ex(t4, ",", 1, "", [], [], [], 1, [])
     if df_column_names(dff)[0] != "name" or dff.row_count() != 2 or dff.col_at(1).get_i64(1) != 2:
         fails = fails + 1
         print("t6 FAIL skiprows")
-    if csv_read_ex("a,b\n1,2\n", ",", 1, "", [], [], [], 99).row_count() != 0:
+    if csv_read_ex("a,b\n1,2\n", ",", 1, "", [], [], [], 99, []).row_count() != 0:
         fails = fails + 1
         print("t6 FAIL skipall")
     if fails == 0:
@@ -152,7 +152,7 @@ def main() -> "i32":
         t7_body2000 = t7_body2000 + "\n" + t7_parts[t7_p]
         t7_p = t7_p + 1
     t7_body2000 = t7_body2000 + "\n"
-    t7_chunks = csv_read_chunks(t7_body2000, ",", 1, "", [], [], [], 0, 300)
+    t7_chunks = csv_read_chunks(t7_body2000, ",", 1, "", [], [], [], 0, 300, [])
     if len(t7_chunks) != 7:
         fails = fails + 1
         print("t7 FAIL nchunks=" + str(len(t7_chunks)))
@@ -202,11 +202,11 @@ def main() -> "i32":
             print("t7 FAIL missing " + str(t7_mi))
         t7_mi = t7_mi + 1
     # nho hon 1 chunk -> 1 chunk; skiprows ap dung 1 lan truoc khi chia
-    t7_tiny = csv_read_chunks("a,b" + t7_NL + "1,2" + t7_NL, ",", 1, "", [], [], [], 0, 100)
+    t7_tiny = csv_read_chunks("a,b" + t7_NL + "1,2" + t7_NL, ",", 1, "", [], [], [], 0, 100, [])
     if len(t7_tiny) != 1 or t7_tiny[0].row_count() != 1:
         fails = fails + 1
         print("t7 FAIL small")
-    t7_c4 = csv_read_chunks("junk" + t7_NL + "x,y" + t7_NL + "5,6" + t7_NL + "7,8" + t7_NL, ",", 1, "", [], [], [], 1, 1)
+    t7_c4 = csv_read_chunks("junk" + t7_NL + "x,y" + t7_NL + "5,6" + t7_NL + "7,8" + t7_NL, ",", 1, "", [], [], [], 1, 1, [])
     if len(t7_c4) != 2 or t7_c4[0].row_count() != 1 or t7_c4[1].row_count() != 1:
         fails = fails + 1
         print("t7 FAIL skiprows")
@@ -216,7 +216,7 @@ def main() -> "i32":
         fails = fails + 1
         print("t7 FAIL skipvals")
     # flags co dinh qua chunk: val infer f64, NA -> null ca 2 chunk
-    t7_c5 = csv_read_chunks("id,v" + t7_NL + "1,2.5" + t7_NL + "2,NA" + t7_NL + "3,4.0" + t7_NL + "4,NA" + t7_NL, ",", 1, "", [], [], ["NA"], 0, 2)
+    t7_c5 = csv_read_chunks("id,v" + t7_NL + "1,2.5" + t7_NL + "2,NA" + t7_NL + "3,4.0" + t7_NL + "4,NA" + t7_NL, ",", 1, "", [], [], ["NA"], 0, 2, [])
     if len(t7_c5) != 2:
         fails = fails + 1
         print("t7 FAIL flag-n")
@@ -240,7 +240,7 @@ def main() -> "i32":
         t8_k = t8_k + 1
     t8_body = t8_body + "\n"
     write_file("_t8stream.csv", t8_body)
-    t8_ch = csv_read_chunks_file("_t8stream.csv", ",", 1, "", [], [], [], 0, 500)
+    t8_ch = csv_read_chunks_file("_t8stream.csv", ",", 1, "", [], [], [], 0, 500, [])
     if len(t8_ch) != 4:
         fails = fails + 1
         print("t8 FAIL nchunks=" + str(len(t8_ch)))
