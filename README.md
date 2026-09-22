@@ -125,7 +125,7 @@ ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
 nuget.exe pack TokenVector.Data.nuspec
 ```
 
-Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` and `packages/TokenVector.Data.1.0.2.nupkg`.
+Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` and `packages/TokenVector.Data.1.0.3.nupkg`.
 
 ---
 

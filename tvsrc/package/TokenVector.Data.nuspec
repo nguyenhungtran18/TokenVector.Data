@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>TokenVector.Data</id>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <title>TokenVector.Data - High-Performance Columnar DataFrame &amp; Tabular Engine (TokenVector Language)</title>
     <authors>TokenVector Project Team</authors>
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
-    <releaseNotes>1.0.2: Performance &amp; feature upgrade. Perf: DataFrame.sort_by O(n log n) stable merge sort (was O(n^2) insertion), AsOf join O(n log m) binary search (was O(n*m) scan, unsorted right input now supported), rolling mean/std O(n). Null propagation: vec_add/sub/mul/div, scalar ops, abs/sqrt/exp/log/pow now propagate nulls (null in -&gt; null out). New APIs: Series.ffill/bfill, Series.str_map_contains/startswith/endswith/upper/lower/replace, Series.between, Series.is_in_f64/is_in_str, DataFrame.drop_duplicates/duplicated_mask/value_counts. 9/9 check suites green.</releaseNotes>
+    <releaseNotes>1.0.3: CSV datetime &amp; encoding. parse_dates=[column names] on csv_read_ex/csv_read_chunks/csv_read_chunks_file (ISO strings -&gt; i64 epoch-ms via series_dt_parse, column name preserved, unknown names skipped). New csv_read_chunks_file_enc with encoding (utf-8/latin-1) + parse_dates; latin-1 byte-per-char full-file path, utf-8/default true streaming. UTF-8 BOM (EF BB BF) auto-stripped by runtime file-open layer. 16 check suites green incl. new pd_check (15 checks).</releaseNotes>
     <description>High-performance columnar DataFrame and tabular data processing library, natively implemented in the TokenVector language (tkv) and compiled to a .NET CIL DLL: schema, columns, series, vector math, filter, group-by, joins (incl. AsOf), pivot/melt, CSV/JSON IO, Arrow IPC stream and out-of-core batches, zero-copy Mat bridge for numerics.</description>
     <tags>dataframe columnar arrow feather csv json timeseries asofjoin tokenvector data</tags>
     <dependencies>

@@ -125,7 +125,7 @@ ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
 nuget.exe pack TokenVector.Data.nuspec
 ```
 
-Artifact dựng sẵn: `tvsrc/TokenVector.Data.dll` và `packages/TokenVector.Data.1.0.2.nupkg`.
+Artifact dựng sẵn: `tvsrc/TokenVector.Data.dll` và `packages/TokenVector.Data.1.0.3.nupkg`.
 
 ---
 
