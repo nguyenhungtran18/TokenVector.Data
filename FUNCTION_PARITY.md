@@ -57,7 +57,7 @@
 
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
-| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null) | 🟡 ~50% flag của pandas; còn thiếu chunksize, encoding, parse_dates |
+| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null); **`csv_read_chunks` / `csv_read_chunks_file` v1.6.1** (chunksize=n → list[DataFrame], chia theo dòng data, header chỉ ở chunk đầu, skiprows/dtype/na_values nhất quán qua chunk) | 🟡 ~60% flag của pandas; còn thiếu encoding, parse_dates. **Giới hạn đã biết: chunks vẫn nạp toàn bộ file vào RAM qua read_file (chia khối ở tầng dòng, KHÔNG phải streaming I/O thật)** |
 | `to_csv` | `csv_write_string` / `csv_write_file` | ✅ cơ bản |
 | `read_json` (orient, lines, dtype…) | `json_array_read_string`, `ndjson_read_string/file` | 🟡 đọc được, **không có write JSON** |
 | `read_excel` | ❌ | — |

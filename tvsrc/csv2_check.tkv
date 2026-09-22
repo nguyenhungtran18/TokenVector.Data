@@ -138,6 +138,95 @@ def main() -> "i32":
         print("t6 FAIL skipall")
     if fails == 0:
         print("t6 csv flags OK")
+    # t7: chunked read (pandas chunksize) - chia theo DATA rows, header chunk dau
+    # CSV 2000 dong id,val: chunksize=300 -> 7 t7_chunks (300*6=1800, cuoi 200)
+    t7_NL = "\n"
+    t7_parts = []
+    t7_p = 0
+    while t7_p < 2000:
+        t7_parts.append(str(t7_p) + "," + str(float(t7_p) * 0.25))
+        t7_p = t7_p + 1
+    t7_body2000 = "id,val"
+    t7_p = 0
+    while t7_p < len(t7_parts):
+        t7_body2000 = t7_body2000 + "\n" + t7_parts[t7_p]
+        t7_p = t7_p + 1
+    t7_body2000 = t7_body2000 + "\n"
+    t7_chunks = csv_read_chunks(t7_body2000, ",", 1, "", [], [], [], 0, 300)
+    if len(t7_chunks) != 7:
+        fails = fails + 1
+        print("t7 FAIL nchunks=" + str(len(t7_chunks)))
+    t7_total7 = 0
+    t7_zi = 0
+    while t7_zi < len(t7_chunks):
+        t7_czj = t7_chunks[t7_zi]
+        t7_total7 = t7_total7 + t7_czj.row_count()
+        t7_zi = t7_zi + 1
+    if t7_total7 != 2000:
+        fails = fails + 1
+        print("t7 FAIL total=" + str(t7_total7))
+    # khong trung/thieu + bien gioi: chunk k bat dau tai id k*300
+    t7_marks = []
+    t7_mi = 0
+    while t7_mi < 2000:
+        t7_marks.append(0)
+        t7_mi = t7_mi + 1
+    t7_zi = 0
+    while t7_zi < len(t7_chunks):
+        t7_czj = t7_chunks[t7_zi]
+        t7_cjcol = t7_czj.col_at(0)
+        t7_cjval = t7_czj.col_at(1)
+        if t7_czj.row_count() > 0 and t7_cjcol.get_i64(0) != t7_zi * 300:
+            fails = fails + 1
+            print("t7 FAIL boundary chunk " + str(t7_zi))
+        t7_rj = 0
+        while t7_rj < t7_czj.row_count():
+            t7_vid = t7_cjcol.get_i64(t7_rj)
+            if t7_vid < 0 or t7_vid >= 2000:
+                fails = fails + 1
+                print("t7 FAIL range " + str(t7_vid))
+            elif t7_marks[t7_vid] == 1:
+                fails = fails + 1
+                print("t7 FAIL dup " + str(t7_vid))
+            else:
+                t7_marks[t7_vid] = 1
+            if t7_cjval.get_f64(t7_rj) != float(t7_vid) * 0.25:
+                fails = fails + 1
+                print("t7 FAIL val " + str(t7_vid))
+            t7_rj = t7_rj + 1
+        t7_zi = t7_zi + 1
+    t7_mi = 0
+    while t7_mi < 2000:
+        if t7_marks[t7_mi] == 0:
+            fails = fails + 1
+            print("t7 FAIL missing " + str(t7_mi))
+        t7_mi = t7_mi + 1
+    # nho hon 1 chunk -> 1 chunk; skiprows ap dung 1 lan truoc khi chia
+    t7_tiny = csv_read_chunks("a,b" + t7_NL + "1,2" + t7_NL, ",", 1, "", [], [], [], 0, 100)
+    if len(t7_tiny) != 1 or t7_tiny[0].row_count() != 1:
+        fails = fails + 1
+        print("t7 FAIL small")
+    t7_c4 = csv_read_chunks("junk" + t7_NL + "x,y" + t7_NL + "5,6" + t7_NL + "7,8" + t7_NL, ",", 1, "", [], [], [], 1, 1)
+    if len(t7_c4) != 2 or t7_c4[0].row_count() != 1 or t7_c4[1].row_count() != 1:
+        fails = fails + 1
+        print("t7 FAIL skiprows")
+    t7_c4x = t7_c4[0].col_at(0)
+    t7_c4y = t7_c4[1].col_at(1)
+    if t7_c4x.get_i64(0) != 5 or t7_c4y.get_i64(0) != 8:
+        fails = fails + 1
+        print("t7 FAIL skipvals")
+    # flags co dinh qua chunk: val infer f64, NA -> null ca 2 chunk
+    t7_c5 = csv_read_chunks("id,v" + t7_NL + "1,2.5" + t7_NL + "2,NA" + t7_NL + "3,4.0" + t7_NL + "4,NA" + t7_NL, ",", 1, "", [], [], ["NA"], 0, 2)
+    if len(t7_c5) != 2:
+        fails = fails + 1
+        print("t7 FAIL flag-n")
+    t7_d0 = t7_c5[0].col_at(1)
+    t7_d1 = t7_c5[1].col_at(1)
+    if t7_d0.get_f64(0) != 2.5 or t7_d0.is_null(1) != 1 or t7_d1.is_null(1) != 1:
+        fails = fails + 1
+        print("t7 FAIL flag-null")
+    if fails == 0:
+        print("t7 chunked read OK")
     if fails == 0:
         print("ALL CSV TESTS PASS")
     else:

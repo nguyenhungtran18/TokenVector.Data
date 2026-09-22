@@ -7811,6 +7811,76 @@ def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_va
     return csv_read_file_ex(file_path, delimiter, has_header, null_value, [], [], [], 0)
 
 
+# ------------------------ chunked read (pandas chunksize) --------------------
+# csv_read_chunks: doc CSV thanh cac khoi n dong (pandas read_csv(chunksize=n)
+# tra iterator; tkv chua co iterator nen tra list[DataFrame] theo thu tu).
+# DUNG TREN cung duong parse csv_read_ex - khong nhan ban parser. Gioi han:
+# toan bo file duoc read_file nap vao bo nho (chunk o tang dong, khong
+# streaming that) - ghi ro trong FUNCTION_PARITY.md.
+# flags (names/dtypes_spec/na_values/skiprows) co dinh cho moi chunk; header
+# chi dung 1 lan o chunk dau; skiprows ap dung 1 lan truoc khi chia khoi.
+def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+    out = []
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    all_lines = csv_text.split("\n")
+    n_all = len(all_lines)
+    if n_all > 0:
+        last = all_lines[n_all - 1]
+        if last == "" or last == "\r":
+            all_lines.pop()
+            n_all = n_all - 1
+    if skiprows > 0:
+        if skiprows >= n_all:
+            out.append(empty_df())
+            return out
+        kept = []
+        for i in range(skiprows, n_all):
+            kept.append(all_lines[i])
+        all_lines = kept
+        n_all = len(all_lines)
+    # data_start: has_header=1 -> dong dau la header (dung lam ten cot hoac bi
+    # bo qua khi truyen names), KHONG tinh vao so dong moi chunk (pandas dem
+    # data rows). Header chi ton tai o chunk dau.
+    data_start = 0
+    if has_header == 1:
+        data_start = 1
+    n_data = n_all - data_start
+    if n_data <= 0:
+        if data_start == 1 and n_all > 0:
+            out.append(csv_read_ex(all_lines[0], delimiter, 1, null_value, names, dtypes_spec, na_values, 0))
+        else:
+            out.append(empty_df())
+        return out
+    start = 0
+    while start < n_data:
+        end = start + chunksize
+        if end > n_data:
+            end = n_data
+        if start == 0 and data_start == 1:
+            body = all_lines[0]
+            k = 0
+            while k < end:
+                body = body + "\n" + all_lines[data_start + k]
+                k = k + 1
+            df = csv_read_ex(body, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+        else:
+            body = all_lines[data_start + start]
+            k = start + 1
+            while k < end:
+                body = body + "\n" + all_lines[data_start + k]
+                k = k + 1
+            df = csv_read_ex(body, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+        out.append(df)
+        start = end
+    return out
+
+def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    text = read_file(file_path)
+    return csv_read_chunks(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize)
+
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
         out = quote
