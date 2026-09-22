@@ -4,6 +4,27 @@
 
 ---
 
+## ⚡ Version 1.0.3-dev (2026-09-22) - CSV datetime & encoding (tvsrc v1.6.3)
+
+**Internal tvsrc library version v1.6.3** (compiler tkvc unchanged; DLL rebuild pending).
+
+### ✨ New APIs
+* **`parse_dates` on all CSV readers** — `csv_read_ex`, `csv_read_chunks`, `csv_read_chunks_file` now take a trailing `parse_dates: "list[str]"`; listed string columns are converted to i64 epoch-ms via `series_dt_parse` (module datetime) with the column name preserved; unknown names are skipped safely (pandas-like). Signature change: callers must append `[]` when no date columns.
+* **`csv_read_chunks_file_enc(..., encoding, parse_dates)`** — encoding-aware chunked CSV read: `"latin-1"`/`"latin1"` reads the whole file byte-per-char via `_read_all_enc` then delegates to `csv_read_chunks`; `"utf-8"`/`""`/other stream for real (chunksize+1 lines in RAM). UTF-8 BOM (EF BB BF) is stripped automatically by the runtime file-open layer (probed for all three open modes).
+
+### 🔎 Runtime facts (probed, not guessed)
+* TKV strings are byte-per-char: a raw U+FEFF literal in source reads as 3 chars, and `write_file` double-encodes it — real-BOM fixtures cannot be built from string APIs; BOM handling therefore lives in the file-open layer.
+* `f.readline()` returns lines WITHOUT the trailing `
+` (unlike Python); `_read_all_enc` re-joins lines with `
+` (caught by the new suite as a real bug).
+* The compiler rejects passing file handles into helper functions (untyped params) and method calls on direct function results — both shaped the final design.
+
+### 🧪 Verification
+* New `pd_check.tkv` suite (15 checks: parse_dates across ex/chunks/file/enc, name preservation, epoch correctness, latin-1/default encoding, unknown-column tolerance) — `FAILS= 0`.
+* Full regression green: base, vec, comp, apply, strings, rel, core, num, arr, feat, stat, stats, v15, io, dt, csv2.
+
+---
+
 ## ⚡ Version 1.0.2 (2026-09-19) - Performance & Feature Upgrade
 
 **`TokenVector.Data`** v1.0.2 focuses on algorithmic upgrades and data-hygiene APIs, all verified by **11/11 green check suites**.

@@ -1,7 +1,34 @@
-# SESSION HANDOFF — 2026-09-21 (đọc file này trước khi làm tiếp)
+# SESSION HANDOFF — 2026-09-22 (đọc file này trước khi làm tiếp)
 
 ## Trạng thái: MỌI THỨ ĐÃ LƯU TRÊN ĐĨA. CHƯA commit git (cả 2 repo có thay đổi
 từ nhiều phiên trước, KHÔNG tự ý stage/commit — chờ user quyết).
+
+---
+
+## 0. PHIÊN 2026-09-22 — io v1.6.3: parse_dates + encoding (XONG, all green)
+
+### Đã làm (chi tiết probe trong tvsrc/_RELNOTES_io_v163.md):
+- **parse_dates**: `csv_read_ex`/`csv_read_chunks`/`csv_read_chunks_file` thêm
+  tham số cuối `parse_dates: "list[str]"` — cột str → i64 epoch ms qua
+  `series_dt_parse`, GIỮ tên cột (biến trung gian + `.rename`; compiler không
+  cho method-call trên kết quả hàm). Cột lạ bỏ qua an toàn. ⚠️ ĐỔI CHỮ KÝ —
+  caller cũ phải thêm `[]`.
+- **csv_read_chunks_file_enc(..., encoding, parse_dates)**: latin-1 đọc cả
+  file qua `_read_all_enc` (byte-per-char) rồi delegate `csv_read_chunks`;
+  utf-8/"" stream thật (delegate csv_read_chunks_file).
+- **BOM EF BB BF**: runtime TỰ STRIP khi mở file (probe cả 3 open mode) —
+  KHÔNG cần strip tay. Chuỗi TKV byte-per-char: literal U+FEFF raw = 3 ký tự,
+  `write_file("\ufeff...")` double-encode → không tạo fixture BOM thật được.
+- **f.readline() KHÔNG trả \n cuối** (khác Python!) → `_read_all_enc` ghép
+  `\n` giữa dòng (bug thật bắt được qua suite).
+- **Compiler không cho truyền file-handle vào hàm** (param không kiểu —
+  `_chunks_read_handle` bị từ chối) → mỗi read tự inline loop hoặc đọc-all.
+- **Merged splice idempotent**: `tvsrc/_patch_merged.py` (marker-based, chống
+  nhân đôi — dùng tool này cho mọi lần refresh merged sau này).
+- Suite mới `tvsrc/pd_check.tkv` (15 checks, FAILS= 0); cập nhật csv2_check,
+  io_check, tokenvector_arrow, bench, v15_check (+tokenvector_datetime import);
+  FUNCTION_PARITY + RELEASE_NOTES (EN/VI) mục 1.0.3-dev; probe tạm đã dọn.
+- Regression 16 suite ĐỀU XANH (base..csv2).
 
 ---
 

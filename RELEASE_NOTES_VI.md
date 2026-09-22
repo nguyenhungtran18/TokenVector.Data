@@ -4,6 +4,27 @@
 
 ---
 
+## ⚡ Phiên Bản 1.0.3-dev (22/09/2026) - CSV datetime & encoding (tvsrc v1.6.3)
+
+**Phiên bản thư viện tvsrc v1.6.3** (compiler tkvc không đổi; DLL chưa rebuild).
+
+### ✨ API mới
+* **`parse_dates` trên mọi CSV reader** — `csv_read_ex`, `csv_read_chunks`, `csv_read_chunks_file` nhận thêm tham số cuối `parse_dates: "list[str]"`; cột str được liệt kê sẽ đổi sang i64 epoch-ms qua `series_dt_parse` (module datetime), giữ nguyên tên cột; tên lạ được bỏ qua an toàn (giống pandas). Đổi chữ ký: caller cũ phải thêm `[]` khi không có cột ngày.
+* **`csv_read_chunks_file_enc(..., encoding, parse_dates)`** — đọc CSV theo chunk có encoding: `"latin-1"`/`"latin1"` đọc cả file byte-per-char qua `_read_all_enc` rồi delegate `csv_read_chunks`; `"utf-8"`/`""`/khác stream thật (chỉ giữ chunksize+1 dòng trong RAM). BOM UTF-8 (EF BB BF) tự strip ở tầng open của runtime (đã probe cả 3 chế độ mở file).
+
+### 🔎 Sự thật runtime (đã probe, không đoán)
+* Chuỗi TKV là byte-per-char: literal U+FEFF raw trong source đọc thành 3 ký tự, `write_file` double-encode — không tạo được fixture BOM thật từ string API; xử lý BOM nằm ở tầng mở file.
+* `f.readline()` KHÔNG trả `
+` cuối dòng (khác Python); `_read_all_enc` tự ghép `
+` giữa các dòng (suite mới bắt được bug thật này).
+* Compiler không cho truyền file-handle vào hàm (param không kiểu) và không cho method-call trên kết quả hàm trực tiếp — cả hai quyết định kiến trúc hiện tại.
+
+### 🧪 Kiểm chứng
+* Suite mới `pd_check.tkv` (15 checks: parse_dates qua ex/chunks/file/enc, giữ tên cột, epoch đúng, encoding latin-1/mặc định, bỏ qua cột lạ) — `FAILS= 0`.
+* Regression toàn bộ xanh: base, vec, comp, apply, strings, rel, core, num, arr, feat, stat, stats, v15, io, dt, csv2.
+
+---
+
 ## ⚡ Phiên Bản 1.0.2 (19/09/2026) - Nâng Cấp Hiệu Năng & Tính Năng
 
 **`TokenVector.Data`** v1.0.2 tập trung vào nâng cấp thuật toán và các API làm sạch dữ liệu, tất cả được xác minh bằng **11/11 check suite xanh**.
