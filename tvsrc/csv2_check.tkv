@@ -65,6 +65,79 @@ def main() -> "i32":
     df5 = csv_read_string(csvtext, ",", 1, "")
     t2 = datetime()
     print("t5 perf rows=" + str(df5.row_count()) + " ms=" + str(_ms(t1, t2)))
+    # t6: read_csv flags (dtype/na_values/names/sep/skiprows) - pandas parity
+    # df goc co "Smith, John" (chua dau phay) -> ghi file -> doc lai voi flag
+    ss1 = []
+    ss2 = []
+    ss2.append("Smith, John")
+    ss2.append("said \"hi\"")
+    ss2.append("")
+    ss2.append("Bo")
+    ss1.append("Smith, John")
+    ss1.append("Ann")
+    ss1.append(None)
+    ss1.append("Bo")
+    colA = make_series_str("name", ss1)
+    colB = make_series_str("note", ss2)
+    vmc = make_mask(4, 1)
+    vmc.set(2, 0)
+    vmc.set(3, 0)
+    colC = make_series_f64_with_mask("score", [3.5, 7.0, 0.0, 0.0], vmc)
+    vm = make_mask(4, 1)
+    vm.set(1, 0)
+    colD = make_series_bool_with_mask("ok", [1, 0, 0, 1], vm)
+    cols = []
+    cols.append(colA)
+    cols.append(colB)
+    cols.append(colC)
+    cols.append(colD)
+    dfx = make_df(cols)
+    csv_write_file(dfx, "_rt6.csv", ",", 1, "")
+    # baseline: doc lai - quote, null, f64, bool phai dung
+    dfa = csv_read_file_ex("_rt6.csv", ",", 1, "", [], [], [], 0)
+    if dfa.col_at(0).get_string(0) != "Smith, John" or dfa.col_at(1).is_null(2) != 1 or dfa.col_at(2).get_f64(0) != 3.5 or dfa.col_at(3).get_bool(0) != 1:
+        fails = fails + 1
+        print("t6 FAIL baseline quote/empty/bool")
+    if dfa.col_at(2).is_null(2) != 1 or dfa.col_at(2).is_null(3) != 1:
+        fails = fails + 1
+        print("t6 FAIL empty-f64-null")
+    # na_values: ghi null_value="NA" roi doc voi na_values=["NA"]
+    csv_write_file(dfx, "_rt6na.csv", ",", 1, "NA")
+    dfb = csv_read_file_ex("_rt6na.csv", ",", 1, "", [], [], ["NA"], 0)
+    if dfb.col_at(1).is_null(2) != 1 or dfb.col_at(0).is_null(2) != 1:
+        fails = fails + 1
+        print("t6 FAIL na_values")
+    # dtype override: doc score/ok lam str, va f64 cho cot cu the
+    dfc = csv_read_file_ex("_rt6.csv", ",", 1, "", [], ["str", "str", "str", "str"], [], 0)
+    if dfc.col_at(2).get_string(0) != "3.5" or dfc.col_at(3).get_string(0).find("rue") < 0:
+        fails = fails + 1
+        print("t6 FAIL dtype str")
+    dfc2 = csv_read_file_ex("_rt6.csv", ",", 1, "", [], ["", "", "f64", ""], [], 0)
+    if dfc2.col_at(2).get_f64(0) != 3.5:
+        fails = fails + 1
+        print("t6 FAIL dtype f64")
+    # names override (header=1 -> bo qua dong header)
+    dfd = csv_read_file_ex("_rt6.csv", ",", 1, "", ["who", "memo", "val", "flag"], [], [], 0)
+    if df_column_names(dfd)[0] != "who" or dfd.col_at(0).get_string(0) != "Smith, John":
+        fails = fails + 1
+        print("t6 FAIL names override")
+    # names + sep (header=0)
+    headless = "1;x\n2;y\n"
+    dfe = csv_read_ex(headless, ";", 0, "", ["id", "tag"], [], [], 0)
+    if dfe.row_count() != 2 or dfe.col_at(0).get_i64(1) != 2 or dfe.col_at(1).get_string(1) != "y":
+        fails = fails + 1
+        print("t6 FAIL names+sep")
+    # skiprows: "junk line" + header + 2 dong
+    t4 = "junk line\nname,score\nA,1\nB,2\n"
+    dff = csv_read_ex(t4, ",", 1, "", [], [], [], 1)
+    if df_column_names(dff)[0] != "name" or dff.row_count() != 2 or dff.col_at(1).get_i64(1) != 2:
+        fails = fails + 1
+        print("t6 FAIL skiprows")
+    if csv_read_ex("a,b\n1,2\n", ",", 1, "", [], [], [], 99).row_count() != 0:
+        fails = fails + 1
+        print("t6 FAIL skipall")
+    if fails == 0:
+        print("t6 csv flags OK")
     if fails == 0:
         print("ALL CSV TESTS PASS")
     else:

@@ -57,7 +57,7 @@
 
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
-| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token) | 🟡 ~15% flag của pandas; chunksize chưa có |
+| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null) | 🟡 ~50% flag của pandas; còn thiếu chunksize, encoding, parse_dates |
 | `to_csv` | `csv_write_string` / `csv_write_file` | ✅ cơ bản |
 | `read_json` (orient, lines, dtype…) | `json_array_read_string`, `ndjson_read_string/file` | 🟡 đọc được, **không có write JSON** |
 | `read_excel` | ❌ | — |
