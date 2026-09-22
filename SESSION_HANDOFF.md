@@ -1,7 +1,11 @@
 # SESSION HANDOFF — 2026-09-22 (đọc file này trước khi làm tiếp)
 
-## Trạng thái: MỌI THỨ ĐÃ LƯU TRÊN ĐĨA. CHƯA commit git (cả 2 repo có thay đổi
-từ nhiều phiên trước, KHÔNG tự ý stage/commit — chờ user quyết).
+## Trạng thái: ĐÃ COMMIT (user yêu cầu) — Data repo: 7476d63 feat io v1.6.3,
+b205bb9 build DLL/nupkg 1.0.3, 35f7aab docs, 40f1be9 smoke harness. Compiler
+repo: c5bd63e feat encoding on with-open + sync tkvc.exe, 18deb7d dọn 102 .pyc
+tracked. Chưa commit ở compiler (không phải của phiên io): media player
+untracked + images/preview.png + submodule tokenvector-grammar dirty. Chưa
+push (đợi user).
 
 ---
 
