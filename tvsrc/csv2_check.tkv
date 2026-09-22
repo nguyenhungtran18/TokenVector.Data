@@ -227,6 +227,44 @@ def main() -> "i32":
         print("t7 FAIL flag-null")
     if fails == 0:
         print("t7 chunked read OK")
+    # t8: streaming csv_read_chunks_file - file that 2000 dong, chunk 500 -> 4
+    t8_parts = []
+    t8_i = 0
+    while t8_i < 2000:
+        t8_parts.append(str(t8_i) + "," + str(float(t8_i) * 0.5))
+        t8_i = t8_i + 1
+    t8_body = "id,val"
+    t8_k = 0
+    while t8_k < len(t8_parts):
+        t8_body = t8_body + "\n" + t8_parts[t8_k]
+        t8_k = t8_k + 1
+    t8_body = t8_body + "\n"
+    write_file("_t8stream.csv", t8_body)
+    t8_ch = csv_read_chunks_file("_t8stream.csv", ",", 1, "", [], [], [], 0, 500)
+    if len(t8_ch) != 4:
+        fails = fails + 1
+        print("t8 FAIL nchunks=" + str(len(t8_ch)))
+    t8_tot = 0
+    t8_z = 0
+    while t8_z < len(t8_ch):
+        t8_c = t8_ch[t8_z]
+        t8_tot = t8_tot + t8_c.row_count()
+        t8_c0 = t8_c.col_at(0)
+        if t8_c0.get_i64(0) != t8_z * 500:
+            fails = fails + 1
+            print("t8 FAIL boundary " + str(t8_z))
+        t8_z = t8_z + 1
+    if t8_tot != 2000:
+        fails = fails + 1
+        print("t8 FAIL total=" + str(t8_tot))
+    t8_last = t8_ch[3]
+    t8_v = t8_last.col_at(1)
+    t8_n = t8_last.row_count()
+    if t8_v.get_f64(t8_n - 1) != 999.5:
+        fails = fails + 1
+        print("t8 FAIL val")
+    if fails == 0:
+        print("t8 stream chunks OK")
     if fails == 0:
         print("ALL CSV TESTS PASS")
     else:

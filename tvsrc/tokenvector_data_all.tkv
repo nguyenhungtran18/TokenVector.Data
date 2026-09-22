@@ -7876,10 +7876,73 @@ def csv_read_chunks(csv_text: "str", delimiter: "str", has_header: "i32", null_v
     return out
 
 def csv_read_chunks_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", chunksize: "i32") -> "list[DataFrame]":
+    if chunksize <= 0:
+        raise ValueError("chunksize phai > 0")
+    out = []
     if file_exists(file_path) == 0:
         raise ValueError("File not found: " + file_path)
-    text = read_file(file_path)
-    return csv_read_chunks(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, chunksize)
+    # STREAM THAT: chi giu trong bo nho toi da chunksize+1 dong; khong doc
+    # toan bo file. Parse tung khooi qua csv_read_ex (dung duong parse chung).
+    with open(file_path, "r") as f:
+        first = 1
+        more = 1
+        while more == 1:
+            # bo skiprows dong dau (1 lan, truoc khooi dau)
+            sr = 0
+            while sr < skiprows and more == 1:
+                jline = f.readline()
+                if jline == "":
+                    more = 0
+                else:
+                    if jline[len(jline) - 1] == "\n":
+                        jline = jline[0:len(jline) - 1]
+                    skip_tmp = jline
+                    sr = sr + 1
+            if more == 0:
+                break
+            # gom chunksize dong DATA (dong dau co the la header cua chunk dau)
+            lines_acc = []
+            if first == 1 and has_header == 1:
+                hline = f.readline()
+                if hline == "":
+                    more = 0
+                else:
+                    if hline[len(hline) - 1] == "\n":
+                        hline = hline[0:len(hline) - 1]
+                    if hline[len(hline) - 1] == "\r":
+                        hline = hline[0:len(hline) - 1]
+                    lines_acc.append(hline)
+            got = 0
+            while got < chunksize and more == 1:
+                dline = f.readline()
+                if dline == "":
+                    more = 0
+                else:
+                    if dline[len(dline) - 1] == "\n":
+                        dline = dline[0:len(dline) - 1]
+                    if dline[len(dline) - 1] == "\r":
+                        dline = dline[0:len(dline) - 1]
+                    lines_acc.append(dline)
+                    got = got + 1
+            if len(lines_acc) == 0:
+                break
+            if first == 1 and has_header == 1:
+                cbody = lines_acc[0]
+                k = 1
+                while k < len(lines_acc):
+                    cbody = cbody + "\n" + lines_acc[k]
+                    k = k + 1
+                cdf = csv_read_ex(cbody, delimiter, 1, null_value, names, dtypes_spec, na_values, 0)
+            else:
+                cbody = lines_acc[0]
+                k = 1
+                while k < len(lines_acc):
+                    cbody = cbody + "\n" + lines_acc[k]
+                    k = k + 1
+                cdf = csv_read_ex(cbody, delimiter, 0, null_value, names, dtypes_spec, na_values, 0)
+            out.append(cdf)
+            first = 0
+    return out
 
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
