@@ -225,38 +225,72 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
     return dtypes
 
 
-def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
-    # Single-pass v2: split moi dong DUY NHAT 1 lan thang vao grid (khong qua
-    # csv_parse_rows -> bo join US + split US quay lai); infer 1 pass short-circuit;
-    # parse truc tiep theo dtype da biet (khong re-validate).
+# --------------------- read_csv flags (pandas parity) ------------------------
+# csv_read_ex(text, sep, header, names, dtype, na_values, skiprows)
+# - header: 0 = khong co dong header, 1 = co dong header (mac dinh)
+# - names:  list ten cot; khac rong -> override header (header duoc bo qua,
+#           giong pandas khi truyen names) hoac dat ten khi header=0
+# - dtype:  list dtype theo THU TU cot ("", "i64", "f64", "str") - khac rong
+#           bo qua infer; cot nho hon list -> infer; dai hon -> DT_STR
+# - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
+# - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
+# Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
+def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
     if csv_text == "":
         return empty_df()
+    if skiprows > 0:
+        all_lines = csv_text.split("\n")
+        if skiprows >= len(all_lines):
+            return empty_df()
+        kept = []
+        for i in range(skiprows, len(all_lines)):
+            kept.append(all_lines[i])
+        csv_text = kept[0]
+        for i in range(1, len(kept)):
+            csv_text = csv_text + "\n" + kept[i]
     lines = csv_text.split("\n")
     n_lines = len(lines)
     column_names = []
     data_start = 0
-    if has_header == 1:
-        header_line = lines[0]
-        hl = len(header_line)
-        if hl > 0 and header_line[hl - 1] == "\r":
-            header_line = header_line[0:hl - 1]
-        header_fields = _split_csv_line(header_line, delimiter, "\"")
-        for f in range(len(header_fields)):
-            column_names.append(header_fields[f])
-        data_start = 1
-    else:
-        if n_lines > 0:
-            first_line = lines[0]
-            fl = len(first_line)
-            if fl > 0 and first_line[fl - 1] == "\r":
-                first_line = first_line[0:fl - 1]
-            first_fields = _split_csv_line(first_line, delimiter, "\"")
-            n_first = len(first_fields)
-            for i in range(n_first):
-                column_names.append("column_" + str(i))
+    use_names = 0
+    if names != None:
+        if len(names) > 0:
+            use_names = 1
+    if use_names == 0:
+        if has_header == 1:
+            header_line = lines[0]
+            hl = len(header_line)
+            if hl > 0 and header_line[hl - 1] == "\r":
+                header_line = header_line[0:hl - 1]
+            header_fields = _split_csv_line(header_line, delimiter, "\"")
+            for f in range(len(header_fields)):
+                column_names.append(header_fields[f])
+            data_start = 1
         else:
-            column_names.append("column_0")
+            if n_lines > 0:
+                first_line = lines[0]
+                fl = len(first_line)
+                if fl > 0 and first_line[fl - 1] == "\r":
+                    first_line = first_line[0:fl - 1]
+                first_fields = _split_csv_line(first_line, delimiter, "\"")
+                n_first = len(first_fields)
+                for i in range(n_first):
+                    column_names.append("column_" + str(i))
+            else:
+                column_names.append("column_0")
+    else:
+        # names override: header=1 -> bo qua dong header; header=0 -> data tu dong 0
+        for i in range(len(names)):
+            column_names.append(names[i])
+        if has_header == 1:
+            data_start = 1
     n_cols = len(column_names)
+    n_spec = 0
+    if dtypes_spec != None:
+        n_spec = len(dtypes_spec)
+    n_na = 0
+    if na_values != None:
+        n_na = len(na_values)
     if data_start >= n_lines:
         result_cols = []
         for c in range(n_cols):
@@ -287,70 +321,107 @@ def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_v
         for c in range(n_cols):
             result_cols.append(make_series_str(column_names[c], []))
         return make_df(result_cols)
-    dtypes = _infer_dtypes_grid(grid, n_cols, total_data, null_value)
     result_cols = []
     for c in range(n_cols):
         col_name = column_names[c]
-        dt = dtypes[c]
+        # resolve dtype: spec roi roi -> infer
+        dt = 0 - 1
+        if c < n_spec:
+            spec = dtypes_spec[c]
+            if spec == "i64":
+                dt = DT_I64
+            elif spec == "f64":
+                dt = DT_F64
+            elif spec == "str":
+                dt = DT_STR
+        if dt == 0 - 1:
+            sub = _csv_grid_subcol(grid, c, n_cols, total_data)
+            dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
         if dt == DT_I64:
             ivals = []
             vm = make_mask(total_data, 1)
             for i in range(total_data):
                 raw = grid[i * n_cols + c].strip()
-                if raw == "" or raw == null_value:
+                if _csv_is_null(raw, null_value, na_values, n_na):
                     ivals.append(0)
                     vm.set(i, 0)
                 else:
-                    # infer da dam bao pure-int; int() nhanh hon manual per-char
                     ivals.append(int(raw))
-            c2 = make_col_i64_with_mask(ivals, vm)
-            result_cols.append(make_series(col_name, c2))
+            result_cols.append(make_series(col_name, make_col_i64_with_mask(ivals, vm)))
+        elif dt == DT_F64:
+            fvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    fvals.append(0.0)
+                    vm.set(i, 0)
+                else:
+                    fvals.append(float(raw))
+            result_cols.append(make_series(col_name, make_col_f64_with_mask(fvals, vm)))
         elif dt == DT_BOOL:
             bvals = []
             vm = make_mask(total_data, 1)
             for i in range(total_data):
                 raw = grid[i * n_cols + c].strip().lower()
-                if raw == "true":
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    bvals.append(0)
+                    vm.set(i, 0)
+                elif raw == "true":
                     bvals.append(1)
                 elif raw == "false":
                     bvals.append(0)
                 else:
                     bvals.append(0)
                     vm.set(i, 0)
-            c2 = make_col_bool_with_mask(bvals, vm)
-            result_cols.append(make_series(col_name, c2))
-        elif dt == DT_F64:
-            fvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if raw == "" or raw == null_value:
-                    fvals.append(0.0)
-                    vm.set(i, 0)
-                else:
-                    fvals.append(float(raw))
-            c2 = make_col_f64_with_mask(fvals, vm)
-            result_cols.append(make_series(col_name, c2))
+            result_cols.append(make_series(col_name, make_col_bool_with_mask(bvals, vm)))
         else:
             strs = []
+            vm = make_mask(total_data, 1)
             for i in range(total_data):
                 val = grid[i * n_cols + c]
-                if val == null_value:
-                    strs.append(None)
+                if _csv_is_null(val.strip(), null_value, na_values, n_na):
+                    strs.append("")
+                    vm.set(i, 0)
                 else:
                     strs.append(val)
-            result_cols.append(make_series_str(col_name, strs))
+            result_cols.append(make_series_str_with_mask(col_name, strs, vm))
     return make_df(result_cols)
 
 
-def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+def _csv_grid_subcol(grid: "list[str]", c: "i32", n_cols: "i32", total_data: "i32") -> "list[str]":
+    sub = []
+    for i in range(total_data):
+        sub.append(grid[i * n_cols + c])
+    return sub
+
+
+def _csv_is_null(raw: "str", null_value: "str", na_values: "list[str]", n_na: "i32") -> "i32":
+    if raw == "":
+        return 1
+    if raw == null_value:
+        return 1
+    for i in range(n_na):
+        if raw == na_values[i]:
+            return 1
+    return 0
+
+
+def csv_read_file_ex(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
     if file_exists(file_path) == 0:
         raise ValueError("File not found: " + file_path)
     text = read_file(file_path)
-    return csv_read_string(text, delimiter, has_header, null_value)
+    return csv_read_ex(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows)
+
+def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    # Wrapper: infer dtypes, khong flag (pandas read_csv mac dinh)
+    return csv_read_ex(csv_text, delimiter, has_header, null_value, [], [], [], 0)
 
 
-# ------------------------------ CSV writing -----------------------------------
+def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
+    return csv_read_file_ex(file_path, delimiter, has_header, null_value, [], [], [], 0)
+
+
 def _csv_escape(value: "str", delimiter: "str", quote: "str") -> "str":
     if value.find(delimiter) >= 0 or value.find(quote) >= 0 or value.find("\n") >= 0 or value.find("\r") >= 0:
         out = quote
@@ -1008,192 +1079,3 @@ def json_array_write_string(df: "DataFrame") -> "str":
 def json_array_write_file(df: "DataFrame", file_path: "str") -> "i32":
     write_file(file_path, json_array_write_string(df))
     return 0
-
-
-# --------------------- read_csv flags (pandas parity) ------------------------
-# csv_read_ex(text, sep, header, names, dtype, na_values, skiprows)
-# - header: 0 = khong co dong header, 1 = co dong header (mac dinh)
-# - names:  list ten cot; khac rong -> override header (header duoc bo qua,
-#           giong pandas khi truyen names) hoac dat ten khi header=0
-# - dtype:  list dtype theo THU TU cot ("", "i64", "f64", "str") - khac rong
-#           bo qua infer; cot nho hon list -> infer; dai hon -> DT_STR
-# - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
-# - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
-# Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
-def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
-    if csv_text == "":
-        return empty_df()
-    if skiprows > 0:
-        all_lines = csv_text.split("\n")
-        if skiprows >= len(all_lines):
-            return empty_df()
-        kept = []
-        for i in range(skiprows, len(all_lines)):
-            kept.append(all_lines[i])
-        csv_text = kept[0]
-        for i in range(1, len(kept)):
-            csv_text = csv_text + "\n" + kept[i]
-    lines = csv_text.split("\n")
-    n_lines = len(lines)
-    column_names = []
-    data_start = 0
-    use_names = 0
-    if names != None:
-        if len(names) > 0:
-            use_names = 1
-    if use_names == 0:
-        if has_header == 1:
-            header_line = lines[0]
-            hl = len(header_line)
-            if hl > 0 and header_line[hl - 1] == "\r":
-                header_line = header_line[0:hl - 1]
-            header_fields = _split_csv_line(header_line, delimiter, "\"")
-            for f in range(len(header_fields)):
-                column_names.append(header_fields[f])
-            data_start = 1
-        else:
-            if n_lines > 0:
-                first_line = lines[0]
-                fl = len(first_line)
-                if fl > 0 and first_line[fl - 1] == "\r":
-                    first_line = first_line[0:fl - 1]
-                first_fields = _split_csv_line(first_line, delimiter, "\"")
-                n_first = len(first_fields)
-                for i in range(n_first):
-                    column_names.append("column_" + str(i))
-            else:
-                column_names.append("column_0")
-    else:
-        # names override: header=1 -> bo qua dong header; header=0 -> data tu dong 0
-        for i in range(len(names)):
-            column_names.append(names[i])
-        if has_header == 1:
-            data_start = 1
-    n_cols = len(column_names)
-    n_spec = 0
-    if dtypes_spec != None:
-        n_spec = len(dtypes_spec)
-    n_na = 0
-    if na_values != None:
-        n_na = len(na_values)
-    if data_start >= n_lines:
-        result_cols = []
-        for c in range(n_cols):
-            result_cols.append(make_series_str(column_names[c], []))
-        return make_df(result_cols)
-    grid = []
-    total_data = 0
-    for i in range(data_start, n_lines):
-        line = lines[i]
-        ln = len(line)
-        if ln > 0 and line[ln - 1] == "\r":
-            line = line[0:ln - 1]
-        if line == "" and i == n_lines - 1:
-            break
-        if line.find("\"") == 0 - 1:
-            fields = line.split(delimiter)
-        else:
-            fields = _split_csv_line(line, delimiter, "\"")
-        nf = len(fields)
-        for c in range(n_cols):
-            if c < nf:
-                grid.append(fields[c])
-            else:
-                grid.append("")
-        total_data = total_data + 1
-    if total_data == 0:
-        result_cols = []
-        for c in range(n_cols):
-            result_cols.append(make_series_str(column_names[c], []))
-        return make_df(result_cols)
-    result_cols = []
-    for c in range(n_cols):
-        col_name = column_names[c]
-        # resolve dtype: spec roi roi -> infer
-        dt = 0 - 1
-        if c < n_spec:
-            spec = dtypes_spec[c]
-            if spec == "i64":
-                dt = DT_I64
-            elif spec == "f64":
-                dt = DT_F64
-            elif spec == "str":
-                dt = DT_STR
-        if dt == 0 - 1:
-            sub = _csv_grid_subcol(grid, c, n_cols, total_data)
-            dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
-        if dt == DT_I64:
-            ivals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    ivals.append(0)
-                    vm.set(i, 0)
-                else:
-                    ivals.append(int(raw))
-            result_cols.append(make_series(col_name, make_col_i64_with_mask(ivals, vm)))
-        elif dt == DT_F64:
-            fvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    fvals.append(0.0)
-                    vm.set(i, 0)
-                else:
-                    fvals.append(float(raw))
-            result_cols.append(make_series(col_name, make_col_f64_with_mask(fvals, vm)))
-        elif dt == DT_BOOL:
-            bvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip().lower()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    bvals.append(0)
-                    vm.set(i, 0)
-                elif raw == "true":
-                    bvals.append(1)
-                elif raw == "false":
-                    bvals.append(0)
-                else:
-                    bvals.append(0)
-                    vm.set(i, 0)
-            result_cols.append(make_series(col_name, make_col_bool_with_mask(bvals, vm)))
-        else:
-            strs = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                val = grid[i * n_cols + c]
-                if _csv_is_null(val.strip(), null_value, na_values, n_na):
-                    strs.append("")
-                    vm.set(i, 0)
-                else:
-                    strs.append(val)
-            result_cols.append(make_series_str_with_mask(col_name, strs, vm))
-    return make_df(result_cols)
-
-
-def _csv_grid_subcol(grid: "list[str]", c: "i32", n_cols: "i32", total_data: "i32") -> "list[str]":
-    sub = []
-    for i in range(total_data):
-        sub.append(grid[i * n_cols + c])
-    return sub
-
-
-def _csv_is_null(raw: "str", null_value: "str", na_values: "list[str]", n_na: "i32") -> "i32":
-    if raw == "":
-        return 1
-    if raw == null_value:
-        return 1
-    for i in range(n_na):
-        if raw == na_values[i]:
-            return 1
-    return 0
-
-
-def csv_read_file_ex(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32") -> "DataFrame":
-    if file_exists(file_path) == 0:
-        raise ValueError("File not found: " + file_path)
-    text = read_file(file_path)
-    return csv_read_ex(text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows)
