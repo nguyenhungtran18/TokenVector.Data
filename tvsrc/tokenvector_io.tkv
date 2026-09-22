@@ -946,3 +946,65 @@ def mat_square_sum(m: "Mat") -> "Mat":
     mr.f64s = out
     return mr
 
+
+
+# ================== v1.5F: DataFrame -> JSON (write) ==================
+def _json_escape_str(s: "str") -> "str":
+    # escape JSON: backslash, quote, newline, tab, CR
+    out = ""
+    n = len(s)
+    for i in range(n):
+        ch = s[i]
+        if ch == "\\":
+            out = out + "\\\\"
+        elif ch == "\"":
+            out = out + "\\\""
+        elif ch == "\n":
+            out = out + "\n"
+        elif ch == "\t":
+            out = out + "\t"
+        elif ch == "\r":
+            out = out + "\r"
+        else:
+            out = out + ch
+    return out
+
+
+def json_array_write_string(df: "DataFrame") -> "str":
+    # pandas df.to_json(orient="records") - [{col:val,...},...] ho tro
+    # f64/i64/bool/str; null -> null. Giong nguoc lai json_array_read_string.
+    nc = df.column_count()
+    names = df_column_names(df)
+    n = df.row_count()
+    out = "["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + "{"
+        for c in range(nc):
+            if c > 0:
+                out = out + ","
+            col = df.col_at(c)
+            nm = names[c]
+            if col.is_null(r) == 1:
+                out = out + "\"" + _json_escape_str(nm) + "\":null"
+                continue
+            if col.dtype == DT_STR:
+                out = out + "\"" + _json_escape_str(nm) + "\":\"" + _json_escape_str(col.get_string(r)) + "\""
+            elif col.dtype == DT_I64:
+                out = out + "\"" + _json_escape_str(nm) + "\":" + str(col.get_i64(r))
+            elif col.dtype == DT_BOOL:
+                if col.get_bool(r) == 1:
+                    out = out + "\"" + _json_escape_str(nm) + "\":true"
+                else:
+                    out = out + "\"" + _json_escape_str(nm) + "\":false"
+            else:
+                out = out + "\"" + _json_escape_str(nm) + "\":" + str(col.get_f64(r))
+        out = out + "}"
+    out = out + "]"
+    return out
+
+
+def json_array_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    write_file(file_path, json_array_write_string(df))
+    return 0

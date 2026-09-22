@@ -2,7 +2,7 @@
 
 > So sánh **chức năng** (API surface), không phải hiệu năng. Hiệu năng đã có ở `BENCHMARKS.md`.
 > Trạng thái: ✅ có · 🟡 có nhưng hẹp/một phần · ❌ thiếu.
-> Kiểm chứng bằng rà soát trực tiếp 6 module `tvsrc/*.tkv` (2026-09-21).
+> Kiểm chứng bằng rà soát trực tiếp module `tvsrc/*.tkv` (cập nhật 2026-09-22, v1.5).
 
 ---
 
@@ -11,11 +11,11 @@
 | Nhóm chức năng | pandas | TKV hiện tại | Chênh lệch chính |
 | :--- | :---: | :--- | :--- |
 | Cấu trúc cột + null mask | ✅ | ✅ | Sắp ngang — TKV thiếu `Nullable<T>`/object, nhưng có Arrow-style bitmask |
-| I/O (CSV/JSON) | ✅ | 🟡 | Thiếu: TSV/tùy chọn delimiter tùy cột, đọc chunk, JSON ghi, Excel/Parquet thực |
+| I/O (CSV/JSON) | ✅ | 🟡 | JSON ghi đã có (v1.5: `json_array_write_string/file` orient=records). Thiếu: đọc chunk, Excel/Parquet thực |
 | Vec math + so sánh | ✅ | 🟡 | Có 23 op nhưng **không chaining/method API**, thiếu đẳng thức kiểu ffill trên cột mới |
 | Filter / boolean | ✅ | ✅ | Đủ (and/or/evaluate/take) |
-| GroupBy / agg | ✅ | 🟡 | Đủ 8 agg phổ biến; thiếu `nunique`, `first/last`, agg tự định nghĩa, transform, iterating |
-| Join / AsOf / pivot / melt | ✅ | 🟡 | Đủ 5+1 loại join; thiếu `merge_on_index`, `merge_multi` nhiều cột phức tạp |
+| GroupBy / agg | ✅ | 🟡 | v1.5: + `groupby_size/transform/filter/apply`, prod/sem/mode. Thiếu: iterating groups, agg tự định nghĩa nội tuyến |
+| Join / AsOf / pivot / melt | ✅ | 🟡 | v1.5: + `crosstab`, `explode`, `pivot_table` (agg mean/sum/min/max/count). Thiếu: `merge_on_index` |
 | Sort | ✅ | ✅ (v1.1) | `sort_by_multi` multi-key stable (multi-pass, hỗ trợ key str), `nlargest/nsmallest` |
 | Window / rolling | ✅ | ✅ (v1.4) | + `win_apply(f)` (rolling.apply — **func(list[f64])**, min_periods), expanding sum/mean/min/max/std, `win_ewm_mean` (khớp pandas adjust=True/False, verify từng chữ số), `win_pct_change`, `win_cumprod/cummax/cummin` |
 | Thống kê | ✅ | ✅ (v1.1) | + corr (Pearson Welford 1-pass), cov, skew, kurt (adjusted G1/G2 khớp pandas), `df_corr_matrix` |
@@ -124,11 +124,11 @@
 | `merge how=inner/left/right/full` | `join_frames` 4 loại + `cross_join` + `join_multi` (đa cột) | ✅ |
 | `merge_asof` (by, direction, tolerance) | `asof_join` | ✅ — điểm mạnh hiếm thấy ở lib mới |
 | `concat(axis=0/1)` | `concat_vertical/horizontal` | ✅ |
-| `pivot / pivot_table` | `pivot` | 🟡 (không có agg trong pivot_table) |
+| `pivot / pivot_table` | `pivot`, `pivot_table(agg)` | ✅ (v1.5: pivot_table agg mean/sum/min/max/count) |
 | `melt / wide_to_long` | `melt` | ✅ |
 | `stack / unstack` | ❌ | Thiếu |
-| `explode` | ❌ | Thiếu |
-| `crosstab` | ❌ | Thiếu |
+| `explode` | `explode(column)` | ✅ (v1.5: cột JSON-list) |
+| `crosstab` | `crosstab(index, columns)` | ✅ (v1.5: đếm số dòng) |
 | `merge_ordered` | ❌ (asof bù một phần) | — |
 | `df.join(on index)` | ❌ (join theo cột) | — |
 

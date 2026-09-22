@@ -1277,6 +1277,305 @@ def pivot(df: "DataFrame", index: "str", columns: "str", values: "str") -> "Data
         result_cols.append(make_series(unique_pivots[p], c))
     return make_df(result_cols)
 
+# ================== v1.5C: groupby transform/filter/size ====================
+def groupby_size(df: "DataFrame", key_columns: "list[str]") -> "DataFrame":
+    # pandas groupby(keys).size() - cot key + cot size (i64)
+    return groupby_agg(df, key_columns, [make_agg(key_columns[0], AGG_COUNT, "size")])
 
 
+def groupby_transform(df: "DataFrame", key_columns: "list[str]", exprs: "list[AggExpr]") -> "DataFrame":
+    # pandas groupby(keys)[cols].transform(agg) - ket qua agg cua NHOM
+    # duoc TRAN XUONG TUNG DONG goc (giu nguyen do dai df). Chi ho tro
+    # cot numeric (f64/i64); cot key khong tran.
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    n = df.row_count()
+    nk = len(key_columns)
+    agg_df = groupby_agg(df, key_columns, exprs)
+    n_agg = agg_df.row_count()
+    # map: key-string -> row index trong agg_df (theo thu tu xuat hien)
+    kmap = {}
+    for g in range(n_agg):
+        parts = []
+        for k in range(nk):
+            parts.append(agg_df.col_by_name(key_columns[k]).get_string(g))
+        key = parts[0]
+        if nk != 1:
+            key = "".join(parts)
+        kmap[key] = g
+    # lay chi so dong goc cua group de lam chi so 'so thu tu group' la KHONG
+    # duoc; dung key string truc tiep.
+    key_series = []
+    for k in range(nk):
+        key_series.append(df.col_by_name(key_columns[k]))
+    out_cols = []
+    for e in range(len(exprs)):
+        expr = exprs[e]
+        src = agg_df.col_by_name(expr.output)
+        vals = []
+        mk = make_mask(n, 0)
+        for i in range(n):
+            parts = []
+            for k in range(nk):
+                parts.append(key_series[k].get_string(i))
+            key = parts[0]
+            if nk != 1:
+                key = "".join(parts)
+            if key in kmap:
+                g = kmap[key]
+                nz = src.is_null(g)
+                if nz == 0:
+                    vals.append(src.get_f64(g))
+                    mk.set(i, 1)
+                    continue
+            vals.append(0.0)
+        out_cols.append(make_series_f64_with_mask(expr.output, vals, mk))
+    return make_df(out_cols)
 
+
+def groupby_filter(df: "DataFrame", key_columns: "list[str]", pred: "func(DataFrame)->i32") -> "DataFrame":
+    # pandas groupby(keys).filter(pred) - giu lai CAC NHOM ma pred(sub_df)
+    # tra True (1). Gom nhom theo key string (giong groupby_apply).
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    n = df.row_count()
+    nk = len(key_columns)
+    key_series = []
+    for k in range(nk):
+        key_series.append(df.col_by_name(key_columns[k]))
+    group_rows = []
+    gmap = {}
+    gcount = 0
+    for i in range(n):
+        parts = []
+        for k in range(nk):
+            parts.append(key_series[k].get_string(i))
+        key = parts[0]
+        if nk != 1:
+            key = "".join(parts)
+        gg = gmap.get(key, 0 - 1)
+        if gg < 0:
+            gmap[key] = gcount
+            gnew = make_idx([])
+            gnew.append(i)
+            group_rows.append(gnew)
+            gcount = gcount + 1
+        else:
+            gcur = group_rows[gg]
+            gcur.append(i)
+    keep_idx = make_idx([])
+    for gx in range(gcount):
+        rows = group_rows[gx]
+        sub_cols = []
+        nc = df.column_count()
+        for c in range(nc):
+            sub_cols.append(df.col_at(c).take(rows))
+        pd_ret = pred(make_df(sub_cols))
+        if pd_ret == 1:
+            for r in range(len(rows)):
+                keep_idx.append(rows[r])
+    out_cols = []
+    for c in range(nc):
+        out_cols.append(df.col_at(c).take(keep_idx))
+    return make_df(out_cols)
+
+
+# ================== v1.5D: crosstab / explode / pivot_table ==================
+def crosstab(df: "DataFrame", index: "str", columns: "str") -> "DataFrame":
+    # pandas crosstab(index, columns): dem SO DONG cho tung cap (index,
+    # columns) - bang cham chu chi so hang doc lap. Cot dau tien mang ten
+    # index, cac cot con la gia tri unique cua cot columns (str).
+    idx_s = df.col_by_name(index)
+    col_s = df.col_by_name(columns)
+    n = df.row_count()
+    # unique index (thu tu xuat hien)
+    seen_idx = []
+    for i in range(n):
+        v = idx_s.get_string(i)
+        dup = 0
+        for s in range(len(seen_idx)):
+            if seen_idx[s] == v:
+                dup = 1
+                break
+        if dup == 0:
+            seen_idx.append(v)
+    # unique columns (thu tu xuat hien)
+    seen_col = []
+    for i in range(n):
+        v = col_s.get_string(i)
+        dup = 0
+        for s in range(len(seen_col)):
+            if seen_col[s] == v:
+                dup = 1
+                break
+        if dup == 0:
+            seen_col.append(v)
+    # dem
+    counts = {}
+    for i in range(n):
+        key = idx_s.get_string(i) + "\x01" + col_s.get_string(i)
+        if key in counts:
+            counts[key] = counts[key] + 1
+        else:
+            counts[key] = 1
+    # dung bang: hang = index, cot = columns
+    result_cols = []
+    i_strs = []
+    for i in range(len(seen_idx)):
+        i_strs.append(seen_idx[i])
+    result_cols.append(make_series_str(index, i_strs))
+    for p in range(len(seen_col)):
+        nums = []
+        for i in range(len(seen_idx)):
+            key = seen_idx[i] + "\x01" + seen_col[p]
+            if key in counts:
+                nums.append(float(counts[key]))
+            else:
+                nums.append(0.0)
+        result_cols.append(make_series_f64(seen_col[p], nums))
+    return make_df(result_cols)
+
+
+def _explode_parse_json_strs(cell: "str") -> "list[str]":
+    # parse '["a","b"]' -> list[str]; khac dinh dang -> None phan tu
+    out = []
+    t = str(cell)
+    t = t.strip()
+    if len(t) < 2:
+        return out
+    inner = t[1:len(t) - 1]
+    parts = inner.split(",")
+    for p in range(len(parts)):
+        seg = parts[p].strip()
+        q = "\""
+        if len(seg) >= 2 and seg[0] == q and seg[len(seg) - 1] == q:
+            out.append(seg[1:len(seg) - 1])
+        else:
+            out.append(seg)
+    return out
+
+
+def explode(df: "DataFrame", column: "str") -> "DataFrame":
+    # pandas df.explode(column): cot JSON-list '["a","b"]' -> NHIEU dong
+    # (1 phan tu / dong); cac cot khac lap lai gia tri dong goc.
+    src = df.col_by_name(column)
+    n = df.row_count()
+    nc = df.column_count()
+    src_ci = 0 - 1
+    for c in range(nc):
+        oc0 = df.col_at(c)
+        if oc0.name == column:
+            src_ci = c
+            break
+    # So phan tu moi dong + tong so dong ra
+    rep_counts = []
+    total = 0
+    for i in range(n):
+        cell = src.get_string(i)
+        lst = _explode_parse_json_strs(cell)
+        k = len(lst)
+        if k == 0:
+            k = 1
+        rep_counts.append(k)
+        total = total + k
+    result_cols = []
+    for c in range(nc):
+        oc = df.col_at(c)
+        nm = oc.name
+        if c == src_ci:
+            out_strs = []
+            for i in range(n):
+                lst = _explode_parse_json_strs(src.get_string(i))
+                if len(lst) == 0:
+                    out_strs.append(None)
+                else:
+                    for e in range(len(lst)):
+                        out_strs.append(lst[e])
+            result_cols.append(make_series_str(column, out_strs))
+        elif oc.dtype == DT_STR:
+            vals = []
+            for i in range(n):
+                v = oc.get_string(i)
+                for r in range(rep_counts[i]):
+                    vals.append(v)
+            result_cols.append(make_series_str(nm, vals))
+        elif oc.dtype == DT_I64:
+            vals2 = []
+            for i in range(n):
+                v = oc.get_i64(i)
+                for r in range(rep_counts[i]):
+                    vals2.append(v)
+            result_cols.append(make_series_i64(nm, vals2))
+        else:
+            vals3 = []
+            for i in range(n):
+                v = oc.get_f64(i)
+                for r in range(rep_counts[i]):
+                    vals3.append(v)
+            result_cols.append(make_series_f64(nm, vals3))
+    return make_df(result_cols)
+
+
+def pivot_table(df: "DataFrame", index: "str", columns: "str",
+                values: "str", agg_type: "i32") -> "DataFrame":
+    # pandas pivot_table: giong pivot nhung cell = AGG cua TAT CA dong
+    # cung (index, columns) thay vi dong dau tien. agg_type: AGG_MEAN/SUM/
+    # MIN/MAX/COUNT (dung _compute_agg voi row_indices don le nhom day du).
+    idx_s = df.col_by_name(index)
+    col_s = df.col_by_name(columns)
+    val_s = df.col_by_name(values)
+    n = df.row_count()
+    seen_idx = []
+    for i in range(n):
+        v = idx_s.get_string(i)
+        dup = 0
+        for s in range(len(seen_idx)):
+            if seen_idx[s] == v:
+                dup = 1
+                break
+        if dup == 0:
+            seen_idx.append(v)
+    seen_col = []
+    for i in range(n):
+        v = col_s.get_string(i)
+        dup = 0
+        for s in range(len(seen_col)):
+            if seen_col[s] == v:
+                dup = 1
+                break
+        if dup == 0:
+            seen_col.append(v)
+    # nhom chi so dong theo (index, columns)
+    groups = {}
+    for i in range(n):
+        key = idx_s.get_string(i) + "\x01" + col_s.get_string(i)
+        if key in groups:
+            gcur = groups[key]
+            gcur.append(i)
+        else:
+            gnew = make_idx([])
+            gnew.append(i)
+            groups[key] = gnew
+    result_cols = []
+    i_strs = []
+    for i in range(len(seen_idx)):
+        i_strs.append(seen_idx[i])
+    result_cols.append(make_series_str(index, i_strs))
+    for p in range(len(seen_col)):
+        vals = []
+        vm = make_mask(len(seen_idx), 0)
+        for i in range(len(seen_idx)):
+            key = seen_idx[i] + "\x01" + seen_col[p]
+            if key in groups:
+                rows = groups[key]
+                agg = _compute_agg(val_s, rows, agg_type)
+                if agg != agg or val_s.null_count() == n:
+                    vals.append(0.0)
+                else:
+                    vals.append(agg)
+                    vm.set(i, 1)
+            else:
+                vals.append(0.0)
+        c = make_col_f64_with_mask(vals, vm)
+        result_cols.append(make_series(seen_col[p], c))
+    return make_df(result_cols)

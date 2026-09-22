@@ -1,0 +1,128 @@
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_io"]
+
+def _gsum(g: "DataFrame") -> "DataFrame":
+    v = g.col_by_name("v")
+    vals = []
+    vals.append(series_sum(v))
+    return make_df([make_series_f64("total", vals)])
+
+def _gkeep(g: "DataFrame") -> "i32":
+    return 1
+
+def _gdrop(g: "DataFrame") -> "i32":
+    return 0
+
+def run() -> "str":
+    # ---- A1 floor/ceil/trunc/round/clip/sign + null-keep
+    mk = make_mask(5, 1)
+    mk.set(4, 0)
+    s = make_series_f64_with_mask("s", [1.7, 2.5, 3.2, 3.8, 0.0], mk)
+    fl = series_floor(s)
+    ce = series_ceil(s)
+    tr = series_trunc(s)
+    rd = series_round(s, 0)
+    cl = series_clip(s, 2.0, 3.0)
+    sg = series_sign(s)
+    if fl.get_f64(0) != 1.0 or ce.get_f64(0) != 2.0 or tr.get_f64(0) != 1.0:
+        return "FAIL A1 fec"
+    if rd.get_f64(1) != 2.0 or rd.get_f64(3) != 4.0:
+        return "FAIL A1 round"
+    if cl.get_f64(0) != 2.0 or cl.get_f64(2) != 3.0:
+        return "FAIL A1 clip"
+    if sg.get_f64(0) != 1.0 or sg.get_f64(4) != 0.0:
+        return "FAIL A1 sign"
+    if fl.is_null(4) != 1:
+        return "FAIL A1 nullkeep"
+    # ---- A2 isin
+    im = series_isin(s, ["2.5", "3.2"])
+    if im.get(0) != 0 or im.get(1) != 1 or im.get(2) != 1 or im.get(3) != 0:
+        return "FAIL A2 isin"
+    # ---- A3 df_isna + dropna rows all
+    dm = make_mask(2, 1)
+    dm.set(1, 0)
+    df = make_df([
+        make_series_f64_with_mask("a", [1.0, 0.0], dm),
+        make_series_f64_with_mask("b", [0.0, 0.0], dm),
+    ])
+    isn = df_isna(df)
+    ca = isn.col_by_name("a")
+    cb = isn.col_by_name("b")
+    if ca.get_bool(0) != 0 or ca.get_bool(1) != 1 or cb.get_bool(1) != 1:
+        return "FAIL A3 isna"
+    dr = df_dropna_rows_all(df)
+    if dr.row_count() != 1:
+        return "FAIL A3 dropna"
+    # ---- B prod/sem/mode
+    ps = make_series_f64("p", [2.0, 3.0, 4.0])
+    if series_prod(ps) != 24.0:
+        return "FAIL B prod"
+    if series_mode(ps) != 2.0:
+        return "FAIL B mode"
+    # ---- C groupby size/apply/filter
+    gdf = make_df([
+        make_series_str("k", ["a", "b", "a", "b", "a"]),
+        make_series_f64("v", [1.0, 2.0, 3.0, 4.0, 5.0]),
+    ])
+    gs = groupby_size(gdf, ["k"])
+    sk = gs.col_by_name("size")
+    if sk.get_f64(0) != 3.0 or sk.get_f64(1) != 2.0:
+        return "FAIL C size"
+    ga = groupby_apply(gdf, ["k"], _gsum, 1)
+    tt = ga.col_by_name("total")
+    if tt.get_f64(0) != 9.0 or tt.get_f64(1) != 6.0:
+        return "FAIL C apply"
+    gf = groupby_filter(gdf, ["k"], _gdrop)
+    if gf.row_count() != 0:
+        return "FAIL C filter-drop"
+    gf2 = groupby_filter(gdf, ["k"], _gkeep)
+    if gf2.row_count() != 5:
+        return "FAIL C filter-keep"
+    # ---- C2 groupby_transform (tran agg xuong tung dong)
+    gt = groupby_transform(gdf, ["k"], [make_agg("v", AGG_MEAN, "m")])
+    gm = gt.col_by_name("m")
+    if gm.get_f64(0) != 3.0 or gm.get_f64(1) != 3.0 or gm.get_f64(2) != 3.0:
+        return "FAIL C2 transform"
+    if gt.row_count() != 5:
+        return "FAIL C2 rows"
+    # ---- B2 sem (ddof=1): [1,2,3,4,5] -> std=1.5811, sem=0.7071
+    vs = make_series_f64("v", [1.0, 2.0, 3.0, 4.0, 5.0])
+    sem1 = series_sem(vs, 1)
+    if sem1 < 0.7071 - 0.0001 or sem1 > 0.7071 + 0.0001:
+        return "FAIL B2 sem"
+    # ---- D1 crosstab: dem so dong (k, p)
+    cdf = make_df([
+        make_series_str("k", ["a", "a", "b", "b", "a"]),
+        make_series_str("p", ["x", "y", "x", "x", "x"]),
+    ])
+    ct = crosstab(cdf, "k", "p")
+    cx = ct.col_by_name("x")
+    cy = ct.col_by_name("y")
+    if cx.get_f64(0) != 2.0 or cx.get_f64(1) != 2.0 or cy.get_f64(0) != 1.0:
+        return "FAIL D1 crosstab"
+    # ---- D2 explode: cot json-list thanh nhieu dong
+    edf = make_df([
+        make_series_str("id", ["1", "2"]),
+        make_series_str("tags", ["[\"a\",\"b\"]", "[\"c\"]"]),
+    ])
+    ex = explode(edf, "tags")
+    et = ex.col_by_name("tags")
+    if ex.row_count() != 3 or et.get_string(0) != "a" or et.get_string(1) != "b" or et.get_string(2) != "c":
+        return "FAIL D2 explode"
+    # ---- D3 pivot_table mean voi cell co 2 dong
+    ptab = pivot_table(gdf, "k", "k", "v", AGG_MEAN)
+    pv = ptab.col_by_name("a")
+    if pv.get_f64(0) != 3.0:
+        return "FAIL D3 pivot_table"
+    # ---- F1 json_array_write roundtrip
+    jdf = make_df([
+        make_series_str("n", ["x", "y"]),
+        make_series_f64("v", [1.0, 2.5]),
+    ])
+    j = json_array_write_string(jdf)
+    if j.find("2.5") == 0 - 1 or j[0] != "[":
+        return "FAIL F1 json_write"
+    jr = json_array_read_string(j)
+    if jr.row_count() != 2 or jr.col_by_name("v").get_f64(1) != 2.5:
+        return "FAIL F1 roundtrip"
+    print("v15 ALL OK")
+    return "OK"

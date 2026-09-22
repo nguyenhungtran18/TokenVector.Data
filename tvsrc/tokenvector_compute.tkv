@@ -1781,3 +1781,253 @@ def win_rolling_var(c: "Col", window: "i32", min_periods: "i32", ddof: "i32") ->
     r = make_col_f64(vals)
     r.valid = mk
     return r
+
+# ================== v1.5: rounding/clip/sign/trunc + isin ====================
+def series_floor(s: "Series") -> "Series":
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            vals.append(s.get_f64(i) // 1.0)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_ceil(s: "Series") -> "Series":
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            x = s.get_f64(i)
+            f = x // 1.0
+            if x > f:
+                f = f + 1.0
+            vals.append(f)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_trunc(s: "Series") -> "Series":
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            x = s.get_f64(i)
+            f = x // 1.0
+            if x < 0.0 and x < f:
+                f = f + 1.0
+            vals.append(f)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_round(s: "Series", digits: "i32") -> "Series":
+    # lam tron 1/2 len tren (Python banker's rounding khong lam - pandas cung round-half-even NHUNG thuc te numpy la half-away tu 1.x; chuan nay khop numpy.round da kiem: 2.5->2.0. DUNG numpy: round-half-even)
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    mul = 1.0
+    j = 0
+    while j < digits:
+        mul = mul * 10.0
+        j = j + 1
+    j2 = 0
+    while j2 > digits:
+        mul = mul / 10.0
+        j2 = j2 - 1
+    for i in range(n):
+        if s.is_null(i) == 0:
+            x = s.get_f64(i) * mul
+            fl = x // 1.0
+            diff = x - fl
+            if diff > 0.5:
+                fl = fl + 1.0
+            elif diff == 0.5:
+                # half-to-even
+                m2 = fl // 2.0 * 2.0
+                if m2 != fl:
+                    fl = fl + 1.0
+            vals.append(fl / mul)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_clip(s: "Series", lo: "f64", hi: "f64") -> "Series":
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            x = s.get_f64(i)
+            if x < lo:
+                x = lo
+            if x > hi:
+                x = hi
+            vals.append(x)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_sign(s: "Series") -> "Series":
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            x = s.get_f64(i)
+            if x > 0.0:
+                vals.append(1.0)
+            elif x < 0.0:
+                vals.append(0.0 - 1.0)
+            else:
+                vals.append(0.0)
+            mk.set(i, 1)
+        else:
+            vals.append(0.0)
+    return make_series_f64_with_mask(s.name, vals, mk)
+
+
+def series_isin(s: "Series", values: "list[str]") -> "Mask":
+    # pandas Series.isin - so sanh qua chuoi (get_string) nen dung duoc cho
+    # moi dtype; values la list gia tri dang chuoi (vd ["1.0", "3.0"]).
+    n = s.length()
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 0:
+            v = s.get_string(i)
+            hit = 0
+            for k in range(len(values)):
+                if values[k] == v:
+                    hit = 1
+                    break
+            if hit == 1:
+                mk.set(i, 1)
+    return mk
+
+
+def df_isna(df: "DataFrame") -> "DataFrame":
+    # pandas df.isna(): 1 DF bool cung kich thuoc, True tai o null
+    nc = df.column_count()
+    out_cols = []
+    for c in range(nc):
+        sc = df.col_at(c)
+        n = sc.length()
+        bvals = []
+        for i in range(n):
+            if sc.is_null(i) == 1:
+                bvals.append(1)
+            else:
+                bvals.append(0)
+        out_cols.append(make_series_bool(sc.name, bvals))
+    return make_df(out_cols)
+
+
+def df_dropna_rows_all(df: "DataFrame") -> "DataFrame":
+    # pandas dropna(how="all"): bo dong ma TAT CA cot deu null
+    nc = df.column_count()
+    n = df.row_count()
+    keep = make_mask(n, 0)
+    for i in range(n):
+        all_null = 1
+        for c in range(nc):
+            if df.col_at(c).is_null(i) == 0:
+                all_null = 0
+                break
+        if all_null == 0:
+            keep.set(i, 1)
+    idx = keep.to_indices()
+    out_cols = []
+    for c in range(nc):
+        out_cols.append(df.col_at(c).take(idx))
+    return make_df(out_cols)
+
+# ================== v1.5B: agg prod/sem/mode ====================
+def agg_prod(c: "Col") -> "f64":
+    n = c.length()
+    prod = 1.0
+    has = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            prod = prod * c.get_f64(i)
+            has = 1
+    if has == 0:
+        return float("nan")
+    return prod
+
+
+def agg_sem(c: "Col", ddof: "i32") -> "f64":
+    # standard error of mean = std / sqrt(n_valid)
+    n = c.length()
+    vcnt = 0
+    fcnt = 0.0
+    total = 0.0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            total = total + c.get_f64(i)
+            vcnt = vcnt + 1
+            fcnt = fcnt + 1.0
+    if vcnt == 0:
+        return float("nan")
+    sd = agg_std(c, ddof)
+    return sd / fcnt ** 0.5
+
+
+def agg_mode(c: "Col") -> "f64":
+    # gia tri xuat hien nhieu nhat (f64, null bo qua); hoa -> gia tri gap dau
+    n = c.length()
+    counts = {}
+    best_v = 0.0
+    best_c = 0
+    for i in range(n):
+        if c.is_null(i) == 0:
+            x = c.get_f64(i)
+            key = str(x)
+            if key in counts:
+                counts[key] = counts[key] + 1
+            else:
+                counts[key] = 1
+            if counts[key] > best_c:
+                best_c = counts[key]
+                best_v = x
+    if best_c == 0:
+        return float("nan")
+    return best_v
+
+
+def _series_col(s: "Series") -> "Col":
+    # boc 1 Series thanh Col (Col chi co f64 buffer + valid) - dung cho
+    # cac agg thu f64. Co null -> khong qua mask giu nguyen qua valid.
+    n = s.length()
+    vals = []
+    for i in range(n):
+        if s.is_null(i) == 0:
+            vals.append(s.get_f64(i))
+        else:
+            vals.append(0.0)
+    vm = s.valid
+    return make_col_f64_with_mask(vals, vm)
+
+
+def series_prod(s: "Series") -> "f64":
+    return agg_prod(_series_col(s))
+
+
+def series_sem(s: "Series", ddof: "i32") -> "f64":
+    return agg_sem(_series_col(s), ddof)
+
+
+def series_mode(s: "Series") -> "f64":
+    return agg_mode(_series_col(s))
