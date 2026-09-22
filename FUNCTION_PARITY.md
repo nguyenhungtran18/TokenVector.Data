@@ -73,8 +73,8 @@
 | :--- | :--- | :--- |
 | `+ - * / ** abs sqrt exp log` | `vec_add/sub/mul/div/pow/abs/sqrt/exp/log` (+ scalar variants) | ✅ 10 op |
 | `== != < <= > >=` (Series & scalar) | `vec_eq/ne/lt/le/gt/ge` + scalar variants | ✅ 12 op |
-| Trilinear/rounding: `floor, ceil, round, clip, sign, trunc` | ❌ | Thiếu |
-| `cumprod`, `cummin/max` | ❌ (chỉ cumsum) | Thiếu |
+| Rounding: `floor, ceil, round, clip, sign, trunc` | `series_floor/ceil/round/clip/sign/trunc` | ✅ (v1.5, giữ null-mask) |
+| `cumprod`, `cummin/max` | `win_cumprod/cummax/cummin` (v1.4) | ✅ |
 | Method-call chaining `df.a + df.b` | Phải gán biến trung gian | API hẹp — không phải hạn chế năng lực |
 | Operator broadcasting Series↔Series và Series↔scalar | ✅ cả hai dạng | — |
 
@@ -273,7 +273,7 @@ trung gian. Cả 2 đã tránh trong code library.
 Tests: `apply_check` 9/9 (thêm A7–A9 groupby_apply), `strings_check` 10/10
 (thêm T9–T10). Regression 15/15 suite xanh. DLL v1.3 rebuild (167KB), verify
 reflection: `re_test`, `series_str_title`, `groupby_apply`. Tổng parity ước
-tính **~75–80%** pandas cho workload tabular (v1.4).
+tính **~80–85%** pandas cho workload tabular (v1.5).
 
 ## 3d. v1.4 — 2026-09-21: window/ewm/interpolate + compiler func(list[T])
 
