@@ -24,39 +24,41 @@ Current release: **1.0.8-dev**. Status: 21/21 test suites green.
 
 ---
 
-## What this repo does for the TokenVector language
+## What this repo does for you when you program in TokenVector
 
-TokenVector.Data is not just *an app written in* TokenVector — it is the
-language's **tabular standard library**, and its heaviest workout.
+TokenVector.Data is the **tabular standard library** of the TokenVector
+language: import it, and your programs work with real data files instead of
+hand-rolled loops.
 
-**If you write TokenVector programs, this repo gives you:**
-- File and text I/O you can trust — CSV (quotes, encodings, chunks, 8-thread
-  parallel), JSON/NDJSON, Excel. One import and you read real-world files:
-  `__tkv_import__ = ["tokenvector_io", "tokenvector_excel"]`.
-- A question layer over your data — SQL (`sql_query`), group-by, 4-way joins
-  + AsOf, window functions — so business logic reads like questions, not loops.
-- .NET for free — the same `.tkv` sources compile to `TokenVector.Data.dll`,
-  so tables built in TokenVector work directly from C#/F# with no Python
-  runtime. Your language just grew an ecosystem bridge.
+**Jobs it takes off your plate:**
+- **Loading messy files** — `csv_read_file("sales.csv", ",", 1, "")` handles
+  quotes, missing cells and type guessing for you; JSON and Excel work the
+  same way (`excel_read_file`, `json_…`).
+- **Answering questions about the data** — `sql_query(df, "SELECT … GROUP
+  BY …")`, `groupby_agg`, 4-way joins + AsOf, window functions. Business
+  logic reads like questions, not nested loops.
+- **Talking to non-programmers** — `excel_write_file` produces files Excel
+  opens directly; `csv_write_string`/`csv_write_file` feed any downstream
+  tool.
+- **Shipping the result** — the same code compiles to `TokenVector.Data.dll`,
+  so a table built in TokenVector opens directly from C#/F# with no Python
+  runtime to install.
 
-**If you hack on the TokenVector compiler, this repo is your gym:** every
-feature below is load-tested here, and its failures caught real compiler bugs
-(logged in `SESSION_HANDOFF.md`):
+**How to use it — the whole pattern in 5 steps:**
 
-| Language feature | Where this repo leans on it |
-| :--- | :--- |
-| `thread_spawn` / `thread_join` returning `list[T]` | 8-thread CSV parse, 8-thread output sweep |
-| First-class `func` + lambdas as arguments | `series_apply`, `win_apply(f)`, `groupby_apply(f)` |
-| Records, `list[T]`, `dict` | `DataFrame` / `Series` / `Mask`, group hash maps |
-| Strings (`find` / `split` / `slice` / regex) | CSV, XML and JSON parsers from scratch; 34 string ops |
-| File primitives (`read_file`, `write_file`, `f.readline`) | All I/O, true-streaming chunk reads |
-| `datetime()` / `datetime_ticks` | Benchmarks, the datetime module, resampling |
-| Typed globals | Configuring no-argument thread workers |
+1. Import what you need:
+   `__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_sql"]`
+2. Get a `DataFrame` — build one (`make_df` + `make_series_i64/str/f64`) or
+   read one (`csv_read_file`, `excel_read_file`, `json_read_string`…).
+3. Transform it with plain functions — `filter`, `groupby_agg`,
+   `join_frames`, `sql_query`, `win_rolling_mean`, `dt_parse`,
+   `series_str_*`. No chaining, no hidden state.
+4. Write it out (`csv_write_file`, `excel_write_file`, `json_…`) or hand
+   the `DataFrame` back to .NET.
+5. Build and run: `tkvc.exe build --entry run myapp.tkv`, then `myapp.exe`.
 
-Known language ceilings this library has hit (all filed for the compiler):
-no binary file write (hence no real Parquet/xlsx), no bitwise ops, thread
-workers take no arguments, no `.dtype` on complex expressions. Practical
-workarounds live in `AGENTS.md`.
+Nulls travel in an explicit per-column mask, so filters, joins and
+aggregations treat missing data identically everywhere — no `NaN` surprises.
 
 ---
 

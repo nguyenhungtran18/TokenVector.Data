@@ -25,39 +25,39 @@ Bản hiện tại: **1.0.8-dev**. Trạng thái: 21/21 suite test xanh.
 
 ---
 
-## Repo này làm gì cho ngôn ngữ TokenVector
+## Repo này giúp gì khi bạn lập trình bằng TokenVector
 
-TokenVector.Data không chỉ là *app viết bằng* TokenVector — nó là **thư viện
-chuẩn dạng bảng** của ngôn ngữ, đồng thời là bài tập nặng nhất của compiler.
+TokenVector.Data là **thư viện chuẩn dạng bảng** của ngôn ngữ TokenVector:
+import nó vào, chương trình của bạn làm việc được với file dữ liệu thật thay
+vì vòng lặp viết tay.
 
-**Nếu bạn viết chương trình TokenVector, repo này cho bạn:**
-- Đọc/ghi file và chuỗi đáng tin — CSV (quote, encoding, chunk, song song 8
-  luồng), JSON/NDJSON, Excel. Một dòng import là đọc được file thực tế:
-  `__tkv_import__ = ["tokenvector_io", "tokenvector_excel"]`.
-- Lớp truy vấn trên dữ liệu — SQL (`sql_query`), group-by, join 4 kiểu +
-  AsOf, hàm cửa sổ — để logic nghiệp vụ đọc như câu hỏi, không phải vòng lặp.
-- .NET miễn phí — cùng mã `.tkv` biên dịch ra `TokenVector.Data.dll`, nên
-  bảng dựng bằng TokenVector xài trực tiếp từ C#/F# mà không cần Python.
-  Ngôn ngữ của bạn vừa có thêm cầu sang hệ sinh thái.
+**Việc nó gánh hộ bạn:**
+- **Đọc file lộn xộn** — `csv_read_file("sales.csv", ",", 1, "")` lo quote,
+  ô trống và đoán kiểu hộ bạn; JSON và Excel cũng cùng một kiểu
+  (`excel_read_file`, `json_…`).
+- **Trả lời câu hỏi về dữ liệu** — `sql_query(df, "SELECT … GROUP BY …")`,
+  `groupby_agg`, join 4 kiểu + AsOf, hàm cửa sổ. Logic nghiệp vụ đọc như câu
+  hỏi, không phải vòng lặp lồng nhau.
+- **Nói chuyện với người không code** — `excel_write_file` ra file Excel mở
+  trực tiếp; `csv_write_string`/`csv_write_file` đưa tiếp cho tool khác.
+- **Ship kết quả** — cùng mã nguồn biên dịch ra `TokenVector.Data.dll`, nên
+  bảng dựng bằng TokenVector mở trực tiếp từ C#/F# mà không cần cài Python.
 
-**Nếu bạn phát triển compiler TokenVector, repo này là phòng gym:** tính năng
-nào dưới đây cũng bị bào hàng ngày, và chỗ gãy của nó từng lòi ra bug
-compiler thật (ghi trong `SESSION_HANDOFF.md`):
+**Cách dùng — toàn bộ quy trình 5 bước:**
 
-| Tính năng ngôn ngữ | Repo này dùng ở đâu |
-| :--- | :--- |
-| `thread_spawn` / `thread_join` trả về `list[T]` | Parse CSV 8 luồng, sweep output 8T |
-| `func` hạng nhất + lambda làm tham số | `series_apply`, `win_apply(f)`, `groupby_apply(f)` |
-| Record, `list[T]`, `dict` | `DataFrame` / `Series` / `Mask`, map băm gom nhóm |
-| Chuỗi (`find` / `split` / `slice` / regex) | Parser CSV, XML, JSON viết tay; 34 phép chuỗi |
-| Primitive file (`read_file`, `write_file`, `f.readline`) | Mọi I/O, đọc chunk streaming thật |
-| `datetime()` / `datetime_ticks` | Benchmark, module datetime, resample |
-| Global có kiểu | Cấu hình worker thread không tham số |
+1. Import cái cần:
+   `__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_sql"]`
+2. Lấy `DataFrame` — tự dựng (`make_df` + `make_series_i64/str/f64`) hoặc
+   đọc (`csv_read_file`, `excel_read_file`, `json_read_string`…).
+3. Biến đổi bằng hàm thường — `filter`, `groupby_agg`, `join_frames`,
+   `sql_query`, `win_rolling_mean`, `dt_parse`, `series_str_*`. Không nối
+   đuôi, không trạng thái ẩn.
+4. Ghi ra (`csv_write_file`, `excel_write_file`, `json_…`) hoặc trả
+   `DataFrame` về cho .NET.
+5. Build và chạy: `tkvc.exe build --entry run myapp.tkv`, rồi `myapp.exe`.
 
-Trần ngôn ngữ mà thư viện đã đụng (đã ghi cho compiler): chưa ghi file
-nhị phân (nên chưa có Parquet/xlsx thật), chưa có bitwise, worker thread
-không nhận tham số, không `.dtype` trên biểu thức phức tạp. Mẹo vòng qua nằm
-trong `AGENTS.md`.
+Null đi theo mask riêng từng cột, nên lọc, nối và tổng hợp đối xử với dữ
+liệu thiếu y hệt nhau ở mọi nơi — không có bất ngờ kiểu `NaN`.
 
 ---
 
