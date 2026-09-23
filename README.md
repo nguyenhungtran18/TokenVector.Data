@@ -7,112 +7,146 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Checks-21%2F21%20Suites%20Passed-brightgreen.svg)]()
 
-**TokenVector.Data** is a high-performance columnar DataFrame and tabular data processing library **natively implemented in the TokenVector programming language (tkv)** and compiled to a .NET CIL assembly (`TokenVector.Data.dll`) via `tkvc` + `ilasm`.
+## What is this?
 
-Version **1.0.8-dev** (library v2.1–v2.2): SQL SELECT engine on DataFrames, Excel SpreadsheetML read/write, Parquet honest-ledger stubs, and multi-threaded CSV parsing — on top of the full pandas-parity core (group-by, joins incl. AsOf, window/ewm, strings, datetime, narrow dtypes). Earlier history: **1.0.1** ported 22 C# files to native tkv; **1.0.2** added O(n log n) sort, O(n log m) AsOf join and null propagation.
+**TokenVector.Data is a DataFrame library** — think pandas, but written in the
+TokenVector language and shipped as a single `.NET DLL` with no Python needed.
 
----
+You give it rows and columns. It gives you back answers: filter them, group
+them, join them, ask SQL questions, read/write CSV/JSON/Excel. If you use
+.NET (C#, F#…), you call it directly like any other library.
 
-## 📦 Modules
-
-| Module (tkv) | Contents |
-| :--- | :--- |
-| `tokenvector_data.tkv` | `DataTypes`, `Schema`, `Mask` (null bitmap), `Col`, `StrCol`, `Series`, `DataFrame`, `ChunkedArray` helpers |
-| `tokenvector_compute.tkv` | `VectorMath` (arith/compare/scalar, rounding, isin, interpolate/where/mask), `FilterEngine`, `Aggregations` (sum/mean/min/max/std/var/quantile/mode/sem), `WindowFunctions` (rolling/expanding/ewm/pct_change/cumsum/rank, `win_apply`) |
-| `tokenvector_relational.tkv` | `GroupByEngine` (multi-key, multi-agg, size/transform/filter/apply/head/tail/nth, rolling/resample), `JoinEngine` (Inner/Left/Right/Full/Cross + financial `AsOfJoin` + `merge_on_index`), `ReshapeEngine` (Pivot/pivot_table, Melt, Concat, stack/unstack, explode, crosstab, `merge_ordered`) |
-| `tokenvector_sort.tkv` | Multi-key stable sort (`sort_by_multi`), `nlargest`/`nsmallest` |
-| `tokenvector_stats.tkv` | `corr`/`cov` (Welford 1-pass), `skew`/`kurt` (adjusted Fisher-Pearson), `nunique`, correlation matrix |
-| `tokenvector_datetime.tkv` | ISO-8601 `dt_parse`/`dt_format`, 11 accessors, `dt_range`, `resample`, UTC epoch-ms basis |
-| `tokenvector_strings.tkv` | ~34 `Series.str` ops + full .NET regex (`extract`/`extractall`, `fullmatch`, `slice_replace`, `cat`, `pad`…) |
-| `tokenvector_apply.tkv` | `series_apply`, `df_apply_col`/`transform`/`filter_rows` (top-level funcs and lambdas) |
-| `tokenvector_dtype.tkv` | Narrow dtypes (`series_astype`: i8…u64, f32, datetime64 tags), `sort_index`, group iteration |
-| `tokenvector_pandas.tkv` | pandas-closure helpers (`factorize`, first/last/nth/mad, `df_eval`/`df_query`, stack/unstack, tz convert) |
-| `tokenvector_read_json.tkv` | JSON readers/writers (records orient, JSONL, single object) |
-| `tokenvector_p100.tkv` | Missing-data frames, `groupby_rolling`/`resample`, positional index ops, CSV/JSON extras |
-| `tokenvector_sql.tkv` | SQL SELECT engine (`sql_query`/`sql_query2`/`sql_count`): WHERE/GROUP BY/HAVING/ORDER BY/LIMIT/OFFSET/DISTINCT, INNER/LEFT/RIGHT JOIN, IN/LIKE, 10 aggregates |
-| `tokenvector_excel.tkv` | SpreadsheetML 2003 read/write (`excel_write/read_string/file`) — Excel opens it directly |
-| `tokenvector_parquet.tkv` | Honest ledger: API reserved, fail-fast until the compiler gains binary write |
-| `tokenvector_io.tkv` | CSV engine (quotes, dtype inference, chunks streaming, encodings, `parse_dates`, parallel `csv_read_par`), JSON/NDJSON, CSV/JSON writers |
-| `tokenvector_numerics.tkv` | `NumericsInterop` — `Series`/`DataFrame` ⇄ `Mat` (NDArray/Tensor model) bridge with **zero-copy** f64 view and `requires_grad` flag |
-| `tokenvector_arrow.tkv` | `ArrowIpcEngine` (ARROW1 stream round-trip preserving null masks) + `OutOfCoreDataFrame` (persist / open / read batch) |
-
----
-
-## ✨ Highlights
-
-* **Pure TokenVector implementation** — no C# sources remain; the whole engine lives in 18 `.tkv` modules (~440 KB source).
-* **Familiar DataFrame API** — Series/DataFrame with schema, per-column null masks, full group-by, 4-way joins + AsOf + merge-on-index, pivot/melt/stack, window/ewm matching pandas digit-for-digit.
-* **SQL on DataFrames** — `sql_query(df, "SELECT cat, SUM(v) AS s FROM df GROUP BY cat HAVING s > 0 ORDER BY s DESC LIMIT 5")` verified number-for-number against real pandas.
-* **Robust I/O** — CSV with quotes & type inference (serial, chunked-streaming and 8-thread parallel), NDJSON/JSON readers, Excel SpreadsheetML round-trips, writer round-trips, file and string based.
-* **Arrow-style interchange** — `ARROW1`-framed stream format that survives null masks (validity bitmaps) through serialization.
-* **Numerics bridge** — convert numeric columns to a 1D/2D `Mat` (flat f64 buffer + shape + `requires_grad`); f64 columns with no nulls are wrapped **zero-copy** (mutations through the Mat are visible in the Series).
-* **Real multi-threading** — the TKV language spawns true 8-thread workers (8T CSV parse, 8T output sweep beating NumPy ~2.3×); the engine stays single-threaded where determinism matters.
-* **.NET interop** — compiled to a plain CIL DLL (~300 KB); callable from any .NET language via reflection or direct references to the `TKVApp` class.
-
----
-
-## 🧪 Verification & Quality Assurance
-
-21 native check suites, all green on stock `tkvc` (best-of runs):
-
-```text
-base_check    (DataTypes/Schema/Mask/Column/StringColumn)   SUCCESS
-comp_check    (VectorMath/Filter/Agg/Window)                SUCCESS
-core_check    (Series/DataFrame/ChunkedArray)               SUCCESS
-rel_check     (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
-io_check      (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
-num_check    (NumericsInterop)                              ALL PASS
-arr_check    (ArrowIpc/OutOfCore)                           ALL PASS
-feat_check   (ffill/bfill, string maps, dedup, …)           SUCCESS
-vec_check    (vec math edge cases)                          FAILS= 0
-strings_check (Series.str + regex, 10 groups)               10/10 PASS
-stat_check   (aggregates)                                   FAILS= 0
-stats_check  (corr/cov/skew/kurt, 7 groups)                 7/7 PASS
-dt_check     (datetime, 11 checks)                          11/11 PASS
-csv2_check   (CSV flags/chunks/parallel, incl. t9)          ALL PASS
-pd_check     (parse_dates/encoding, 15 checks)              FAILS= 0
-p2_check     (pandas-closure acceptance, 154 checks)        154/154 PASS
-p100_check   (missing-data/index/merge extras, 74 checks)   74/74 PASS
-v15_check    (rounding/groupby-complete/pivot/JSON)         ALL OK
-sql_check    (SQL engine, 43 checks)                        FAILS= 0
-excel_check  (SpreadsheetML round-trip, 33 checks)          FAILS= 0
-apply_check  (apply/transform/filter fns, 9 checks)         9/9 PASS
+```
+CSV / JSON / Excel  →   DataFrame  →  filter · group · join · SQL  →  result
 ```
 
+Current release: **1.0.8-dev**. Status: 21/21 test suites green.
+
 ---
 
-## 🚀 Quick Start (TokenVector language)
+## Show me in 30 seconds
 
 ```tokenvector
-__tkv_import__ = ["tokenvector_data", "tokenvector_relational", "tokenvector_sql"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_sql", "tokenvector_excel"]
 
 def run() -> "i32":
-    # 1. Create a DataFrame
+    # 1. Make a table
     df = make_df([
-        make_series_i64("user_id", [1, 2, 3, 4, 5]),
         make_series_str("dept", ["IT", "HR", "IT", "Sales", "HR"]),
         make_series_f64("salary", [75000.0, 52000.0, 88000.0, 61000.0, 58000.0]),
     ])
 
-    # 2. GroupBy & aggregation
-    report = groupby_agg(df, ["dept"], [
-        make_agg("salary", AGG_COUNT, "headcount"),
-        make_agg("salary", AGG_MEAN, "avg_salary"),
-        make_agg("salary", AGG_MAX, "max_salary"),
-    ])
-
-    # 3. SQL on the same DataFrame
+    # 2. Ask a SQL question — verified digit-for-digit against real pandas
     top = sql_query(df, "SELECT dept, AVG(salary) AS m FROM df GROUP BY dept ORDER BY m DESC LIMIT 2")
 
-    # 4. Excel round-trip (SpreadsheetML, opens directly in Excel)
+    # 3. Save it so Excel opens it directly, read it back
     excel_write_file(df, "dept.xml", "Dept")
-    back = excel_read_file("dept.xml")
+    back = excel_read_file("dept.xml")   # same 5 rows, same values
     return 0
 ```
 
+Three things to notice:
+
+1. **Tables are columns, not rows.** Each column (`dept`, `salary`) is stored
+   on its own with its own type and its own null-mask. That is why grouping
+   and math are fast, and why a missing value never corrupts a whole row.
+2. **Everything is a plain function.** There is no `df.something()` chaining —
+   you call `sql_query(df, …)`, `groupby_agg(df, …)`, `excel_write_file(…)`.
+   Less magic, easier to see what runs.
+3. **Missing values are explicit.** Every column knows exactly which rows are
+   null (a bitmask), instead of hiding them as `NaN`. Filters and joins
+   respect that mask.
+
 ---
 
-## 💻 Quick Start (.NET side via reflection)
+## When should I use it — and when not?
+
+**Good fit:**
+- You ship a .NET app and want tables + SQL without bundling Python.
+- You need Excel files fast (plain-XML bridge writes ~24× faster than
+  openpyxl in our measurement; files are bigger — no ZIP).
+- You want pandas-checked answers (group-by, joins, window functions,
+  SQL) with the null handling spelled out.
+
+**Not a fit (honest list):**
+- Raw speed on big scans — Polars/DuckDB are 10–100× faster (see
+  `BENCHMARKS.md` for same-machine numbers).
+- Real Parquet or `.xlsx` binaries — blocked until the compiler grows binary
+  I/O (tracked honestly in `tokenvector_parquet.tkv`).
+- MultiIndex, lazy query plans, the pandas ecosystem (sklearn, plotting…).
+
+---
+
+## What can it do? (the full list, collapsed)
+
+<details>
+<summary>18 modules — click to expand</summary>
+
+| Module | What lives there |
+| :--- | :--- |
+| `tokenvector_data.tkv` | The table itself: types, null-mask, `Series`, `DataFrame` |
+| `tokenvector_compute.tkv` | Math on columns, filters, sums/means, rolling windows, ewm |
+| `tokenvector_relational.tkv` | Group-by, 4 kinds of join + AsOf join, pivot/melt/stack |
+| `tokenvector_sort.tkv` | Multi-key sorting, largest/smallest |
+| `tokenvector_stats.tkv` | Correlations, skew/kurtosis |
+| `tokenvector_datetime.tkv` | Parse/format dates, ranges, resampling (UTC) |
+| `tokenvector_strings.tkv` | ~34 text operations + full regex |
+| `tokenvector_apply.tkv` | Run your own function over a column or rows |
+| `tokenvector_dtype.tkv` | Small integer/float/datetime flavors, sort-by-index |
+| `tokenvector_pandas.tkv` | Extras that close pandas gaps (`df.query`, factorize, …) |
+| `tokenvector_read_json.tkv` | JSON readers/writers |
+| `tokenvector_p100.tkv` | Missing-data tools, rolling-per-group, index helpers |
+| `tokenvector_sql.tkv` | SQL: `SELECT … WHERE … GROUP BY … HAVING … ORDER BY … LIMIT`, joins, `IN`/`LIKE` |
+| `tokenvector_excel.tkv` | SpreadsheetML read/write (Excel opens it) |
+| `tokenvector_parquet.tkv` | Reserved API, refuses honestly until the compiler catches up |
+| `tokenvector_io.tkv` | CSV engine (quotes, encodings, streaming, 8-thread parallel), JSON |
+| `tokenvector_numerics.tkv` | Bridge to tensor math (`Mat`, zero-copy, gradients flag) |
+| `tokenvector_arrow.tkv` | Internal `ARROW1` format + files bigger than RAM (batches) |
+
+</details>
+
+---
+
+## How do I know it works?
+
+21 test suites live next to the code (`tvsrc/*_check.tkv`) and all pass on
+the stock compiler — including 154 pandas-acceptance checks, a 43-check SQL
+suite cross-checked against real pandas, and a 33-check Excel round-trip
+suite. The shipped DLL is additionally probed from C# (54 symbols + real
+calls). Details: `FUNCTION_PARITY.md`, `BENCHMARKS.md`, `SESSION_HANDOFF.md`.
+
+<details>
+<summary>Full suite list — click to expand</summary>
+
+```text
+base_check    core types and masks                        SUCCESS
+comp_check    math / filter / aggregates / windows         SUCCESS
+core_check    Series / DataFrame basics                   SUCCESS
+rel_check     group-by / joins / pivot                    SUCCESS
+io_check      CSV / JSON / file I/O                       SUCCESS
+num_check     numerics bridge                             ALL PASS
+arr_check     Arrow stream / out-of-core                  ALL PASS
+feat_check    fill, text maps, dedup                      SUCCESS
+vec_check     math edge cases                             FAILS= 0
+strings_check text + regex (10 groups)                    10/10 PASS
+stat_check    aggregates                                  FAILS= 0
+stats_check   corr / skew / kurtosis (7 groups)           7/7 PASS
+dt_check      datetime (11 checks)                        11/11 PASS
+csv2_check    CSV flags / chunks / parallel               ALL PASS
+pd_check      dates / encodings (15 checks)               FAILS= 0
+p2_check      pandas acceptance (154 checks)              154/154 PASS
+p100_check    missing data / index (74 checks)            74/74 PASS
+v15_check     rounding / pivot / JSON extras              ALL OK
+sql_check     SQL engine (43 checks)                      FAILS= 0
+excel_check   SpreadsheetML round-trip (33 checks)        FAILS= 0
+apply_check   custom functions (9 checks)                 9/9 PASS
+```
+
+</details>
+
+---
+
+## Calling it from .NET
 
 ```powershell
 $asm  = [System.Reflection.Assembly]::LoadFrom("TokenVector.Data.dll")
@@ -124,35 +158,26 @@ $df  = $app.GetMethod("csv_read_string").Invoke($null,
 $df.GetType().GetMethod("row_count").Invoke($df, @())   # -> 2
 ```
 
-All engine functions are static methods of the `TKVApp` class (records such as `DataFrame`, `Series`, `Mask` are public classes usable as .NET types).
+Every engine function is a static method of `TKVApp`; `DataFrame`, `Series`
+and `Mask` are plain public classes.
 
 ---
 
-## 🔧 Build from source
+## Building it yourself
 
-Requirements: TokenVector compiler (`tkvc.exe`) and .NET Framework `ilasm.exe` (+ `csc.exe` for the smoke test).
+You need the TokenVector compiler (`tkvc.exe`) and .NET `ilasm.exe`.
 
 ```bash
-# 1. Refresh the merged library sources after editing tvsrc/*.tkv
-python tvsrc/_patch_merged.py        # refresh tokenvector_io section
-python tvsrc/_patch_merged3.py       # splice new modules (idempotent)
-
-# 2. Compile the merged source to IL (.exe form keeps the IL next to it)
-tkvc.exe build --entry run tvsrc/tokenvector_data_all.tkv
-
-# 3. Convert IL to library form and assemble the DLL
-python tvsrc/_mk_dll.py              # -> TokenVector.Data.il -> TokenVector.Data.dll (ilasm)
-
-# 4. Verify: C# reflection smoke test (54 symbols) + functional calls
-csc.exe /nologo /out:smoke.exe tvsrc/smoke.cs && smoke.exe   # -> SMOKE OK
-
-# 5. Package (no nuget.exe needed — layout-compatible zip)
+python tvsrc/_patch_merged.py        # refresh merged sources after edits
+python tvsrc/_patch_merged3.py       # splice in new modules (idempotent)
+tkvc.exe build --entry run tvsrc/tokenvector_data_all.tkv   # -> .il
+python tvsrc/_mk_dll.py              # -> TokenVector.Data.dll
+csc.exe tvsrc/smoke.cs && smoke.exe  # -> SMOKE OK (54 symbols)
 python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.8-dev.nupkg
 ```
 
-Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` (~300 KB) and `packages/TokenVector.Data.1.0.8-dev.nupkg`.
-
-See `FUNCTION_PARITY.md` (pandas/Polars feature comparison), `BENCHMARKS.md` (same-machine measurements) and `SESSION_HANDOFF.md` (build/verification log) for details.
+Or skip the build: use `tvsrc/TokenVector.Data.dll` (~300 KB) and the
+`packages/` nupkg straight from this repo.
 
 ---
 
