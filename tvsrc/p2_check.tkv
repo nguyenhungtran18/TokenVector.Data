@@ -1,0 +1,306 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_datetime", "tokenvector_strings", "tokenvector_pandas", "tokenvector_read_json"]
+
+# --------------------------- helpers ------------------------------------------
+def check(acc: "list[i64]", tag: "str", ok: "i32") -> "i32":
+    acc[1] = acc[1] + 1
+    if ok != 0:
+        acc[0] = acc[0] + 1
+    else:
+        print("FAIL: " + tag)
+    return 0
+
+
+def check_i(acc: "list[i64]", tag: "str", got: "i64", want: "i64") -> "i32":
+    ok = 0
+    if got == want:
+        ok = 1
+    if ok == 0:
+        print("FAIL: " + tag + " got=" + str(got) + " want=" + str(want))
+    acc[1] = acc[1] + 1
+    if ok == 1:
+        acc[0] = acc[0] + 1
+    return 0
+
+
+def check_f(acc: "list[i64]", tag: "str", got: "f64", want: "f64") -> "i32":
+    d = got - want
+    if d < 0.0:
+        d = 0.0 - d
+    ok = 0
+    if d < 0.000000001:
+        ok = 1
+    if ok == 0:
+        print("FAIL: " + tag + " got=" + str(got) + " want=" + str(want))
+    acc[1] = acc[1] + 1
+    if ok == 1:
+        acc[0] = acc[0] + 1
+    return 0
+
+
+def check_s(acc: "list[i64]", tag: "str", got: "str", want: "str") -> "i32":
+    ok = 0
+    if got == want:
+        ok = 1
+    if ok == 0:
+        print("FAIL: " + tag + " got=[" + got + "] want=[" + want + "]")
+    acc[1] = acc[1] + 1
+    if ok == 1:
+        acc[0] = acc[0] + 1
+    return 0
+
+
+def mk_df() -> "DataFrame":
+    a = make_series_str("name", ["abc", None, "te", "longname"])
+    x = make_series_f64("x", [1.0, 2.0, 3.0, 4.0])
+    g = make_series_str("g", ["a", "a", "b", "b"])
+    return make_df([a, x, g])
+
+
+def t_str(acc: "list[i64]") -> "i32":
+    df = mk_df()
+    # slice_replace
+    r = series_str_slice_replace(df.col_by_name("name"), 1, 3, "**")
+    check_s(acc, "sr.0", r.get_string(0), "a**")
+    check_s(acc, "sr.2", r.get_string(2), "t**")
+    check_s(acc, "sr.3", r.get_string(3), "l**gname")
+    check_i(acc, "sr.null", r.is_null(1), 1)
+    # slice_replace stop<0: thay tu start den het
+    r2 = series_str_slice_replace(df.col_by_name("name"), 2, -1, "Z")
+    check_s(acc, "sr2.3", r2.get_string(3), "loZe")
+    # fullmatch: "te" khong khop TOAN BO "t+" (can it nhat 2 ky tu t)
+    fm = series_str_fullmatch(df.col_by_name("name"), "t+")
+    check_i(acc, "fm.2", fm.get_bool(2), 0)
+    check_i(acc, "fm.0", fm.get_bool(0), 0)
+    # extractall
+    ea = series_str_extractall(df.col_by_name("name"), "[a-c]", "hit")
+    check_i(acc, "ea.rows", ea.row_count(), 4)
+    check_s(acc, "ea.v0", ea.col_by_name("hit").get_string(0), "a")
+    check_i(acc, "ea.src0", ea.col_by_name("match").get_i64(0), 0)
+    check_i(acc, "ea.src2", ea.col_by_name("match").get_i64(2), 0)    # cat
+    b = make_series_str("b", ["X", "Y", "Z", "W"])
+    c = series_str_cat(df.col_by_name("name"), "-", b)
+    check_s(acc, "cat.0", c.get_string(0), "abc-X")
+    check_i(acc, "cat.null0", c.is_null(1), 1)
+    check_i(acc, "cat.null1", c.is_null(3), 0)
+    check_s(acc, "cat.2", c.get_string(2), "te-Z")
+    return 0
+
+
+def t_factorize(acc: "list[i64]") -> "i32":
+    df = mk_df()
+    f = series_factorize(df.col_by_name("g"))
+    check_i(acc, "fac.0", f.get_i64(0), 0)
+    check_i(acc, "fac.1", f.get_i64(1), 0)
+    check_i(acc, "fac.2", f.get_i64(2), 1)
+    check_i(acc, "fac.3", f.get_i64(3), 1)
+    u = series_factorize_uniques(df.col_by_name("g"))
+    check_i(acc, "fac.nu", u.length(), 2)
+    check_s(acc, "fac.u0", u.get_string(0), "a")
+    check_s(acc, "fac.u1", u.get_string(1), "b")
+    return 0
+
+
+def t_agg(acc: "list[i64]") -> "i32":
+    sm = make_mask(4, 1)
+    sm.set(1, 0)
+    s = make_series_f64_with_mask("v", [3.0, 0.0, 1.0, 7.0], sm)
+    check_f(acc, "first", series_first(s), 3.0)
+    check_f(acc, "last", series_last(s), 7.0)
+    check_f(acc, "nth0", series_nth(s, 0), 3.0)
+    check_f(acc, "nth-1", series_nth(s, -1), 7.0)
+    check_f(acc, "nth2", series_nth(s, 2), 1.0)
+    check_f(acc, "mad", series_mad(s), 2.2222222222)
+    # mad tay: mean=11/3; |3-3.667|+|1-3.667|+|7-3.667| = 0.667+2.667+3.333=6.667 /3 = 2.222
+    s2 = make_series_f64("v", [3.0, 1.0, 7.0])
+    check_f(acc, "mad2", series_mad(s2), 2.2222222222)
+    return 0
+
+
+def t_groupby(acc: "list[i64]") -> "i32":
+    df = mk_df()
+    f = groupby_first(df, ["g"], "x")
+    check_i(acc, "gbf.rows", f.row_count(), 2)
+    check_f(acc, "gbf.a", f.col_by_name("x").get_f64(0), 1.0)
+    check_f(acc, "gbf.b", f.col_by_name("x").get_f64(1), 3.0)
+    l = groupby_last(df, ["g"], "x")
+    check_f(acc, "gbl.a", l.col_by_name("x").get_f64(0), 2.0)
+    check_f(acc, "gbl.b", l.col_by_name("x").get_f64(1), 4.0)
+    n1 = groupby_nth(df, ["g"], "x", 1, 1)
+    check_i(acc, "gbn.rows", n1.row_count(), 2)
+    check_f(acc, "gbn.a", n1.col_by_name("x").get_f64(0), 2.0)
+    check_f(acc, "gbn.b", n1.col_by_name("x").get_f64(1), 4.0)
+    h = groupby_head(df, ["g"], 1)
+    check_i(acc, "gbh.rows", h.row_count(), 2)
+    check_f(acc, "gbh.a", h.col_by_name("x").get_f64(0), 1.0)
+    check_f(acc, "gbh.b", h.col_by_name("x").get_f64(1), 3.0)
+    tl = groupby_tail(df, ["g"], 1)
+    check_i(acc, "gbt.rows", tl.row_count(), 2)
+    check_f(acc, "gbt.a", tl.col_by_name("x").get_f64(0), 2.0)
+    check_f(acc, "gbt.b", tl.col_by_name("x").get_f64(1), 4.0)
+    # thu tu giu nguyen sau groupby_apply: hang 0 la 'a'
+    check_s(acc, "gbh.key", h.col_by_name("g").get_string(0), "a")
+    return 0
+
+
+def t_stack(acc: "list[i64]") -> "i32":
+    df = mk_df()
+    st = stack(df, "col")
+    # 2 cot so (x) + ... name la str, g la str -> chi x; 3 non-null x
+    check_i(acc, "st.rows", st.row_count(), 4)
+    check_i(acc, "st.rows2", stack(df, "col").row_count(), 4)
+    s0 = st.col_by_name("row").get_i64(0)
+    check_i(acc, "st.r0", s0, 0)
+    check_s(acc, "st.c0", st.col_by_name("col").get_string(0), "x")
+    check_f(acc, "st.v0", st.col_by_name("value").get_f64(0), 1.0)
+    us = unstack(st, "col")
+    check_i(acc, "us.cols", us.column_count(), 1)
+    check_i(acc, "us.rows", us.row_count(), 4)
+    # cot 'x': [1,2,3,4] (khong co null trong du lieu goc)
+    check_f(acc, "us.x1", us.col_by_name("x").get_f64(1), 2.0)
+    return 0
+
+
+def t_merge_ordered(acc: "list[i64]") -> "i32":
+    l = make_df([make_series_i64("t", [1, 3, 5]), make_series_f64("lv", [10.0, 30.0, 50.0])])
+    r = make_df([make_series_i64("t", [2, 3]), make_series_f64("rv", [200.0, 300.0])])
+    m = merge_ordered(l, r, "t", [], "")
+    check_i(acc, "mo.rows", m.row_count(), 4)
+    check_i(acc, "mo.t0", m.col_by_name("t").get_i64(0), 1)
+    check_i(acc, "mo.t1", m.col_by_name("t").get_i64(1), 2)
+    check_i(acc, "mo.t2", m.col_by_name("t").get_i64(2), 3)
+    check_i(acc, "mo.t3", m.col_by_name("t").get_i64(3), 5)
+    check_f(acc, "mo.lv0", m.col_by_name("lv").get_f64(0), 10.0)
+    check_i(acc, "mo.lv1", m.col_by_name("lv").is_null(1), 1)
+    check_f(acc, "mo.lv2", m.col_by_name("lv").get_f64(2), 30.0)
+    check_i(acc, "mo.rv0n", m.col_by_name("rv").is_null(0), 1)
+    check_f(acc, "mo.rv1", m.col_by_name("rv").get_f64(1), 200.0)
+    check_f(acc, "mo.rv2", m.col_by_name("rv").get_f64(2), 300.0)
+    check_i(acc, "mo.rv3n", m.col_by_name("rv").is_null(3), 1)
+    # ffill
+    m2 = merge_ordered(l, r, "t", [], "ffill")
+    check_f(acc, "mo.ff.lv", m2.col_by_name("lv").get_f64(1), 10.0)
+    return 0
+
+
+def t_tz(acc: "list[i64]") -> "i32":
+    # 2026-07-15 12:00 UTC -> EDT (-4h)
+    ts_summer = dt_parse("2026-07-15 12:00:00")
+    check_i(acc, "tz.off.summer", dt_utc_offset(ts_summer, "US/Eastern"), -4 * 3600)
+    # 2026-01-15 12:00 UTC -> EST (-5h)
+    ts_winter = dt_parse("2026-01-15 12:00:00")
+    check_i(acc, "tz.off.winter", dt_utc_offset(ts_winter, "US/Eastern"), -5 * 3600)
+    # fixed zone
+    check_i(acc, "tz.fixed", dt_utc_offset(0, "UTC+07"), 7 * 3600)
+    check_i(acc, "tz.fixed2", dt_utc_offset(0, "UTC-05:30"), -5 * 3600 - 30 * 60)
+    # convert roundtrip
+    loc = dt_tz_convert(ts_summer, "US/Eastern")
+    check_i(acc, "tz.conv", loc, ts_summer + (-4 * 3600 * 1000))
+    back = dt_tz_to_utc(loc, "US/Eastern")
+    check_i(acc, "tz.roundtrip", back, ts_summer)
+    # DST boundary: ngay bat dau DST (2026: CN thu 2 cua thang 3 = 8/3)
+    check_i(acc, "tz.dst.before", dt_utc_offset(dt_parse("2026-03-08 06:59:00"), "US/Eastern"), -5 * 3600)
+    check_i(acc, "tz.dst.after", dt_utc_offset(dt_parse("2026-03-08 07:01:00"), "US/Eastern"), -4 * 3600)
+    return 0
+
+
+def t_query(acc: "list[i64]") -> "i32":
+    df = mk_df()
+    e = df_eval(df, "x * 2")
+    check_f(acc, "ev.0", e.get_f64(0), 2.0)
+    check_f(acc, "ev.3", e.get_f64(3), 8.0)
+    e2 = df_eval(df, "(x + 1) * 2 > 6")
+    check_f(acc, "ev2.1", e2.get_f64(1), 0.0)
+    check_f(acc, "ev2.0", e2.get_f64(0), 0.0)
+    q = df_query(df, "x >= 3 and g == 'b'")
+    check_i(acc, "q.rows", q.row_count(), 2)
+    check_f(acc, "q.v", q.col_by_name("x").get_f64(0), 3.0)
+    q2 = df_query(df, "name == 'te' or x < 2")
+    check_i(acc, "q2.rows", q2.row_count(), 2)
+    check_s(acc, "q2.n", q2.col_by_name("name").get_string(0), "abc")
+    q3 = df_query(df, "not (x < 3)")
+    check_i(acc, "q3.rows", q3.row_count(), 2)
+    return 0
+
+
+def t_json(acc: "list[i64]") -> "i32":
+    txt = "[{\"name\":\"a\",\"x\":1,\"ok\":true,\"pi\":3.5},{\"name\":\"b\",\"x\":null,\"ok\":false,\"pi\":null},{\"name\":\"c\",\"x\":3}]"
+    df = json_read_string(txt)
+    check_i(acc, "js.cols", df.column_count(), 4)
+    check_i(acc, "js.rows", df.row_count(), 3)
+    ncol = df.col_by_name("name")
+    check_s(acc, "js.n0", ncol.get_string(0), "a")
+    check_s(acc, "js.n2", ncol.get_string(2), "c")
+    check_i(acc, "js.n1n", ncol.is_null(1), 0)
+    xcol = df.col_by_name("x")
+    check_i(acc, "js.x.dtype.i64", xcol.dtype, DT_I64)
+    check_i(acc, "js.x0", xcol.get_i64(0), 1)
+    check_i(acc, "js.x1n", xcol.is_null(1), 1)
+    check_i(acc, "js.x2", xcol.get_i64(2), 3)
+    okcol = df.col_by_name("ok")
+    check_i(acc, "js.ok.dtype", okcol.dtype, DT_BOOL)
+    check_i(acc, "js.ok0", okcol.get_bool(0), 1)
+    check_i(acc, "js.ok1", okcol.get_bool(1), 0)
+    picol = df.col_by_name("pi")
+    check_i(acc, "js.pi.dtype", picol.dtype, DT_F64)
+    check_f(acc, "js.pi0", picol.get_f64(0), 3.5)
+    check_i(acc, "js.pi1n", picol.is_null(1), 1)
+    # write + roundtrip
+    w = json_write_string(df)
+    check_s(acc, "jw.w", w, "[{\"name\":\"a\",\"x\":1,\"ok\":true,\"pi\":3.5},{\"name\":\"b\",\"x\":null,\"ok\":false,\"pi\":null},{\"name\":\"c\",\"x\":3,\"ok\":null,\"pi\":null}]")
+    df2 = json_read_string(w)
+    check_i(acc, "jw.rt.rows", df2.row_count(), 3)
+    check_i(acc, "jw.rt.x1", df2.col_by_name("x").get_i64(1), 0)
+    check_i(acc, "jw.rt.x1n", df2.col_by_name("x").is_null(1), 1)
+    # time coercion
+    txt2 = "[{\"ev\":\"2026-01-02 03:04:05\"},{\"ev\":\"2026-03-04 05:06:07\"}]"
+    df3 = json_read_records(txt2, ["x"], ["ev"])
+    ev = df3.col_by_name("ev")
+    check_i(acc, "jsr.ev.dtype", ev.dtype, DT_I64)
+    check_i(acc, "jsr.ev0", ev.get_i64(0), dt_parse("2026-01-02 03:04:05"))
+    # jsonl
+    txt4 = "{\"a\":1}\n{\"a\":2}\n\n# garbage line\n{\"a\":3}"
+    df4 = jsonl_read_string(txt4)
+    check_i(acc, "jsonl.rows", df4.row_count(), 3)
+    check_i(acc, "jsonl.a1", df4.col_by_name("a").get_i64(2), 3)
+    # object
+    df5 = json_read_object("{\"p\":7,\"q\":\"z\"}")
+    check_i(acc, "jobj.rows", df5.row_count(), 1)
+    check_i(acc, "jobj.p", df5.col_by_name("p").get_i64(0), 7)
+    check_s(acc, "jobj.q", df5.col_by_name("q").get_string(0), "z")
+    # escape roundtrip
+    txt6 = "[{\"s\":\"line1\\nline2\",\"q\":\"a\\\"b\"}]"
+    df6 = json_read_string(txt6)
+    check_i(acc, "js.esc.len", len(df6.col_by_name("s").get_string(0)), 11)
+    w6 = json_write_string(df6)
+    check_i(acc, "jw.esc", w6.find("\\n") > 0, 1)
+    return 0
+
+
+def main() -> "str":
+    acc = [0, 0]
+    print("## t_str")
+    t_str(acc)
+    print("## t_factorize")
+    t_factorize(acc)
+    print("## t_agg")
+    t_agg(acc)
+    print("## t_groupby")
+    t_groupby(acc)
+    print("## t_stack")
+    t_stack(acc)
+    print("## t_merge_ordered")
+    t_merge_ordered(acc)
+    print("## t_tz")
+    t_tz(acc)
+    print("## t_query")
+    t_query(acc)
+    print("## t_json")
+    t_json(acc)
+    print("PASS= " + str(acc[0]) + " FAILS= " + str(acc[1] - acc[0]))
+    if acc[0] == acc[1]:
+        return "P2OK"
+    return "P2FAIL"
+
+
+# chú thích: acc[0]=PASS count, acc[1]=total
