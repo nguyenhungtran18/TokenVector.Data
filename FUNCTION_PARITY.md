@@ -114,8 +114,8 @@
 | `groupby().filter` | `groupby_filter` | ✅ (v1.5) |
 | `groupby().size / nunique` | `groupby_size`; nunique qua `AGG_NUNIQUE` | ✅ (v1.1/v1.5) |
 | `groupby().head/tail` | `groupby_head / groupby_tail` (v1.7) | ✅ |
-| `groupby().resample` (thời gian) | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms` (v1.9) | ✅ |
-| `groupby().rolling` (window trong nhóm) | `groupby_rolling(df, key, col, win, agg)` (v1.9) | ✅ |
+| `groupby().resample` (thời gian) | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms`; v1.10 sort theo (nhóm, bucket) như pandas | ✅ |
+| `groupby().rolling` (window trong nhóm) | `groupby_rolling(df, key, col, win, agg)` (v1.9; kernel mảng phảng O(n log n) v1.10) | ✅ |
 | Iterating groups | `groupby_group_keys(df, keys)` + `groupby_group(df, keys, key)` (v1.8 — loop `for i in range(len(keys))`) | ✅ |
 
 ### 2.7 Join / Reshape (tokenvector_relational.tkv)
@@ -372,7 +372,7 @@ riêng từng nhánh (`vb`, `vi`) — cùng bản chất với bài học `vals_
 | `groupby().resample` | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms` | ✅ |
 | `df.set_index` (positional) | `df_set_index` (vị trí dòng giữ nguyên — TKV position-based) | ✅ |
 | `df.reindex(new_index)` | `df_reindex(df, keys)` — union, key thiếu → null cells. Lưu ý: keys phải đã sort (zero-pad id số) | ✅ |
-| `merge(left, right, left_index=True, right_index=True)` | `merge_on_index(left, right, kcol, how)` — two-pointer merge, cần keys đã sort (nhanh hơn pandas hash-join ~1.4×). Lưu ý: zero-pad id số | ✅ |
+| `merge(left, right, left_index=True, right_index=True)` | `merge_on_index(left, right, kcol, how)` — keys sort: two-pointer (nhanh hơn pandas ~1.4×); không sort: hash fallback (v1.10, thêm `right`) | ✅ |
 | `to_csv(date_format=, quoting=QUOTE_ALL)` | `csv_write_ex(..., date_format, quote_all)` — chỉ áp date_format cho cột datetime64 | ✅ |
 | `to_json(orient=values/split/index/columns)` | `json_write_values/split/index` + đọc lại `json_read_object`/`json_read_string` | ✅ (records có từ v1.7) |
 

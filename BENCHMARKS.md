@@ -71,10 +71,10 @@
 | :--- | ---: | ---: | ---: | ---: |
 | C1 `Series.shift(1)` | 500,000 | **4.4** | **1.2** | ~3.7× |
 | C2 `Series.fillna` (10% null) | 500,000 | **16.0** | **2.6** | ~6.2× |
-| C3 `groupby().rolling(7).sum()` | 500,000 | **2,117** | **177** | ~12.0× |
-| C4 `groupby().resample(5min).mean()` | 500,000 | **675** | **91** | ~7.4× |
+| C3 `groupby().rolling(7).sum()` | 500,000 | **1,041** (v1.10 kernel) | **177** | ~5.9× |
+| C4 `groupby().resample(5min).mean()` | 500,000 | **841** (v1.10 kernel, sort semantics) | **91** | ~9.2× |
 | C5 `df.reindex` (str index, 20% missing) | 500,000 | **122** | **67** | ~1.8× |
-| C6 merge on index inner (N × N/2) | 500,000 | **61** | **86** | **TKV ~1.4× faster** |
+| C6 merge on index inner (N × N/2) | 500,000 | **61** (sorted two-pointer; hash fallback v1.10: 91) | **86** | **TKV ~1.4× faster** |
 
 > **Perf fix shipped with this bench:** `groupby_rolling` previously sorted each
 > group with a per-group **selection sort O(n²)** — at 500k rows × 3 groups the

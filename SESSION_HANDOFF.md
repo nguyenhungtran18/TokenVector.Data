@@ -8,6 +8,23 @@ verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b20
 
 ---
 
+## 0e. PHIÊN 2026-09-23 (tiếp nữa) — v1.10 kernel nhanh + regression compiler tkvc mới (XONG ✅)
+
+- **Kernel v1.10** (trên toolchain worktree sạch): groupby_rolling mảng phẳng
+  O(n log n) đọc trực tiếp cột (2.1s→1.0s @500k), groupby_resample sort-based
+  (semantics mới: output sort theo (nhóm,bucket) khớp pandas), merge_on_index
+  hash-fallback (bỏ ràng buộc sort, thêm how="right"). p100_check 74/74,
+  regression 18/18, DLL/nupkg **1.0.7-dev**, smoke 44/44.
+- **Báo cáo regression tkvc dist 17:59** → `docs/COMPILER_REGRESSIONS_20260923.md`
+  (R1 KeyError constant, R2 constant import, R3 use-before-def oan, R4 InvalidIL
+  pattern hoán đổi list). Thư viện đã né R4 bằng buffer param — khi compiler
+  sửa xong R1–R3, build lại p100 bằng tkvc mới để xác nhận.
+- **Bài học mới cho handoff**: (1) alias list `a = b` rồi `a[i]=x` làm first-pass
+  suy sai scalar — truyền buffer qua param thay vì alias; (2) hoán đổi 2 list
+  qua biến tmp → InvalidProgramException trên tkvc cũ — copy từng phần tử.
+
+---
+
 ## 0d. PHIÊN 2026-09-23 (tiếp nữa) — v1.9 pandas-100 closure (XONG ✅)
 
 Yêu cầu "phải đạt 100%". Đóng nốt nhóm "tiện ích nhỏ còn sót" — module
