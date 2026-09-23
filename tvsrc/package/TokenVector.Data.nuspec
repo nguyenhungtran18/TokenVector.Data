@@ -2,13 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>TokenVector.Data</id>
-    <version>1.0.3</version>
+    <version>1.0.4-dev</version>
     <title>TokenVector.Data - High-Performance Columnar DataFrame &amp; Tabular Engine (TokenVector Language)</title>
     <authors>TokenVector Project Team</authors>
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
-    <releaseNotes>1.0.3: CSV datetime &amp; encoding. parse_dates=[column names] on csv_read_ex/csv_read_chunks/csv_read_chunks_file (ISO strings -&gt; i64 epoch-ms via series_dt_parse, column name preserved, unknown names skipped). New csv_read_chunks_file_enc with encoding (utf-8/latin-1) + parse_dates; latin-1 byte-per-char full-file path, utf-8/default true streaming. UTF-8 BOM (EF BB BF) auto-stripped by runtime file-open layer. 16 check suites green incl. new pd_check (15 checks).</releaseNotes>
+    <releaseNotes>1.0.4-dev: pandas parity closure (v1.7). New module tokenvector_pandas (36 fns): Series.str slice_replace/fullmatch/extractall/cat, agg first/last/nth/mad, factorize + category codes, groupby first/last/nth/head/tail, stack/unstack, merge_ordered (key-coalescing outer with optional ffill), datetime tz helpers with US DST, df_eval/df_query expression engine (shunting-yard, string comparisons included). New module tokenvector_read_json (16 fns): native JSON reader (orient=records, per-column dtype normalization bool&gt;i64&gt;f64&gt;str, explicit null safe), json_read_records with numeric/time coercion to epoch-ms, jsonl_read (garbage lines skipped), json_read_object, json_write (records). Escaped-quote scanning fixed; runtime dtype inference fixed. Suites: 17/17 green, p2_check 110/110, DLL smoke 20/20 new symbols.</releaseNotes>
     <description>High-performance columnar DataFrame and tabular data processing library, natively implemented in the TokenVector language (tkv) and compiled to a .NET CIL DLL: schema, columns, series, vector math, filter, group-by, joins (incl. AsOf), pivot/melt, CSV/JSON IO, Arrow IPC stream and out-of-core batches, zero-copy Mat bridge for numerics.</description>
     <tags>dataframe columnar arrow feather csv json timeseries asofjoin tokenvector data</tags>
     <dependencies>

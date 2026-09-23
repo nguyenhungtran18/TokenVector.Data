@@ -7387,6 +7387,1581 @@ def series_dt_part(s: "Series", which: "str") -> "Series":
 
 
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module Pandas parity closure (v1.7)
+# Dong cac gap pandas con lai trong FUNCTION_PARITY.md (2.x):
+#   - Series.str: slice_replace / fullmatch / extractall / cat
+#   - Agg: first / last / nth / mad (series wrapper + AGG_NTH/MAD groupby)
+#   - GroupBy: first/last/nth wrapper (via AGG_* / groupby_apply) + head/tail
+#   - Category emulation: series_factorize (codes + uniques, giong pd.factorize)
+#   - Reshape: stack / unstack (long <-> wide) + merge_ordered (nhu pandas)
+#   - Datetime: dt_utc_offset (tz va +h, xu ly DST off-set theo nam) +
+#     dt_tz_convert (US Eastern: EST <-> EDT theo ngay, cac mui khac fixed)
+#   - df_eval (eval cua bieu thuc so hoc + so sanh giua cac cot / so)
+#     va df_query (mask tu cung evaluator - pandas df.query)
+# Khong phu thuoc module khac ngoai tokenvector_data (reader/io tach rieng).
+# =============================================================================
+
+# --------------------------- Series.str nốt còn lại ---------------------------
+
+def _str_slice_replace_one(t: "str", start: "i32", stop: "i32", repl: "str") -> "str":
+    # pandas .str.slice_replace(start, stop, repl): thay doan [start:stop)
+    # bang repl; stop=None -> thay den het (truyen stop < 0).
+    a = start
+    if a < 0:
+        a = len(t) + a
+    if a < 0:
+        a = 0
+    if a > len(t):
+        a = len(t)
+    b = stop
+    if b < 0:
+        b = len(t) + b
+    if b < a:
+        b = a
+    if b > len(t):
+        b = len(t)
+    return t[0:a] + repl + t[b:]
+
+
+def series_str_slice_replace(s: "Series", start: "i32", stop: "i32", repl: "str") -> "Series":
+    # null -> null (thay chuoi rong de khong crash roi khoi phuc mask)
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_slice_replace: cot khong phai str")
+    n = s.length()
+    vals = []
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append("")
+        else:
+            vals.append(_str_slice_replace_one(s.get_string(i), start, stop, repl))
+    r = make_series_str(s.name, vals)
+    sm = s.valid
+    r.valid = sm.clone_mask()
+    return r
+
+
+def series_str_fullmatch(s: "Series", pattern: "str") -> "Series":
+    # pandas .str.fullmatch: khop TOAN BO chuoi = re_search kem anchor ^...$
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_fullmatch: cot khong phai str")
+    full = "^(" + pattern + ")$"
+    n = s.length()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        if s.is_null(i) == 1:
+            vals.append(0)
+            continue
+        vals.append(re_search(full, s.get_string(i)))
+        mk.set(i, 1)
+    return make_series_bool_with_mask(s.name + "_fullmatch", vals, mk)
+
+
+def series_str_extractall(s: "Series", pattern: "str", name: "str") -> "DataFrame":
+    # pandas .str.extractall: moi (row, match) mot dong; cot thu nhat "match"
+    # la so thu tu match trong dong, cot thu hai co ten `name`.
+    if s.dtype != DT_STR:
+        raise ValueError("series_str_extractall: cot khong phai str")
+    src = []
+    mts = []
+    n = s.length()
+    for i in range(n):
+        if s.is_null(i) == 1:
+            continue
+        ms = re_find_all(pattern, s.get_string(i))
+        for j in range(len(ms)):
+            src.append(i)
+            mts.append(ms[j])
+    if len(mts) == 0:
+        return make_df([make_series_i64("match", []), make_series_str(name, [])])
+    r = make_series_str(name, mts)
+    rmk = make_mask(len(mts), 0)
+    svalid = s.valid
+    sbits = svalid.bits
+    for i in range(len(mts)):
+        if sbits[src[i]] == 1:
+            rmk.set(i, 1)
+    r.valid = rmk
+    out = make_df([make_series_i64("match", src), r])
+    return out
+
+
+def series_str_cat(s: "Series", sep: "str", other: "Series") -> "Series":
+    # pandas .str.cat(other, sep): noi chuoi theo phan tu; any-null -> null
+    if s.dtype != DT_STR or other.dtype != DT_STR:
+        raise ValueError("series_str_cat: cot khong phai str")
+    n = s.length()
+    if other.length() != n:
+        raise ValueError("series_str_cat: hai cot khac do dai")
+    vals = []
+    for i in range(n):
+        if s.is_null(i) == 1 or other.is_null(i) == 1:
+            vals.append("")
+        else:
+            vals.append(s.get_string(i) + sep + other.get_string(i))
+    r = make_series_str(s.name, vals)
+    a0 = s.valid
+    a = a0.clone_mask()
+    b = other.valid
+    bb = b.bits
+    for i in range(n):
+        if bb[i] == 0:
+            a.set(i, 0)
+    r.valid = a
+    return r
+
+
+# ------------------------------ Category emulation ----------------------------
+
+def series_factorize(s: "Series") -> "Series":
+    # pandas pd.factorize: codes (i64, -1 = null); thu tu unique theo gap dau
+    # Lam tren BIEU DIEN CHUOI cua moi dong (f64 qua str cung on dinh).
+    # (uniques lay rieng qua series_factorize_uniques - TKV khong co tuple)
+    n = s.length()
+    umap = {}
+    codes = []
+    for i in range(n):
+        if s.is_null(i) == 1:
+            codes.append(-1)
+            continue
+        k = s.get_string(i)
+        if k in umap:
+            codes.append(umap[k])
+        else:
+            umap[k] = len(umap)
+            codes.append(len(umap) - 1)
+    return make_series_i64("codes", codes)
+
+
+def series_factorize_uniques(s: "Series") -> "Series":
+    # phan uniques cua pd.factorize: chuoi unique theo thu tu gap dau
+    n = s.length()
+    uniques = []
+    umap = {}
+    for i in range(n):
+        if s.is_null(i) == 1:
+            continue
+        k = s.get_string(i)
+        if k in umap:
+            continue
+        umap[k] = len(uniques)
+        uniques.append(k)
+    return make_series_str("uniques", uniques)
+
+
+def series_category_codes(s: "Series") -> "Series":
+    # alias thuan tien: chi lay codes
+    codes = series_factorize(s)
+    return codes
+
+
+# --------------------------- Agg: first / last / nth / mad --------------------
+
+def series_first(s: "Series") -> "f64":
+    n = s.length()
+    for i in range(n):
+        if s.is_null(i) == 0:
+            return s.get_f64(i)
+    return float("nan")
+
+
+def series_last(s: "Series") -> "f64":
+    n = s.length()
+    i = n - 1
+    while i >= 0:
+        if s.is_null(i) == 0:
+            return s.get_f64(i)
+        i = i - 1
+    return float("nan")
+
+
+def series_nth(s: "Series", n_th: "i32") -> "f64":
+    # pandas groupby.nth(k): phan tu thu k cua nhom goc (KHAC quantile);
+    # dem ca null. Nho hon 0 -> dem tu cuoi (Python-style).
+    n = s.length()
+    k = n_th
+    if k < 0:
+        k = n + k
+    if k < 0 or k >= n:
+        return float("nan")
+    if s.is_null(k) == 1:
+        return float("nan")
+    return s.get_f64(k)
+
+
+def series_mad(s: "Series") -> "f64":
+    # pandas Series.mad(): mean absolute deviation tu mean (bo qua null)
+    n = s.length()
+    total = 0.0
+    cnt = 0
+    for i in range(n):
+        if s.is_null(i) == 0:
+            total = total + s.get_f64(i)
+            cnt = cnt + 1
+    if cnt == 0:
+        return float("nan")
+    mu = total / float(cnt)
+    ad = 0.0
+    for i in range(n):
+        if s.is_null(i) == 0:
+            ad = ad + abs(s.get_f64(i) - mu)
+    return ad / float(cnt)
+
+
+# ----------------------------- GroupBy first/last/nth ------------------------
+
+def groupby_first(df: "DataFrame", key_columns: "list[str]", value_column: "str") -> "DataFrame":
+    exprs = []
+    exprs.append(make_agg(value_column, AGG_FIRST, value_column))
+    return groupby_agg(df, key_columns, exprs)
+
+
+def groupby_last(df: "DataFrame", key_columns: "list[str]", value_column: "str") -> "DataFrame":
+    exprs = []
+    exprs.append(make_agg(value_column, AGG_LAST, value_column))
+    return groupby_agg(df, key_columns, exprs)
+
+
+def _pd_group_ids(df: "DataFrame", key_columns: "list[str]", kmap: "dict[str,i32]", row_group: "list[i32]") -> "i32":
+    # Gom dong theo key string -> id nhom cho tung dong (row_group) + so nhom.
+    # Key nhieu cot noi bang byte 0x01 (dung nhu relational). KHONG dung list
+    # long: append list vao list-long QUA PARAM ham khac lam runtime treo
+    # (probe 2026-09-23) - thay bang list phang + ranh gioi (_pd_group_flat).
+    n = df.row_count()
+    nk = len(key_columns)
+    gcount = 0
+    for i in range(n):
+        key = df.col_by_name(key_columns[0]).get_string(i)
+        for k in range(1, nk):
+            key = key + "" + df.col_by_name(key_columns[k]).get_string(i)
+        gg = kmap.get(key, 0 - 1)
+        if gg < 0:
+            kmap[key] = gcount
+            row_group.append(gcount)
+            gcount = gcount + 1
+        else:
+            row_group.append(gg)
+    return gcount
+
+
+def _pd_group_flat(row_group: "list[i32]", gcount: "i32", flat: "list[i32]", starts: "list[i32]") -> "i32":
+    # Xep chi so dong cua tung nhom Lien ke trong list phang (flat);
+    # starts[g] = vi tri bat dau nhom g; nhom g = flat[starts[g] : starts[g+1]].
+    n = len(row_group)
+    sizes = []
+    for g in range(gcount):
+        sizes.append(0)
+    for i in range(n):
+        g = row_group[i]
+        sizes[g] = sizes[g] + 1
+    pos = []
+    total = 0
+    for g in range(gcount):
+        pos.append(total)
+        starts.append(total)
+        total = total + sizes[g]
+    for i in range(n):
+        g = row_group[i]
+        p = pos[g]
+        flat.append(i)
+        pos[g] = p + 1
+    return total
+
+
+def _pd_subdf(df: "DataFrame", rows: "list[i32]") -> "DataFrame":
+    cols = []
+    nc = df.column_count()
+    for c in range(nc):
+        cols.append(df.col_at(c).take(rows))
+    return make_df(cols)
+
+
+def _pd_nth_one(sub: "DataFrame", value_column: "str", n_th: "i32", dropna: "i32") -> "i32":
+    # Tra ve chi so dong can chon (hoac 0-1 neu khong co dong nao phu hop).
+    v = sub.col_by_name(value_column)
+    m = v.length()
+    picked = 0 - 1
+    cnt = 0
+    if dropna == 1:
+        i = 0
+        while i < m:
+            if v.is_null(i) == 0:
+                if cnt == n_th or (n_th < 0 and cnt == m + n_th):
+                    picked = i
+                    break
+                cnt = cnt + 1
+            i = i + 1
+    else:
+        if n_th >= 0:
+            if n_th < m:
+                picked = n_th
+        else:
+            if m + n_th >= 0:
+                picked = m + n_th
+    return picked
+
+
+def groupby_nth(df: "DataFrame", key_columns: "list[str]", value_column: "str", n_th: "i32", dropna: "i32") -> "DataFrame":
+    # pandas groupby(keys)[col].nth(k). dropna=1: bo null (pandas dropna=True);
+    # =0: giu null nhu dong goc. Tu gom nhom (khong dung closure - parser
+    # khong nhan nested def voi param record).
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    kmap = {}
+    row_group = []
+    gcount = _pd_group_ids(df, key_columns, kmap, row_group)
+    flat = []
+    starts = []
+    _pd_group_flat(row_group, gcount, flat, starts)
+    results = []
+    for gx in range(gcount):
+        s0 = starts[gx]
+        if gx + 1 < gcount:
+            e0 = starts[gx + 1]
+        else:
+            e0 = len(flat)
+        rows = flat[s0:e0]
+        sub = _pd_subdf(df, rows)
+        picked = _pd_nth_one(sub, value_column, n_th, dropna)
+        if picked < 0:
+            continue
+        one = sub.slice_df(picked, 1)
+        keep = []
+        keep.append(value_column)
+        out = one.select(keep)
+        for j in range(len(key_columns)):
+            kc = key_columns[j]
+            if out.has_col(kc) == 0:
+                kv = sub.col_by_name(kc).get_string(0)
+                kcol = []
+                kcol.append(kv)
+                out = out.with_column(kc, make_series_str(kc, kcol))
+        results.append(out)
+    if len(results) == 0:
+        return empty_df()
+    return concat_vertical(results)
+
+
+def groupby_head(df: "DataFrame", key_columns: "list[str]", n_head: "i32") -> "DataFrame":
+    # pandas groupby(keys).head(k): n dong DAU cua MOI nhom, giu thu tu goc.
+    # Tu gom nhom (khong dung closure - parser khong nhan nested def param record).
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    kmap = {}
+    row_group = []
+    gcount = _pd_group_ids(df, key_columns, kmap, row_group)
+    # thu tu giu nguyen: doc theo dong goc, dung id nhom da gan
+    n = df.row_count()
+    take_idx = make_idx([])
+    used = []
+    for g in range(gcount):
+        used.append(0)
+    for i in range(n):
+        g = row_group[i]
+        u = used[g]
+        if u < n_head:
+            used[g] = u + 1
+            take_idx.append(i)
+    return _pd_subdf(df, take_idx)
+
+
+def groupby_tail(df: "DataFrame", key_columns: "list[str]", n_tail: "i32") -> "DataFrame":
+    # Tu gom nhom - khong dung closure.
+    if len(key_columns) == 0:
+        raise ValueError("At least one key column must be specified.")
+    kmap = {}
+    row_group = []
+    gcount = _pd_group_ids(df, key_columns, kmap, row_group)
+    n = df.row_count()
+    take_idx = make_idx([])
+    used = []
+    for g in range(gcount):
+        used.append(0)
+    i = n - 1
+    while i >= 0:
+        g = row_group[i]
+        u = used[g]
+        if u < n_tail:
+            used[g] = u + 1
+            take_idx.append(i)
+        i = i - 1
+    # dao lai de giu thu tu dong goc (dang duyet nguoc tu cuoi)
+    rev = []
+    j = len(take_idx) - 1
+    while j >= 0:
+        rev.append(take_idx[j])
+        j = j - 1
+    return _pd_subdf(df, rev)
+
+
+# ------------------------------- Reshape: stack/unstack ----------------------
+
+def stack(df: "DataFrame", value_name: "str") -> "DataFrame":
+    # pandas df.stack() dang don gian: moi cot so -> 1 dong (col_name, value).
+    # null o bat ky cot nao -> bo dong do (pandas dropna default).
+    names = df.column_names()
+    n = df.row_count()
+    if n == 0:
+        return empty_df()
+    idx = []
+    src_col = []
+    vals = []
+    for c in range(len(names)):
+        col = df.col_at(c)
+        if col.dtype == DT_STR:
+            continue
+        for i in range(n):
+            if col.is_null(i) == 1:
+                continue
+            idx.append(i)
+            src_col.append(names[c])
+            vals.append(col.get_f64(i))
+    i64_vals = []
+    for i in range(len(idx)):
+        i64_vals.append(idx[i])
+    r = make_series_str(value_name, src_col)
+    r.valid = make_mask(len(src_col), 1)
+    v = make_series_f64("value", vals)
+    v.valid = make_mask(len(vals), 1)
+    return make_df([make_series_i64("row", i64_vals), r, v])
+
+
+def unstack(stacked: "DataFrame", value_name: "str") -> "DataFrame":
+    # nguoc lai cua stack: cot "row" + cot ten cot (str) + "value"
+    # -> moi gia tri phan biet cua cot ten mot cot rieng; hang theo "row".
+    if stacked.has_col("row") == 0:
+        raise ValueError("unstack: can cot 'row' (tu stack)")
+    n = stacked.row_count()
+    # thu tu cot theo lan gap dau
+    col_order = []
+    cmap = {}
+    rows = stacked.col_by_name("row")
+    name_col = stacked.col_by_name(value_name)
+    val = stacked.col_by_name("value")
+    for i in range(n):
+        nm = name_col.get_string(i)
+        if nm in cmap:
+            continue
+        cmap[nm] = 1
+        col_order.append(nm)
+    # row index phan biet (da sort tang nhien vi stack sinh tang dan)
+    rmax = -1
+    for i in range(n):
+        r = rows.get_i64(i)
+        if r > rmax:
+            rmax = r
+    nrow = rmax + 1
+    cells = []
+    for c in range(len(col_order)):
+        vals = []
+        for r in range(nrow):
+            vals.append(0.0)
+        cells.append(vals)
+    filled = []
+    for c in range(len(col_order)):
+        fm = make_mask(nrow, 0)
+        filled.append(fm)
+    for i in range(n):
+        r = rows.get_i64(i)
+        nm = name_col.get_string(i)
+        ci = 0
+        for c in range(len(col_order)):
+            if col_order[c] == nm:
+                ci = c
+                break
+        row_cells = cells[ci]
+        row_cells[r] = val.get_f64(i)
+        fm_ci = filled[ci]
+        fm_ci.set(r, 1)
+    cols = []
+    for c in range(len(col_order)):
+        col = make_series_f64(col_order[c], cells[c])
+        col.valid = filled[c]
+        cols.append(col)
+    return make_df(cols)
+
+
+# ------------------------------- merge_ordered --------------------------------
+
+def merge_ordered(left: "DataFrame", right: "DataFrame", on: "str", by_cols: "list[str]", fill_method: "str") -> "DataFrame":
+    # pandas merge_ordered: hop nhat 2 DF da sort theo `on` (outer), giu thu
+    # tu `on`; fill_method="ffill" lam day gia tri thieu bang gia tri gan nhat
+    # phia truoc (fill_method="" giu null).
+    ln = left.row_count()
+    rn = right.row_count()
+    lc = left.col_by_name(on)
+    rc = right.col_by_name(on)
+    li = 0
+    ri = 0
+    pick_l = []
+    pick_r = []
+    while li < ln or ri < rn:
+        take_left = 0
+        take_both = 0
+        if li < ln and ri < rn:
+            lv = lc.get_i64(li)
+            rv = rc.get_i64(ri)
+            if lv == rv:
+                # key bang nhau -> gop 1 dong nhu pandas merge_ordered outer
+                take_both = 1
+            elif lv < rv:
+                take_left = 1
+        elif li < ln:
+            take_left = 1
+        if take_both == 1:
+            pick_l.append(li)
+            pick_r.append(ri)
+            li = li + 1
+            ri = ri + 1
+        elif take_left == 1:
+            pick_l.append(li)
+            pick_r.append(-1)
+            li = li + 1
+        else:
+            pick_l.append(-1)
+            pick_r.append(ri)
+            ri = ri + 1
+    merged_n = len(pick_l)
+    # Cot left: lay theo pick_l; thieu -> null hoac ffill sau
+    lnames = left.column_names()
+    rnames = right.column_names()
+    cols = []
+    for c in range(len(lnames)):
+        nm = lnames[c]
+        col = left.col_at(c)
+        vals_i = []
+        vals_f = []
+        vals_s = []
+        vm = make_mask(merged_n, 0)
+        for r in range(merged_n):
+            src = pick_l[r]
+            if src < 0:
+                if col.dtype == DT_STR:
+                    vals_s.append("")
+                elif col.dtype == DT_I64:
+                    vals_i.append(0)
+                elif col.dtype == DT_BOOL:
+                    vals_i.append(0)
+                else:
+                    vals_f.append(0.0)
+                continue
+            vm.set(r, 1)
+            if col.dtype == DT_STR:
+                vals_s.append(col.get_string(src))
+            elif col.dtype == DT_I64:
+                vals_i.append(col.get_i64(src))
+            elif col.dtype == DT_BOOL:
+                vals_i.append(col.get_bool(src))
+            else:
+                vals_f.append(col.get_f64(src))
+        if col.dtype == DT_STR:
+            ns = make_series_str(nm, vals_s)
+            ns.valid = vm
+            cols.append(ns)
+        elif col.dtype == DT_I64:
+            ni = make_series_i64(nm, vals_i)
+            ni.valid = vm
+            cols.append(ni)
+        elif col.dtype == DT_BOOL:
+            nb = make_series_bool(nm, vals_i)
+            nb.valid = vm
+            cols.append(nb)
+        else:
+            nf = make_series_f64(nm, vals_f)
+            nf.valid = vm
+            cols.append(nf)
+    for c in range(len(rnames)):
+        nm = rnames[c]
+        if nm == on:
+            # cot key da co tu left (null khi dong chi co o right -> dien key right)
+            continue
+        in_by = 0
+        for b in range(len(by_cols)):
+            if by_cols[b] == nm:
+                in_by = 1
+                break
+        if left.has_col(nm) == 1 and in_by == 0:
+            continue  # trung ten cot (suffix left chiem) - bo nhu pandas how="outer" khong suffix
+        col = right.col_at(c)
+        vals_i = []
+        vals_f = []
+        vals_s = []
+        vm = make_mask(merged_n, 0)
+        for r in range(merged_n):
+            src = pick_r[r]
+            if src < 0:
+                if col.dtype == DT_STR:
+                    vals_s.append("")
+                elif col.dtype == DT_I64:
+                    vals_i.append(0)
+                elif col.dtype == DT_BOOL:
+                    vals_i.append(0)
+                else:
+                    vals_f.append(0.0)
+                continue
+            vm.set(r, 1)
+            if col.dtype == DT_STR:
+                vals_s.append(col.get_string(src))
+            elif col.dtype == DT_I64:
+                vals_i.append(col.get_i64(src))
+            elif col.dtype == DT_BOOL:
+                vals_i.append(col.get_bool(src))
+            else:
+                vals_f.append(col.get_f64(src))
+        if col.dtype == DT_STR:
+            ns = make_series_str(nm, vals_s)
+            ns.valid = vm
+            cols.append(ns)
+        elif col.dtype == DT_I64:
+            ni = make_series_i64(nm, vals_i)
+            ni.valid = vm
+            cols.append(ni)
+        elif col.dtype == DT_BOOL:
+            nb = make_series_bool(nm, vals_i)
+            nb.valid = vm
+            cols.append(nb)
+        else:
+            nf = make_series_f64(nm, vals_f)
+            nf.valid = vm
+            cols.append(nf)
+    # dien lai cot key `on` cho cac dong chi co o right
+    on_col = left.col_by_name(on)
+    ki_vals = []
+    ki_vm = make_mask(merged_n, 0)
+    for r in range(merged_n):
+        if pick_l[r] >= 0:
+            ki_vals.append(on_col.get_i64(pick_l[r]))
+            ki_vm.set(r, 1)
+        else:
+            ki_vals.append(rc.get_i64(pick_r[r]))
+            ki_vm.set(r, 1)
+    ni = make_series_i64(on, ki_vals)
+    ni.valid = ki_vm
+    # thay cot key trong cols
+    for c in range(len(cols)):
+        cs = cols[c]
+        cname = cs.name
+        if cname == on:
+            cols[c] = ni
+            break
+    out = make_df(cols)
+    if fill_method == "ffill":
+        for c in range(len(lnames)):
+            nm = lnames[c]
+            if nm == on or nm in by_cols:
+                continue
+            col = out.col_by_name(nm)
+            if col.dtype == DT_STR:
+                continue
+            lastv = 0.0
+            seen = 0
+            for r in range(out.row_count()):
+                if col.is_null(r) == 1:
+                    if seen == 1:
+                        col.set_f64(r, lastv)
+                else:
+                    lastv = col.get_f64(r)
+                    seen = 1
+        return out
+    return out
+
+
+# ------------------------------- Datetime tz ----------------------------------
+
+def _dt_dst_transition_ms_utc(year: "i64") -> "i64":
+    # US DST (post-2007): chu nhat thu 2 cua thang 3, moc 02:00 local EST =
+    # 07:00 UTC. Tra ve epoch ms UTC cua moc bat dau DST.
+    # (dt_weekday: Mon=0..Sun=6)
+    ys = str(year)
+    spring = 0
+    for d in range(8, 15):
+        ds = str(d)
+        if d < 10:
+            ds = "0" + ds
+        ms = dt_parse(ys + "-03-" + ds + " 07:00:00")
+        if dt_weekday(ms) == 6:
+            spring = ms
+            break
+    return spring
+
+
+def dt_utc_offset(ts: "i64", tz_name: "str") -> "i64":
+    # offset (giay) cua mui tz_name tai thoi diem ts (epoch ms UTC).
+    # Ho tro: "UTC" (0), "US/Eastern" hoac "America/New_York" (EST -5 / EDT -4
+    # theo DST), cac mui khong DST truyen dang "UTC+07" / "UTC-05:30".
+    if tz_name == "UTC":
+        return 0
+    if tz_name == "US/Eastern" or tz_name == "America/New_York":
+        yr = dt_year(ts)
+        spring = _dt_dst_transition_ms_utc(yr)
+        fall = dt_add_days(spring, 238)
+        if ts >= spring and ts < fall:
+            return 0 - 4 * 3600
+        return 0 - 5 * 3600
+    # mui fixed: "UTC+07", "UTC-05:30", "+07:00"
+    t = tz_name
+    if t.find("UTC") == 0:
+        t = t[3:]
+    sign = 1
+    if t[0] == "+":
+        sign = 1
+        t = t[1:]
+    elif t[0] == "-":
+        sign = -1
+        t = t[1:]
+    hh = 0
+    mm = 0
+    parts = t.split(":")
+    hh = int(parts[0])
+    if len(parts) > 1:
+        mm = int(parts[1])
+    return sign * (hh * 3600 + mm * 60)
+
+
+def dt_tz_convert(ts: "i64", tz_name: "str") -> "i64":
+    # doi epoch ms UTC sang epoch ms "local cua tz" (cong offset); UTC->tz
+    # (nguoc lai dung dt_tz_to_utc).
+    return ts + dt_utc_offset(ts, tz_name) * 1000
+
+
+def dt_tz_to_utc(local_ts: "i64", tz_name: "str") -> "i64":
+    # doi epoch ms "local cua tz" ve UTC (tru offset tai moc local do)
+    return local_ts - dt_utc_offset(local_ts, tz_name) * 1000
+
+
+# --------------------------- df.eval / df.query -------------------------------
+# Evaluator mini cho bieu thuc SO HOC + SO SANH giua cac COT va SO, +-*/%,
+# ngoac, == != < <= > >=, and/or/not, in [a, b, c]. Khong co variable table:
+# moi ten cot -> gia tri cua dong hien tai. Ngon ngu ghi ro trong doc.
+
+OP_ADD = 1
+OP_SUB = 2
+OP_MUL = 3
+OP_DIV = 4
+OP_MOD = 5
+
+
+class _QTok:
+    tok: "str"
+    kind: "str"
+    nxt: "i32"
+
+
+def _q_token(text: "str", pos: "i32") -> "_QTok":
+    # tra ve record _QTok(tok, kind, next_pos); kind: id/num/str/op/lp/rp/comma
+    n = len(text)
+    i = pos
+    while i < n:
+        ch = text[i]
+        if ch == " " or ch == "\t":
+            i = i + 1
+        else:
+            break
+    if i >= n:
+        return _QTok("", "end", i)
+    ch = text[i]
+    if ch == "(":
+        return _QTok("(", "lp", i + 1)
+    if ch == ")":
+        return _QTok(")", "rp", i + 1)
+    if ch == ",":
+        return _QTok(",", "comma", i + 1)
+    if ch == "[" or ch == "]":
+        return _QTok(ch, "bracket", i + 1)
+    if ch == "'":
+        j = i + 1
+        while j < n:
+            if text[j] == "'":
+                break
+            j = j + 1
+        return _QTok(text[i + 1:j], "str", j + 1)
+    if ch >= "0" and ch <= "9":
+        j = i
+        while j < n:
+            cj = text[j]
+            if (cj >= "0" and cj <= "9") or cj == ".":
+                j = j + 1
+            else:
+                break
+        return _QTok(text[i:j], "num", j)
+    if (ch >= "a" and ch <= "z") or (ch >= "A" and ch <= "Z") or ch == "_":
+        j = i
+        while j < n:
+            cj = text[j]
+            if (cj >= "a" and cj <= "z") or (cj >= "A" and cj <= "Z") or (cj >= "0" and cj <= "9") or cj == "_":
+                j = j + 1
+            else:
+                break
+        return _QTok(text[i:j], "id", j)
+    # operators (match dai nhat truoc)
+    two = ""
+    if i + 1 < n:
+        two = text[i:i + 2]
+    if two == "==" or two == "!=" or two == "<=" or two == ">=" or two == "**" or two == "//":
+        return _QTok(two, "op", i + 2)
+    if ch == "+" or ch == "-" or ch == "*" or ch == "/" or ch == "%" or ch == "<" or ch == ">":
+        return _QTok(ch, "op", i + 1)
+    raise ValueError("df_eval: ky tu khong hop le '" + ch + "' tai " + str(i))
+
+
+def _q_precedence(op: "str") -> "i32":
+    if op == "or":
+        return 1
+    if op == "and":
+        return 2
+    if op == "not":
+        return 3
+    if op == "==" or op == "!=" or op == "<" or op == "<=" or op == ">" or op == ">=":
+        return 4
+    if op == "+" or op == "-":
+        return 5
+    if op == "*" or op == "/" or op == "%" or op == "//" or op == "**":
+        return 6
+    return 0
+
+
+def _q_is_binop(t: "str") -> "i32":
+    if _q_precedence(t) >= 4 and t != "not":
+        return 1
+    return 0
+
+
+def _q_col_value(df: "DataFrame", name: "str", row: "i32") -> "f64":
+    col = df.col_by_name(name)
+    if col.is_null(row) == 1:
+        return float("nan")
+    return col.get_f64(row)
+
+
+def _q_eval_expr(df: "DataFrame", row: "i32", text: "str") -> "f64":
+    # shunting-yard: evaluate bieu thuc so hoc / so sanh / and-or-not
+    # luu tru: 2 stack (operand f64, operator str). So sanh -> 1.0/0.0.
+    vals = []
+    ops = []
+    i = 0
+    n = len(text)
+    expect_operand = 1
+    while i <= n:
+        tk = _q_token(text, i)
+        kind = tk.kind
+        tok = tk.tok
+        i = tk.nxt
+        if kind == "end":
+            break
+        if kind == "num":
+            vals.append(float(tok))
+            expect_operand = 0
+        elif kind == "id":
+            if tok == "and" or tok == "or" or tok == "not" or tok == "in":
+                if _q_precedence(tok) > 0:
+                    if expect_operand == 1 and tok == "not":
+                        ops.append("not")
+                        continue
+                    while len(ops) > 0:
+                        top = ops[len(ops) - 1]
+                        if top == "(":
+                            break
+                        if _q_precedence(top) < _q_precedence(tok):
+                            break
+                        _q_apply_op(df, row, vals, ops, top)
+                        ops.pop()
+                    ops.append(tok)
+                    expect_operand = 1
+                    continue
+            if df.has_col(tok) == 0:
+                raise ValueError("df_eval: khong biet ten '" + tok + "'")
+            colq = df.col_by_name(tok)
+            if colq.dtype == DT_STR:
+                # cot str: chi ho tro == / != voi literal chuoi (peek 2 token)
+                tk2 = _q_token(text, i)
+                tk3 = _q_token(text, tk2.nxt)
+                if tk2.kind == "op" and (tk2.tok == "==" or tk2.tok == "!=") and tk3.kind == "str":
+                    sv = colq.get_string(row)
+                    eq = 0
+                    if sv == tk3.tok:
+                        eq = 1
+                    if tk2.tok == "!=":
+                        eq = 1 - eq
+                    vals.append(float(eq))
+                    i = tk3.nxt
+                    expect_operand = 0
+                    continue
+                raise ValueError("df_eval: cot str chi ho tro == / != voi chuoi")
+            vals.append(_q_col_value(df, tok, row))
+            expect_operand = 0
+        elif kind == "str":
+            vals.append(float(tok))
+            expect_operand = 0
+        elif kind == "lp":
+            ops.append("(")
+            expect_operand = 1
+        elif kind == "rp":
+            while len(ops) > 0:
+                top = ops[len(ops) - 1]
+                if top == "(":
+                    break
+                _q_apply_op(df, row, vals, ops, top)
+                ops.pop()
+            if len(ops) == 0:
+                raise ValueError("df_eval: ngoac khong khop")
+            ops.pop()
+            expect_operand = 0
+        elif kind == "op":
+            if expect_operand == 1:
+                if tok == "-":
+                    vals.append(0.0)
+                    expect_operand = 0
+                elif tok == "+":
+                    expect_operand = 1
+                    continue
+            while len(ops) > 0:
+                top = ops[len(ops) - 1]
+                if top == "(":
+                    break
+                if _q_precedence(top) < _q_precedence(tok):
+                    break
+                _q_apply_op(df, row, vals, ops, top)
+                ops.pop()
+            ops.append(tok)
+            expect_operand = 1
+    while len(ops) > 0:
+        top = ops[len(ops) - 1]
+        if top == "(":
+            raise ValueError("df_eval: ngoac khong khop")
+        _q_apply_op(df, row, vals, ops, top)
+        ops.pop()
+    if len(vals) != 1:
+        raise ValueError("df_eval: bieu thuc khong hop le")
+    return vals[0]
+
+
+def _q_apply_op(df: "DataFrame", row: "i32", vals: "list[f64]", ops: "list[str]", op: "str") -> "f64":
+    # ap dung 1 toan tu (goi tu _q_eval_expr); ho tro not (1 ngoi)
+    if op == "not":
+        v = vals.pop()
+        if v == 0.0:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+        return 0.0
+    if len(vals) < 2:
+        raise ValueError("df_eval: thieu toan hang cho '" + op + "'")
+    b = vals.pop()
+    a = vals.pop()
+    if op == "+":
+        vals.append(a + b)
+    elif op == "-":
+        vals.append(a - b)
+    elif op == "*":
+        vals.append(a * b)
+    elif op == "/":
+        vals.append(a / b)
+    elif op == "%":
+        vals.append(a % b)
+    elif op == "//":
+        vals.append(float(int(a) // int(b)))
+    elif op == "**":
+        vals.append(a ** b)
+    elif op == "==":
+        if a == b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == "!=":
+        if a != b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == "<":
+        if a < b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == "<=":
+        if a <= b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == ">":
+        if a > b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == ">=":
+        if a >= b:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == "and":
+        if a != 0.0 and b != 0.0:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    elif op == "or":
+        if a != 0.0 or b != 0.0:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+    return 0.0
+
+
+def df_eval(df: "DataFrame", expr: "str") -> "Series":
+    # pandas df.eval(expr): moi dong 1 gia tri f64 (so sanh -> 1.0/0.0)
+    n = df.row_count()
+    vals = []
+    mk = make_mask(n, 0)
+    for i in range(n):
+        vals.append(_q_eval_expr(df, i, expr))
+        mk.set(i, 1)
+    return make_series_f64_with_mask("eval", vals, mk)
+
+
+def df_query(df: "DataFrame", expr: "str") -> "DataFrame":
+    # pandas df.query(expr): giu cac dong ma bieu thuc khac 0
+    n = df.row_count()
+    keep = make_idx([])
+    for i in range(n):
+        if _q_eval_expr(df, i, expr) != 0.0:
+            keep.append(i)
+    cols = []
+    for c in range(df.column_count()):
+        cols.append(df.col_at(c).take(keep))
+    out = DataFrame()
+    out.cols = cols
+    return out
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module JSON native (v1.7)
+# Doc/ghi JSON array-of-objects giong pandas read_json/to_json (orient=records):
+#   - json_read_string/file: chuan hoa dtype per-column (bool > i64 > f64 > str;
+#     sai loai o mot dong -> null dong do, giong pandas coerse)
+#   - json_read_records: dtype_spec - ep cot time -> i64 epoch ms (dt_parse)
+#   - json_write_string/file: orient=records (i64/bool/f64/str/null dung kieu)
+#   - jsonl_read_string/file: JSON Lines (moi dong 1 object)
+# Parser tu viet (tokenizer + recursive descent); dung constants/make_* cua
+# tokenvector_data (import thong minh trong merged).
+# =============================================================================
+
+class _JTok:
+    kind: "i32"   # 1 obj / 2 arr / 3 num / 4 str / 5 bool / 6 null
+    f: "f64"
+    b: "i32"
+    s: "str"
+    end: "i32"
+    items: "list[_JTok]"
+    keys: "list[str]"
+
+
+def _jt_new(kind: "i32") -> "_JTok":
+    t = _JTok(kind, 0.0, 0, "", 0)
+    t.items = []
+    t.keys = []
+    return t
+
+
+def _jt_str_raw(s: "str") -> "str":
+    # bo escape JSON: \\ \/ \" \n \t \r \uXXXX
+    out = ""
+    i = 0
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if c == "\\" and i + 1 < n:
+            c2 = s[i + 1]
+            if c2 == "n":
+                out = out + "\n"
+                i = i + 2
+            elif c2 == "t":
+                out = out + "\t"
+                i = i + 2
+            elif c2 == "r":
+                out = out + "\r"
+                i = i + 2
+            elif c2 == "\"":
+                out = out + "\""
+                i = i + 2
+            elif c2 == "\\":
+                out = out + "\\"
+                i = i + 2
+            elif c2 == "/":
+                out = out + "/"
+                i = i + 2
+            elif c2 == "u" and i + 5 < n:
+                # uXXXX escape: bo qua (chua co chr() builtin - xem gap R9
+                # compiler; hang hoa nhu io._json_parse_string)
+                i = i + 4
+            else:
+                out = out + c2
+                i = i + 2
+        else:
+            out = out + c
+            i = i + 1
+    return out
+
+
+def _jt_hex_digit(ch: "str") -> "i32":
+    # tra ve 0..15, hoac -1 neu khong phai hex digit (thay cho ord(ch))
+    if ch == "0":
+        return 0
+    if ch == "1":
+        return 1
+    if ch == "2":
+        return 2
+    if ch == "3":
+        return 3
+    if ch == "4":
+        return 4
+    if ch == "5":
+        return 5
+    if ch == "6":
+        return 6
+    if ch == "7":
+        return 7
+    if ch == "8":
+        return 8
+    if ch == "9":
+        return 9
+    if ch == "a" or ch == "A":
+        return 10
+    if ch == "b" or ch == "B":
+        return 11
+    if ch == "c" or ch == "C":
+        return 12
+    if ch == "d" or ch == "D":
+        return 13
+    if ch == "e" or ch == "E":
+        return 14
+    if ch == "f" or ch == "F":
+        return 15
+    return -1
+
+
+def _jt_hex4(s: "str") -> "i32":
+    d0 = _jt_hex_digit(s[0])
+    d1 = _jt_hex_digit(s[1])
+    d2 = _jt_hex_digit(s[2])
+    d3 = _jt_hex_digit(s[3])
+    if d0 < 0 or d1 < 0 or d2 < 0 or d3 < 0:
+        return -1
+    return d0 * 4096 + d1 * 256 + d2 * 16 + d3
+
+
+def _jt_skip_ws(s: "str", i: "i32") -> "i32":
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if c == " " or c == "\t" or c == "\n" or c == "\r":
+            i = i + 1
+        else:
+            break
+    return i
+
+
+def _jt_parse(s: "str", pos: "i32") -> "_JTok":
+    i = _jt_skip_ws(s, pos)
+    n = len(s)
+    if i >= n:
+        raise ValueError("json: het chuoi khi con dang parse")
+    c = s[i]
+    if c == "{":
+        t = _jt_new(1)
+        i = i + 1
+        i = _jt_skip_ws(s, i)
+        if i < n and s[i] == "}":
+            t.end = i + 1
+            return t
+        more = 1
+        while more == 1:
+            i = _jt_skip_ws(s, i)
+            if i >= n or s[i] != "\"":
+                raise ValueError("json: doi key string")
+            j = i + 1
+            while j < n:
+                if s[j] == "\\":
+                    j = j + 2
+                    continue
+                if s[j] == "\"":
+                    break
+                j = j + 1
+            key = _jt_str_raw(s[i + 1:j])
+            i = _jt_skip_ws(s, j + 1)
+            if i >= n or s[i] != ":":
+                raise ValueError("json: doi ':'")
+            v = _jt_parse(s, i + 1)
+            t.keys.append(key)
+            t.items.append(v)
+            i = _jt_skip_ws(s, v.end)
+            if i < n and s[i] == ",":
+                i = i + 1
+                continue
+            if i < n and s[i] == "}":
+                i = i + 1
+                t.end = i
+                more = 0
+            else:
+                raise ValueError("json: doi ',' hoac '}' trong object")
+        return t
+    if c == "[":
+        t = _jt_new(2)
+        i = i + 1
+        i = _jt_skip_ws(s, i)
+        if i < n and s[i] == "]":
+            t.end = i + 1
+            return t
+        more = 1
+        while more == 1:
+            v = _jt_parse(s, i)
+            t.items.append(v)
+            i = _jt_skip_ws(s, v.end)
+            if i < n and s[i] == ",":
+                i = i + 1
+                continue
+            if i < n and s[i] == "]":
+                i = i + 1
+                t.end = i
+                more = 0
+            else:
+                raise ValueError("json: doi ',' hoac ']' trong array")
+        return t
+    if c == "\"":
+        j = i + 1
+        while j < n:
+            if s[j] == "\\":
+                j = j + 2
+                continue
+            if s[j] == "\"":
+                break
+            j = j + 1
+        t = _jt_new(4)
+        t.s = _jt_str_raw(s[i + 1:j])
+        t.end = j + 1
+        return t
+    if i + 4 <= n and s[i:i + 4] == "true":
+        t = _jt_new(5)
+        t.b = 1
+        t.end = i + 4
+        return t
+    if i + 5 <= n and s[i:i + 5] == "false":
+        t = _jt_new(5)
+        t.end = i + 5
+        return t
+    if i + 4 <= n and s[i:i + 4] == "null":
+        t = _jt_new(6)
+        t.end = i + 4
+        return t
+    # number
+    j = i
+    while j < n:
+        cj = s[j]
+        if (cj >= "0" and cj <= "9") or cj == "-" or cj == "+" or cj == "." or cj == "e" or cj == "E":
+            j = j + 1
+        else:
+            break
+    if j == i:
+        raise ValueError("json: ky tu khong hop le '" + c + "'")
+    t = _jt_new(3)
+    t.f = float(s[i:j])
+    t.s = s[i:j]
+    t.end = j
+    return t
+
+
+def _jt_obj_get(o: "_JTok", key: "str") -> "_JTok":
+    # khong tim thay -> token kind 0 (sentinel; tao moi de tranh hang so
+    # module-level goi ham - compiler khong cho phep)
+    for k in range(len(o.keys)):
+        if o.keys[k] == key:
+            return o.items[k]
+    return _jt_new(0)
+
+
+# === SECTION 2: read (orient=records) =========================================
+
+def json_read_string(json_text: "str") -> "DataFrame":
+    root = _jt_parse(json_text, 0)
+    if root.kind != 2:
+        raise ValueError("json_read_string: root phai la JSON array")
+    n_obj = len(root.items)
+    if n_obj == 0:
+        return empty_df()
+    keys = []
+    for oi in range(n_obj):
+        o = root.items[oi]
+        if o.kind != 1:
+            continue
+        for k in range(len(o.keys)):
+            kn = o.keys[k]
+            if kn in keys:
+                continue
+            keys.append(kn)
+    result_cols = []
+    for ki in range(len(keys)):
+        kn = keys[ki]
+        is_bool = 1
+        is_int = 1
+        is_num = 1
+        non_null = 0
+        for oi in range(n_obj):
+            o = root.items[oi]
+            if o.kind != 1:
+                continue
+            val = _jt_obj_get(o, kn)
+            if val.kind == 0 or val.kind == 6:
+                continue  # thieu key hoac null tường minh -> khong anh huong dtype
+            non_null = non_null + 1
+            if val.kind == 5:
+                is_int = 0
+                is_num = 0
+            elif val.kind == 3:
+                is_bool = 0
+                vs = val.s
+                if vs.find(".") >= 0:
+                    is_int = 0
+            elif val.kind == 4:
+                is_bool = 0
+                is_int = 0
+                is_num = 0
+            else:
+                is_bool = 0
+                is_int = 0
+                is_num = 0
+        vm = make_mask(n_obj, 0)
+        if non_null == 0:
+            vals_s0 = []
+            for oi in range(n_obj):
+                vals_s0.append("")
+            out = make_series_str(kn, vals_s0)
+            result_cols.append(out)
+            continue
+        if is_bool == 1:
+            vals_b = []
+            for oi in range(n_obj):
+                o = root.items[oi]
+                val = _jt_obj_get(o, kn)
+                if val.kind == 0 or val.kind != 5:
+                    vals_b.append(0)
+                    continue
+                vals_b.append(val.b)
+                vm.set(oi, 1)
+            c2 = make_col_bool_with_mask(vals_b, vm)
+            out = make_series(kn, c2)
+        elif is_int == 1:
+            vals_i = []
+            for oi in range(n_obj):
+                o = root.items[oi]
+                val = _jt_obj_get(o, kn)
+                if val.kind == 0 or val.kind != 3:
+                    vals_i.append(0)
+                    continue
+                vals_i.append(int(val.f))
+                vm.set(oi, 1)
+            c2 = make_col_i64_with_mask(vals_i, vm)
+            out = make_series(kn, c2)
+        elif is_num == 1:
+            vals_f = []
+            for oi in range(n_obj):
+                o = root.items[oi]
+                val = _jt_obj_get(o, kn)
+                if val.kind == 0 or val.kind != 3:
+                    vals_f.append(0.0)
+                    continue
+                vals_f.append(val.f)
+                vm.set(oi, 1)
+            c2 = make_col_f64_with_mask(vals_f, vm)
+            out = make_series(kn, c2)
+        else:
+            vals_s = []
+            for oi in range(n_obj):
+                o = root.items[oi]
+                val = _jt_obj_get(o, kn)
+                if val.kind == 0 or val.kind != 4:
+                    vals_s.append("")
+                    continue
+                vals_s.append(val.s)
+                vm.set(oi, 1)
+            out = make_series_str_with_mask(kn, vals_s, vm)
+        result_cols.append(out)
+    return make_df(result_cols)
+
+
+def json_read_file(file_path: "str") -> "DataFrame":
+    return json_read_string(read_file(file_path))
+
+
+def json_read_records(json_text: "str", num_cols: "list[str]", time_cols: "list[str]") -> "DataFrame":
+    # read + ep kieu: num_cols -> f64, time_cols -> i64 epoch ms (dt_parse ISO);
+    # cot khong nam trong 2 list: de json_read_string tu chuan hoa.
+    df = json_read_string(json_text)
+    for i in range(len(num_cols)):
+        nm = num_cols[i]
+        if df.has_col(nm) == 0:
+            continue
+        col = df.col_by_name(nm)
+        vals_f2 = []
+        vm = make_mask(df.row_count(), 0)
+        for r in range(df.row_count()):
+            if col.is_null(r) == 1:
+                vals_f2.append(0.0)
+                continue
+            vals_f2.append(col.get_f64(r))
+            vm.set(r, 1)
+        nf = make_series_f64(nm, vals_f2)
+        nf.valid = vm
+        df = df.with_column(nm, nf)
+    for i in range(len(time_cols)):
+        nm = time_cols[i]
+        if df.has_col(nm) == 0:
+            continue
+        col = df.col_by_name(nm)
+        vals_i2 = []
+        vm = make_mask(df.row_count(), 0)
+        for r in range(df.row_count()):
+            if col.is_null(r) == 1:
+                vals_i2.append(0)
+                continue
+            vals_i2.append(dt_parse(col.get_string(r)))
+            vm.set(r, 1)
+        ni = make_series_i64(nm, vals_i2)
+        ni.valid = vm
+        df = df.with_column(nm, ni)
+    return df
+
+
+# === SECTION 3: write (orient=records) ========================================
+
+def _jw_quote(s: "str") -> "str":
+    out = "\""
+    for i in range(len(s)):
+        c = s[i]
+        if c == "\"":
+            out = out + "\\\""
+        elif c == "\\":
+            out = out + "\\\\"
+        elif c == "\n":
+            out = out + "\\n"
+        elif c == "\t":
+            out = out + "\\t"
+        elif c == "\r":
+            out = out + "\\r"
+        else:
+            out = out + c
+    return out + "\""
+
+
+def json_write_string(df: "DataFrame") -> "str":
+    n = df.row_count()
+    names = df.column_names()
+    out = "["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + "{"
+        for c in range(len(names)):
+            nm = names[c]
+            col = df.col_by_name(nm)
+            if c > 0:
+                out = out + ","
+            if col.is_null(r) == 1:
+                out = out + _jw_quote(nm) + ":null"
+            elif col.dtype == DT_STR:
+                out = out + _jw_quote(nm) + ":" + _jw_quote(col.get_string(r))
+            elif col.dtype == DT_I64:
+                out = out + _jw_quote(nm) + ":" + str(col.get_i64(r))
+            elif col.dtype == DT_BOOL:
+                if col.get_bool(r) == 1:
+                    out = out + _jw_quote(nm) + ":true"
+                else:
+                    out = out + _jw_quote(nm) + ":false"
+            else:
+                fv = col.get_f64(r)
+                out = out + _jw_quote(nm) + ":" + str(fv)
+        out = out + "}"
+    return out + "]"
+
+
+def json_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    write_file(file_path, json_write_string(df))
+    return 0
+
+
+# === SECTION 4: JSONL (moi dong 1 object) =====================================
+
+def jsonl_read_string(text: "str") -> "DataFrame":
+    # tach tung dong co '{' dau (bo space dau dong), noi bang ',' thanh array
+    arr = "["
+    i = 0
+    n = len(text)
+    first = 1
+    while i < n:
+        # bo space/trang
+        while i < n:
+            c = text[i]
+            if c == " " or c == "\t" or c == "\n" or c == "\r":
+                i = i + 1
+            else:
+                break
+        if i >= n:
+            break
+        if text[i] != "{":
+            # bo qua den cuoi dong
+            while i < n and text[i] != "\n":
+                i = i + 1
+            continue
+        j = i
+        depth = 0
+        instr = 0
+        while j < n:
+            cj = text[j]
+            if instr == 1:
+                if cj == "\\":
+                    j = j + 2
+                    continue
+                if cj == "\"":
+                    instr = 0
+            else:
+                if cj == "\"":
+                    instr = 1
+                elif cj == "{":
+                    depth = depth + 1
+                elif cj == "}":
+                    depth = depth - 1
+                    if depth == 0:
+                        break
+            j = j + 1
+        if j >= n:
+            break
+        seg = text[i:j + 1]
+        if first == 0:
+            arr = arr + ","
+        arr = arr + seg
+        first = 0
+        i = j + 1
+    arr = arr + "]"
+    if first == 1:
+        return empty_df()
+    return json_read_string(arr)
+
+
+def jsonl_read_file(file_path: "str") -> "DataFrame":
+    return jsonl_read_string(read_file(file_path))
+
+
+# === SECTION 5: JSON object don (1 dong) ======================================
+
+def json_read_object(json_text: "str") -> "DataFrame":
+    root = _jt_parse(json_text, 0)
+    if root.kind != 1:
+        raise ValueError("json_read_object: root phai la JSON object")
+    arr = "[" + json_text + "]"
+    return json_read_string(arr)
+
+
+
+
 # tokenvector_io.tkv - port tu C# TokenVector.Data/IO
 
 Q = "\""

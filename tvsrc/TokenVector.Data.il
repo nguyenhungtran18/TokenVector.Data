@@ -29,7 +29,7 @@
   .method public hidebysig newslot virtual instance int32 'equals_field'(class Field 'other') cil managed
   {
     .maxstack 10
-    .locals init (string '__hoist96', string 'n1', string '__hoist97', string 'n2', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (string '__hoist110', string 'n1', string '__hoist111', string 'n2', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld string Field::'name'
     stloc.s 0
@@ -248,7 +248,7 @@
   .method public hidebysig newslot virtual instance int32 'get'(int32 'i') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp1861309389360', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp2262423989248', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -287,7 +287,7 @@
   .method public hidebysig newslot virtual instance void 'set'(int32 'i', int32 'v') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp1861287155312', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp2262450341824', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -563,7 +563,7 @@
   .method public hidebysig newslot virtual instance class Mask 'mask_and'(class Mask 'other') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp1861309387520', int32 '__strtmp1861285779696', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist98', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist99', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp2262450347344', int32 '__strtmp2262424908912', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist112', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist113', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -650,7 +650,7 @@
   .method public hidebysig newslot virtual instance class Mask 'mask_or'(class Mask 'other') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp1861307719472', int32 '__strtmp1861309602512', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist100', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist101', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp2262402163840', int32 '__strtmp2262450353024', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist114', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist115', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -737,7 +737,7 @@
   .method public hidebysig newslot virtual instance class Mask 'mask_not'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist102', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist103', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist116', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist117', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -792,7 +792,7 @@
   .method public hidebysig newslot virtual instance class Mask 'mask_xor'(class Mask 'other') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp1861309395360', int32 '__strtmp1861285779456', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist104', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist105', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', int32 '__strtmp2262424288400', int32 '__strtmp2262424033280', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist118', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist119', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -882,7 +882,7 @@
   .method public hidebysig newslot virtual instance class Mask 'slice_mask'(int32 'offset', int32 'length') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist106', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist120', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -949,7 +949,7 @@
   .method public hidebysig newslot virtual instance class Mask 'clone_mask'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist107', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bits', class Mask 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist121', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
     stloc.s 0
@@ -1251,7 +1251,7 @@
   .method public hidebysig newslot virtual instance class Col 'slice_col'(int32 'offset', int32 'length') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', int32 'n', class Mask 'vm', class Col 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist108', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist109', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist110', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', int32 'n', class Mask 'vm', class Col 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist122', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist123', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist124', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Col::'f64s'
     stloc.s 0
@@ -1374,7 +1374,7 @@
   .method public hidebysig newslot virtual instance class Col 'take'(class [mscorlib]System.Collections.Generic.List`1<int32> 'indices') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', int32 'cnt', class Mask 'vm', class Col 'r', int32 'i', int32 'src', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist111', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist112', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist113', class Mask 'rv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', int32 'cnt', class Mask 'vm', class Col 'r', int32 'i', int32 'src', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist125', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist126', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist127', class Mask 'rv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Col::'f64s'
     stloc.s 0
@@ -1491,7 +1491,7 @@
   .method public hidebysig newslot virtual instance class Col 'clone_col'() cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class Mask 'vm', class Col 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist114', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist115', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist116', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class Mask 'vm', class Col 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist128', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist129', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist130', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Col::'f64s'
     stloc.s 0
@@ -1580,7 +1580,7 @@
   .method public hidebysig newslot virtual instance class StrCol 'to_string_col'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> 'strings', int32 'n', int32 'i', int64 '__strtmp1861309388000', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> 'strings', int32 'n', int32 'i', int64 '__strtmp2262424285840', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Col::'f64s'
     stloc.s 0
@@ -1757,7 +1757,7 @@
   .method public hidebysig newslot virtual instance class StrCol 'slice_str'(int32 'offset', int32 'length') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'n', class Mask 'vm', class StrCol 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist117', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'n', class Mask 'vm', class StrCol 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist131', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<string> StrCol::'strings'
     stloc.s 0
@@ -1829,7 +1829,7 @@
   .method public hidebysig newslot virtual instance class StrCol 'take'(class [mscorlib]System.Collections.Generic.List`1<int32> 'indices') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'cnt', class Mask 'vm', class StrCol 'r', int32 'i', int32 'src', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist118', class Mask 'rv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'cnt', class Mask 'vm', class StrCol 'r', int32 'i', int32 'src', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist132', class Mask 'rv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<string> StrCol::'strings'
     stloc.s 0
@@ -1887,7 +1887,7 @@
   .method public hidebysig newslot virtual instance class StrCol 'clone_str'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class Mask 'vm', class StrCol 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist119', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class Mask 'vm', class StrCol 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist133', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<string> StrCol::'strings'
     stloc.s 0
@@ -2117,7 +2117,7 @@
   .method public hidebysig newslot virtual instance string 'get_string'(int32 'i') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int64 '__strtmp1861309606272', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int64 '__strtmp2262402162560', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Series::'f64s'
     stloc.s 0
@@ -2241,7 +2241,7 @@
   .method public hidebysig newslot virtual instance class Series 'slice_series'(int32 'offset', int32 'ln') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'n', class Mask 'vm', class Series 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist120', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist121', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist122', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist123', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', int32 'n', class Mask 'vm', class Series 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist134', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist135', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist136', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist137', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Series::'f64s'
     stloc.s 0
@@ -2599,7 +2599,7 @@
   .method public hidebysig newslot virtual instance class Series 'clone_series'() cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class Mask 'vm', class Series 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist124', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist125', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist126', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist127', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class Mask 'vm', class Series 'r', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist138', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist139', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist140', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist141', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Series::'f64s'
     stloc.s 0
@@ -2979,7 +2979,7 @@
   .method public hidebysig newslot virtual instance void '_copy_value_from'(class Series 'src', int32 'src_i', int32 'dst_i') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist128', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist129', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist130', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist131', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__self_f64s', class [mscorlib]System.Collections.Generic.List`1<int64> '__self_i64s', class [mscorlib]System.Collections.Generic.List`1<int32> '__self_bools', class [mscorlib]System.Collections.Generic.List`1<string> '__self_strings', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist142', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist143', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist144', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist145', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Series::'f64s'
     stloc.s 0
@@ -3479,7 +3479,7 @@
   .method public hidebysig newslot virtual instance class Series 'str_map_upper'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist132', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist146', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
     stloc.s 0
     ldarg.s 0
@@ -3536,7 +3536,7 @@
   .method public hidebysig newslot virtual instance class Series 'str_map_lower'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist133', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist147', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
     stloc.s 0
     ldarg.s 0
@@ -3593,7 +3593,7 @@
   .method public hidebysig newslot virtual instance class Series 'str_map_replace'(string 'old', string 'new') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist134', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', int32 'n', int32 'i', string 'sv', class Series 'r', class Mask '__hoist148', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
     stloc.s 0
     ldarg.s 0
@@ -6136,7 +6136,7 @@
   .method public hidebysig newslot virtual instance class Series 'flatten_ca'() cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<class Col> '__self_chunks_num', class [mscorlib]System.Collections.Generic.List`1<class StrCol> '__self_chunks_str', class StrCol 'cs0', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', int32 'j', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist135', class Col 'cn0', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist136', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist137', class [mscorlib]System.Collections.Generic.List`1<string> 'all_strings', int32 'i', class StrCol 'cstr', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist138', class [mscorlib]System.Collections.Generic.List`1<int64> 'all_i', class Col 'cnum', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist139', class [mscorlib]System.Collections.Generic.List`1<float64> 'all_v', class Col 'cnum2', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist140', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class Col> '__self_chunks_num', class [mscorlib]System.Collections.Generic.List`1<class StrCol> '__self_chunks_str', class StrCol 'cs0', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', int32 'j', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist149', class Col 'cn0', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist150', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist151', class [mscorlib]System.Collections.Generic.List`1<string> 'all_strings', int32 'i', class StrCol 'cstr', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist152', class [mscorlib]System.Collections.Generic.List`1<int64> 'all_i', class Col 'cnum', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist153', class [mscorlib]System.Collections.Generic.List`1<float64> 'all_v', class Col 'cnum2', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist154', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<class Col> ChunkedArray::'chunks_num'
     stloc.s 0
@@ -6508,6 +6508,66 @@
     ldarg.0
     ldarg.s 2
     stfld int32 PairItem::'idx'
+    ret
+  }
+}
+.class public auto ansi _QTok extends [mscorlib]System.Object
+{
+  .field public string 'tok'
+  .field public string 'kind'
+  .field public int32 'nxt'
+  .method public hidebysig specialname rtspecialname instance void .ctor(string 'tok', string 'kind', int32 'nxt') cil managed
+  {
+    .maxstack 8
+    ldarg.0
+    call instance void [mscorlib]System.Object::.ctor()
+    ldarg.0
+    ldarg.s 1
+    stfld string _QTok::'tok'
+    ldarg.0
+    ldarg.s 2
+    stfld string _QTok::'kind'
+    ldarg.0
+    ldarg.s 3
+    stfld int32 _QTok::'nxt'
+    ret
+  }
+}
+.class public auto ansi _JTok extends [mscorlib]System.Object
+{
+  .field public int32 'kind'
+  .field public float64 'f'
+  .field public int32 'b'
+  .field public string 's'
+  .field public int32 'end'
+  .field public class [mscorlib]System.Collections.Generic.List`1<class _JTok> 'items'
+  .field public class [mscorlib]System.Collections.Generic.List`1<string> 'keys'
+  .method public hidebysig specialname rtspecialname instance void .ctor(int32 'kind', float64 'f', int32 'b', string 's', int32 'end') cil managed
+  {
+    .maxstack 8
+    ldarg.0
+    call instance void [mscorlib]System.Object::.ctor()
+    ldarg.0
+    ldarg.s 1
+    stfld int32 _JTok::'kind'
+    ldarg.0
+    ldarg.s 2
+    stfld float64 _JTok::'f'
+    ldarg.0
+    ldarg.s 3
+    stfld int32 _JTok::'b'
+    ldarg.0
+    ldarg.s 4
+    stfld string _JTok::'s'
+    ldarg.0
+    ldarg.s 5
+    stfld int32 _JTok::'end'
+    ldarg.0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class _JTok>::.ctor()
+    stfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    ldarg.0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
     ret
   }
 }
@@ -9040,7 +9100,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class _VcItem> '_ms_vc'(class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'items') cil managed
   {
     .maxstack 10
-    .locals init (int32 'n', int32 'mid', int32 '__idiv1861309142320_a', int32 '__idiv1861309142320_b', int32 '__idiv1861309142320_q', int32 '__idiv1861309142320_r', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'left', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'ls', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'rs', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'mid', int32 '__idiv2262450078640_a', int32 '__idiv2262450078640_b', int32 '__idiv2262450078640_q', int32 '__idiv2262450078640_r', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'left', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'ls', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'rs', class [mscorlib]System.Collections.Generic.List`1<class _VcItem> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class _VcItem>::get_Count()
     stloc.s 0
@@ -9397,7 +9457,7 @@
   .method public static int32 'str_startswith'(string 's', string 'prefix') cil managed
   {
     .maxstack 11
-    .locals init (int32 'lp', int32 '__slice1861309087424_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'lp', int32 '__slice2262450027984_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     callvirt instance int32 [mscorlib]System.String::get_Length()
     stloc.s 0
@@ -9436,7 +9496,7 @@
   .method public static int32 'str_endswith'(string 's', string 'suffix') cil managed
   {
     .maxstack 11
-    .locals init (int32 'ls', int32 'n', int32 '__slice1861309140960_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'ls', int32 'n', int32 '__slice2262450080720_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     callvirt instance int32 [mscorlib]System.String::get_Length()
     stloc.s 0
@@ -9547,7 +9607,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class RowKey> '_ms_rows'(class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'items', int32 'ascending') cil managed
   {
     .maxstack 10
-    .locals init (int32 'n', int32 'mid', int32 '__idiv1861309084864_a', int32 '__idiv1861309084864_b', int32 '__idiv1861309084864_q', int32 '__idiv1861309084864_r', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', class RowKey 'a', class RowKey 'b', valuetype TkvInt 'take_left', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'mid', int32 '__idiv2262450027344_a', int32 '__idiv2262450027344_b', int32 '__idiv2262450027344_q', int32 '__idiv2262450027344_r', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKey> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', class RowKey 'a', class RowKey 'b', valuetype TkvInt 'take_left', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class RowKey>::get_Count()
     stloc.s 0
@@ -12860,7 +12920,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class RowKey2> '_ms_sk2'(class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'items', class [mscorlib]System.Collections.Generic.List`1<int32> 'asc', int32 'nk') cil managed
   {
     .maxstack 12
-    .locals init (int32 'n', int32 'mid', int32 '__idiv1861307978256_a', int32 '__idiv1861307978256_b', int32 '__idiv1861307978256_q', int32 '__idiv1861307978256_r', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'mid', int32 '__idiv2262424796944_a', int32 '__idiv2262424796944_b', int32 '__idiv2262424796944_q', int32 '__idiv2262424796944_r', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKey2> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class RowKey2>::get_Count()
     stloc.s 0
@@ -13301,7 +13361,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> '_ms_rks'(class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'items', int32 'ascending') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', int32 'mid', int32 '__idiv1861307988656_a', int32 '__idiv1861307988656_b', int32 '__idiv1861307988656_q', int32 '__idiv1861307988656_r', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'mid', int32 '__idiv2262424765840_a', int32 '__idiv2262424765840_b', int32 '__idiv2262424765840_q', int32 '__idiv2262424765840_r', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'left', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'ls', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'rs', class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class RowKeyStr>::get_Count()
     stloc.s 0
@@ -15551,7 +15611,7 @@
   .method public static float64 '_compute_agg'(class Series 'series', class [mscorlib]System.Collections.Generic.List`1<int32> 'row_indices', int32 'agg_type') cil managed
   {
     .maxstack 11
-    .locals init (int32 'cnt', class Mask 'svalid', class [mscorlib]System.Collections.Generic.List`1<int32> 'sb', int32 'dt', valuetype TkvInt 'non_null', int32 'i', int32 'r', class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt> 'seen', valuetype TkvInt 'nu_cnt', string 'k', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> 'sv', int32 'm', int32 '__idiv1861309086704_a', int32 '__idiv1861309086704_b', int32 '__idiv1861309086704_q', int32 '__idiv1861309086704_r', int32 '__idiv1861309141600_a', int32 '__idiv1861309141600_b', int32 '__idiv1861309141600_q', int32 '__idiv1861309141600_r', int32 '__idiv1861309141840_a', int32 '__idiv1861309141840_b', int32 '__idiv1861309141840_q', int32 '__idiv1861309141840_r', int32 '__idiv1861309137200_a', int32 '__idiv1861309137200_b', int32 '__idiv1861309137200_q', int32 '__idiv1861309137200_r', int32 'has_nulls', class [mscorlib]System.Collections.Generic.List`1<float64> 'buf', int32 'r0', int32 'rl', float64 'smin', float64 'v', float64 'smax', valuetype TkvInt 'wcnt', float64 'fcnt', float64 'wmean', float64 'wm2', float64 'x', float64 'd', float64 'dd', float64 'total', valuetype TkvInt 'vcnt', float64 'fvcnt', float64 'fv', float64 'lv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'cnt', class Mask 'svalid', class [mscorlib]System.Collections.Generic.List`1<int32> 'sb', int32 'dt', valuetype TkvInt 'non_null', int32 'i', int32 'r', class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt> 'seen', valuetype TkvInt 'nu_cnt', string 'k', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> 'sv', int32 'm', int32 '__idiv2262450015664_a', int32 '__idiv2262450015664_b', int32 '__idiv2262450015664_q', int32 '__idiv2262450015664_r', int32 '__idiv2262423994288_a', int32 '__idiv2262423994288_b', int32 '__idiv2262423994288_q', int32 '__idiv2262423994288_r', int32 '__idiv2262423994208_a', int32 '__idiv2262423994208_b', int32 '__idiv2262423994208_q', int32 '__idiv2262423994208_r', int32 '__idiv2262450016304_a', int32 '__idiv2262450016304_b', int32 '__idiv2262450016304_q', int32 '__idiv2262450016304_r', int32 'has_nulls', class [mscorlib]System.Collections.Generic.List`1<float64> 'buf', int32 'r0', int32 'rl', float64 'smin', float64 'v', float64 'smax', valuetype TkvInt 'wcnt', float64 'fcnt', float64 'wmean', float64 'wm2', float64 'x', float64 'd', float64 'dd', float64 'total', valuetype TkvInt 'vcnt', float64 'fvcnt', float64 'fv', float64 'lv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Count()
     stloc.s 0
@@ -18198,7 +18258,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class _TsItem> '_ms_ts'(class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'items') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', int32 'mid', int32 '__idiv1861309083264_a', int32 '__idiv1861309083264_b', int32 '__idiv1861309083264_q', int32 '__idiv1861309083264_r', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'left', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'ls', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'rs', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'mid', int32 '__idiv2262424011056_a', int32 '__idiv2262424011056_b', int32 '__idiv2262424011056_q', int32 '__idiv2262424011056_r', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'left', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'right', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'ls', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'rs', class [mscorlib]System.Collections.Generic.List`1<class _TsItem> 'out', valuetype TkvInt 'li', valuetype TkvInt 'ri', int32 'nl', int32 'nr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class _TsItem>::get_Count()
     stloc.s 0
@@ -18556,7 +18616,7 @@
   .method public static int32 '_asof_best_at'(class [mscorlib]System.Collections.Generic.List`1<float64> 'sorted_times', int32 'lo', int32 'hi', float64 'lt', int32 'direction', float64 'tolerance', class [mscorlib]System.Collections.Generic.List`1<int32> 'right_rows') cil managed
   {
     .maxstack 10
-    .locals init (int32 'lo1', int32 'hi1', valuetype TkvInt 'ans', int32 'mid', int32 '__idiv1861309082304_a', int32 '__idiv1861309082304_b', int32 '__idiv1861309082304_q', int32 '__idiv1861309082304_r', int32 'r', float64 'rt', int32 'lo2', int32 'hi2', valuetype TkvInt 'ans2', int32 '__idiv1861309080464_a', int32 '__idiv1861309080464_b', int32 '__idiv1861309080464_q', int32 '__idiv1861309080464_r', int32 'lo3', int32 'hi3', valuetype TkvInt 'up', int32 '__idiv1861309611632_a', int32 '__idiv1861309611632_b', int32 '__idiv1861309611632_q', int32 '__idiv1861309611632_r', valuetype TkvInt 'best_k', float64 'best_diff', valuetype TkvInt 'dn', float64 'dd', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'lo1', int32 'hi1', valuetype TkvInt 'ans', int32 'mid', int32 '__idiv2262450080880_a', int32 '__idiv2262450080880_b', int32 '__idiv2262450080880_q', int32 '__idiv2262450080880_r', int32 'r', float64 'rt', int32 'lo2', int32 'hi2', valuetype TkvInt 'ans2', int32 '__idiv2262450020784_a', int32 '__idiv2262450020784_b', int32 '__idiv2262450020784_q', int32 '__idiv2262450020784_r', int32 'lo3', int32 'hi3', valuetype TkvInt 'up', int32 '__idiv2262403643200_a', int32 '__idiv2262403643200_b', int32 '__idiv2262403643200_q', int32 '__idiv2262403643200_r', valuetype TkvInt 'best_k', float64 'best_diff', valuetype TkvInt 'dn', float64 'dd', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 4
     ldc.i4 1
     ceq
@@ -22382,7 +22442,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<string> '_explode_parse_json_strs'(string 'cell') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', string 't', string 'inner', int32 '__slice1861307986816_start', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', int32 'p', string 'seg', string 'q', int32 '__slice1861308117328_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'out', string 't', string 'inner', int32 '__slice2262450020944_start', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', int32 'p', string 'seg', string 'q', int32 '__slice2262450022944_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
     stloc.s 0
     ldarg.s 0
@@ -23216,7 +23276,7 @@
   .method public static class Col 'vec_add'(class Col 'a', class Col 'b') cil managed
   {
     .maxstack 11
-    .locals init (int32 '__strtmp1861308115728', int32 '__strtmp1861308120448', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist31', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist32', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist33', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist34', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 '__strtmp2262424764720', int32 '__strtmp2262424796944', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist31', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist32', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist33', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist34', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 Col::'length'()
     ldarg.s 1
@@ -23510,7 +23570,7 @@
   .method public static class Col 'vec_sub'(class Col 'a', class Col 'b') cil managed
   {
     .maxstack 11
-    .locals init (int32 '__strtmp1861309080144', int32 '__strtmp1861309604912', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist35', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist36', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist37', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist38', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 '__strtmp2262450027824', int32 '__strtmp2262423993968', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist35', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist36', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist37', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist38', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 Col::'length'()
     ldarg.s 1
@@ -23804,7 +23864,7 @@
   .method public static class Col 'vec_mul'(class Col 'a', class Col 'b') cil managed
   {
     .maxstack 11
-    .locals init (int32 '__strtmp1861309138560', int32 '__strtmp1861309085184', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist39', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist40', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist41', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist42', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 '__strtmp2262424764720', int32 '__strtmp2262424797024', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<int64> 'ai', class [mscorlib]System.Collections.Generic.List`1<int64> 'bi', class [mscorlib]System.Collections.Generic.List`1<int64> 'ri', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist39', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist40', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist41', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist42', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 Col::'length'()
     ldarg.s 1
@@ -24098,7 +24158,7 @@
   .method public static class Col 'vec_div'(class Col 'a', class Col 'b') cil managed
   {
     .maxstack 11
-    .locals init (int32 '__strtmp1861309087504', int32 '__strtmp1861309137840', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist43', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist44', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 '__strtmp2262424787824', int32 '__strtmp2262424765280', int32 'n', class Col 'r', class Mask 'av', class Mask 'bv', class [mscorlib]System.Collections.Generic.List`1<float64> 'af', class [mscorlib]System.Collections.Generic.List`1<float64> 'bf', class [mscorlib]System.Collections.Generic.List`1<float64> 'rf', int32 'i', class Mask 'mk', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist43', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist44', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 Col::'length'()
     ldarg.s 1
@@ -28296,7 +28356,7 @@
   .method public static float64 'agg_min'(class Col 'c') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> '__agg1861276012800_src', int32 '__agg1861276012800_idx', float64 '__agg1861276012800_res', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> '__agg2262403298432_src', int32 '__agg2262403298432_idx', float64 '__agg2262403298432_res', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     call class [mscorlib]System.Collections.Generic.List`1<float64> TKVApp::'_col_valid_f64s'(class Col)
     stloc.s 0
@@ -28345,7 +28405,7 @@
   .method public static float64 'agg_max'(class Col 'c') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> '__agg1861308505216_src', int32 '__agg1861308505216_idx', float64 '__agg1861308505216_res', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<float64> '__agg2262403295040_src', int32 '__agg2262403295040_idx', float64 '__agg2262403295040_res', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     call class [mscorlib]System.Collections.Generic.List`1<float64> TKVApp::'_col_valid_f64s'(class Col)
     stloc.s 0
@@ -34924,7 +34984,7 @@
   .method public static string '_str_strip_one_side'(string 't', int32 'left', int32 'right') cil managed
   {
     .maxstack 11
-    .locals init (valuetype TkvInt 'a', int32 'b', string 'ch', int32 '__slice1861308117168_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (valuetype TkvInt 'a', int32 'b', string 'ch', int32 '__slice2262403478000_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldc.i8 0
     call valuetype TkvInt TkvInt::FromI64(int64)
     stloc.s 0
@@ -35144,7 +35204,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<string> '_str_split_once'(string 't', string 'sep') cil managed
   {
     .maxstack 11
-    .locals init (int32 'idx', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', class [mscorlib]System.Collections.Generic.List`1<string> 'parts2', int32 '__slice1861309083344_start', int32 '__slice1861307978416_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'idx', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', class [mscorlib]System.Collections.Generic.List`1<string> 'parts2', int32 '__slice2262403479200_start', int32 '__slice2262403476000_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     ldstr ""
     call bool [mscorlib]System.String::Equals(string, string)
@@ -35608,7 +35668,7 @@
   .method public static class Series 'series_str_slice'(class Series 's', int32 'start', int32 'stop') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', string 't', int32 'ln', int32 'a', int32 'b', int32 '__slice1861308117488_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', string 't', int32 'ln', int32 'a', int32 'b', int32 '__slice2262403477440_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Series::'dtype'
     ldc.i4 12
@@ -35992,7 +36052,7 @@
   .method public static class Series 'series_str_pad'(class Series 's', int32 'width', string 'side', string 'fill') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', string 't', int32 'ln', int32 'k', string 'pads', int32 'j', class [mscorlib]System.Text.StringBuilder '__sb_pads', int32 'half', int32 '__idiv1861308116128_a', int32 '__idiv1861308116128_b', int32 '__idiv1861308116128_q', int32 '__idiv1861308116128_r', int32 '__slice1861307978656_start', int32 '__slice1861307975856_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', string 't', int32 'ln', int32 'k', string 'pads', int32 'j', class [mscorlib]System.Text.StringBuilder '__sb_pads', int32 'half', int32 '__idiv2262424021936_a', int32 '__idiv2262424021936_b', int32 '__idiv2262424021936_q', int32 '__idiv2262424021936_r', int32 '__slice2262424789984_start', int32 '__slice2262424764720_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Series::'dtype'
     ldc.i4 12
@@ -36270,7 +36330,7 @@
   .method public static string '_str_cap_one'(string 't') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', int32 '__slice1861308117408_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 '__slice2262424024976_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 [mscorlib]System.String::get_Length()
     stloc.s 0
@@ -36436,7 +36496,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<string> '_str_rsplit_once'(string 't', string 'sep') cil managed
   {
     .maxstack 11
-    .locals init (int32 'idx', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', class [mscorlib]System.Collections.Generic.List`1<string> 'parts2', int32 '__slice1861307975536_start', int32 '__slice1861308109648_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'idx', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', class [mscorlib]System.Collections.Generic.List`1<string> 'parts2', int32 '__slice2262424769280_start', int32 '__slice2262424022096_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     ldstr ""
     call bool [mscorlib]System.String::Equals(string, string)
@@ -37221,7 +37281,7 @@
   .method public static string 're_find'(string 'pattern', string 't') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa1861305851712_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa1861305851712_result', int32 '__refa1861305851712_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa2262405992384_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa2262405992384_result', int32 '__refa2262405992384_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     ldarg.s 0
     call class [System]System.Text.RegularExpressions.MatchCollection [System]System.Text.RegularExpressions.Regex::Matches(string, string)
@@ -37265,7 +37325,7 @@
   .method public static int32 're_count'(string 'pattern', string 't') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa1861318459200_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa1861318459200_result', int32 '__refa1861318459200_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa2262406128896_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa2262406128896_result', int32 '__refa2262406128896_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     ldarg.s 0
     call class [System]System.Text.RegularExpressions.MatchCollection [System]System.Text.RegularExpressions.Regex::Matches(string, string)
@@ -37300,7 +37360,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<string> 're_find_all'(string 'pattern', string 't') cil managed
   {
     .maxstack 10
-    .locals init (class [System]System.Text.RegularExpressions.MatchCollection '__refa1861318335360_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa1861318335360_result', int32 '__refa1861318335360_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [System]System.Text.RegularExpressions.MatchCollection '__refa2262406119872_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa2262406119872_result', int32 '__refa2262406119872_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 1
     ldarg.s 0
     call class [System]System.Text.RegularExpressions.MatchCollection [System]System.Text.RegularExpressions.Regex::Matches(string, string)
@@ -37332,7 +37392,7 @@
   .method public static class Series 'series_str_extract'(class Series 's', string 'pattern') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa1861308509376_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa1861308509376_result', int32 '__refa1861308509376_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', class Mask 'mk', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'ms', class [System]System.Text.RegularExpressions.MatchCollection '__refa2262456224960_mc', class [mscorlib]System.Collections.Generic.List`1<string> '__refa2262456224960_result', int32 '__refa2262456224960_i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Series::'dtype'
     ldc.i4 12
@@ -37698,7 +37758,7 @@
   .method public static int32 '_dt_is_leap'(int32 'y') cil managed
   {
     .maxstack 8
-    .locals init (int32 '__idiv1861309082864_a', int32 '__idiv1861309082864_b', int32 '__idiv1861309082864_q', int32 '__idiv1861309082864_r', int32 '__idiv1861309600832_a', int32 '__idiv1861309600832_b', int32 '__idiv1861309600832_q', int32 '__idiv1861309600832_r', int32 '__idiv1861308115888_a', int32 '__idiv1861308115888_b', int32 '__idiv1861308115888_q', int32 '__idiv1861308115888_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 '__idiv2262403480000_a', int32 '__idiv2262403480000_b', int32 '__idiv2262403480000_q', int32 '__idiv2262403480000_r', int32 '__idiv2262403492224_a', int32 '__idiv2262403492224_b', int32 '__idiv2262403492224_q', int32 '__idiv2262403492224_r', int32 '__idiv2262403478560_a', int32 '__idiv2262403478560_b', int32 '__idiv2262403478560_q', int32 '__idiv2262403478560_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 0
     ldc.i4 4
@@ -37828,7 +37888,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<int32> '_dt_civil_from_days'(int64 'z') cil managed
   {
     .maxstack 10
-    .locals init (int64 'n', int64 'era', int64 '__idiv1861307978816_a', int64 '__idiv1861307978816_b', int64 '__idiv1861307978816_q', int64 '__idiv1861307978816_r', int64 'doe', int64 'yoe', int64 '__idiv1861307863088_a', int64 '__idiv1861307863088_b', int64 '__idiv1861307863088_q', int64 '__idiv1861307863088_r', int64 '__idiv1861287156272_a', int64 '__idiv1861287156272_b', int64 '__idiv1861287156272_q', int64 '__idiv1861287156272_r', int64 '__idiv1861287179936_a', int64 '__idiv1861287179936_b', int64 '__idiv1861287179936_q', int64 '__idiv1861287179936_r', int64 '__idiv1861287179696_a', int64 '__idiv1861287179696_b', int64 '__idiv1861287179696_q', int64 '__idiv1861287179696_r', int64 'yy', int64 'doy', int64 '__idiv1861309610592_a', int64 '__idiv1861309610592_b', int64 '__idiv1861309610592_q', int64 '__idiv1861309610592_r', int64 '__idiv1861309081264_a', int64 '__idiv1861309081264_b', int64 '__idiv1861309081264_q', int64 '__idiv1861309081264_r', int64 'mp', int64 '__idiv1861307863488_a', int64 '__idiv1861307863488_b', int64 '__idiv1861307863488_q', int64 '__idiv1861307863488_r', int64 'dd', int64 '__idiv1861308117968_a', int64 '__idiv1861308117968_b', int64 '__idiv1861308117968_q', int64 '__idiv1861308117968_r', int64 'mm', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'n', int64 'era', int64 '__idiv2262403478480_a', int64 '__idiv2262403478480_b', int64 '__idiv2262403478480_q', int64 '__idiv2262403478480_r', int64 'doe', int64 'yoe', int64 '__idiv2262403480400_a', int64 '__idiv2262403480400_b', int64 '__idiv2262403480400_q', int64 '__idiv2262403480400_r', int64 '__idiv2262403480160_a', int64 '__idiv2262403480160_b', int64 '__idiv2262403480160_q', int64 '__idiv2262403480160_r', int64 '__idiv2262450025104_a', int64 '__idiv2262450025104_b', int64 '__idiv2262450025104_q', int64 '__idiv2262450025104_r', int64 '__idiv2262403479760_a', int64 '__idiv2262403479760_b', int64 '__idiv2262403479760_q', int64 '__idiv2262403479760_r', int64 'yy', int64 'doy', int64 '__idiv2262403479520_a', int64 '__idiv2262403479520_b', int64 '__idiv2262403479520_q', int64 '__idiv2262403479520_r', int64 '__idiv2262403478800_a', int64 '__idiv2262403478800_b', int64 '__idiv2262403478800_q', int64 '__idiv2262403478800_r', int64 'mp', int64 '__idiv2262403476720_a', int64 '__idiv2262403476720_b', int64 '__idiv2262403476720_q', int64 '__idiv2262403476720_r', int64 'dd', int64 '__idiv2262450080880_a', int64 '__idiv2262450080880_b', int64 '__idiv2262450080880_q', int64 '__idiv2262450080880_r', int64 'mm', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldc.i8 719468
     add.ovf
@@ -38160,7 +38220,7 @@
   .method public static int64 '_dt_days_from_civil'(int32 'y', int32 'm', int32 'd') cil managed
   {
     .maxstack 8
-    .locals init (int32 'yy', int32 'era', int32 '__idiv1861307981456_a', int32 '__idiv1861307981456_b', int32 '__idiv1861307981456_q', int32 '__idiv1861307981456_r', int32 'yoe', int32 'mp', int32 'doy', int32 '__idiv1861307981376_a', int32 '__idiv1861307981376_b', int32 '__idiv1861307981376_q', int32 '__idiv1861307981376_r', int32 'doe', int32 '__idiv1861308117808_a', int32 '__idiv1861308117808_b', int32 '__idiv1861308117808_q', int32 '__idiv1861308117808_r', int32 '__idiv1861308117408_a', int32 '__idiv1861308117408_b', int32 '__idiv1861308117408_q', int32 '__idiv1861308117408_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'yy', int32 'era', int32 '__idiv2262424022336_a', int32 '__idiv2262424022336_b', int32 '__idiv2262424022336_q', int32 '__idiv2262424022336_r', int32 'yoe', int32 'mp', int32 'doy', int32 '__idiv2262403642480_a', int32 '__idiv2262403642480_b', int32 '__idiv2262403642480_q', int32 '__idiv2262403642480_r', int32 'doe', int32 '__idiv2262450026704_a', int32 '__idiv2262450026704_b', int32 '__idiv2262450026704_q', int32 '__idiv2262450026704_r', int32 '__idiv2262403643120_a', int32 '__idiv2262403643120_b', int32 '__idiv2262403643120_q', int32 '__idiv2262403643120_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 0
     ldarg.s 1
@@ -38340,7 +38400,7 @@
   .method public static int64 'dt_parse'(string 's') cil managed
   {
     .maxstack 11
-    .locals init (string 't', int32 'ln', int32 'yy', int32 '__slice1861307979056_start', int32 'mm', int32 '__slice1861308106048_start', int32 'dd', int32 '__slice1861307975616_start', valuetype TkvInt 'hh', valuetype TkvInt 'mi', valuetype TkvInt 'ss', valuetype TkvInt 'ms', valuetype TkvInt 'off_ms', valuetype TkvInt 'i', int32 '__slice1861308112608_start', int32 '__slice1861309079744_start', int32 '__slice1861309080944_start', valuetype TkvInt 'j', string 'frac', int32 '__slice1861309080144_start', int32 'fl', int32 '__slice1861309081824_start', string 'c', valuetype TkvInt 'sgn', int32 'oh', int32 '__slice1861308115728_start', valuetype TkvInt 'om', int32 '__slice1861308113648_start', int64 'days', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (string 't', int32 'ln', int32 'yy', int32 '__slice2262450020944_start', int32 'mm', int32 '__slice2262424792784_start', int32 'dd', int32 '__slice2262450021184_start', valuetype TkvInt 'hh', valuetype TkvInt 'mi', valuetype TkvInt 'ss', valuetype TkvInt 'ms', valuetype TkvInt 'off_ms', valuetype TkvInt 'i', int32 '__slice2262450018064_start', int32 '__slice2262403643520_start', int32 '__slice2262403643200_start', valuetype TkvInt 'j', string 'frac', int32 '__slice2262403643840_start', int32 'fl', int32 '__slice2262403644000_start', string 'c', valuetype TkvInt 'sgn', int32 'oh', int32 '__slice2262424769200_start', valuetype TkvInt 'om', int32 '__slice2262424796544_start', int64 'days', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance string [mscorlib]System.String::Trim()
     stloc.s 0
@@ -40203,7 +40263,7 @@
   .method public static string 'dt_format'(int64 'ms', string 'fmt') cil managed
   {
     .maxstack 10
-    .locals init (int64 'day0', int64 '__idiv1861308110448_a', int64 '__idiv1861308110448_b', int64 '__idiv1861308110448_q', int64 '__idiv1861308110448_r', int64 'rem', class [mscorlib]System.Collections.Generic.List`1<int32> 'ymd', int32 'yy', int32 'mm', int32 'dd', int64 'hh', int64 '__idiv1861309138400_a', int64 '__idiv1861309138400_b', int64 '__idiv1861309138400_q', int64 '__idiv1861309138400_r', int64 'rem2', int64 'mi', int64 '__idiv1861309137600_a', int64 '__idiv1861309137600_b', int64 '__idiv1861309137600_q', int64 '__idiv1861309137600_r', int64 'rem3', int64 'ss', int64 '__idiv1861309140960_a', int64 '__idiv1861309140960_b', int64 '__idiv1861309140960_q', int64 '__idiv1861309140960_r', int64 'msss', string 'out', valuetype TkvInt 'k', int32 'ln', string 'ch', string 'code', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'day0', int64 '__idiv2262424793104_a', int64 '__idiv2262424793104_b', int64 '__idiv2262424793104_q', int64 '__idiv2262424793104_r', int64 'rem', class [mscorlib]System.Collections.Generic.List`1<int32> 'ymd', int32 'yy', int32 'mm', int32 'dd', int64 'hh', int64 '__idiv2262456457936_a', int64 '__idiv2262456457936_b', int64 '__idiv2262456457936_q', int64 '__idiv2262456457936_r', int64 'rem2', int64 'mi', int64 '__idiv2262456458096_a', int64 '__idiv2262456458096_b', int64 '__idiv2262456458096_q', int64 '__idiv2262456458096_r', int64 'rem3', int64 'ss', int64 '__idiv2262456458336_a', int64 '__idiv2262456458336_b', int64 '__idiv2262456458336_q', int64 '__idiv2262456458336_r', int64 'msss', string 'out', valuetype TkvInt 'k', int32 'ln', string 'ch', string 'code', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -40782,7 +40842,7 @@
   .method public static int32 'dt_year'(int64 'ms') cil managed
   {
     .maxstack 10
-    .locals init (int64 '__idiv1861307988576_a', int64 '__idiv1861307988576_b', int64 '__idiv1861307988576_q', int64 '__idiv1861307988576_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 '__idiv2262450022384_a', int64 '__idiv2262450022384_b', int64 '__idiv2262450022384_q', int64 '__idiv2262450022384_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 0
     ldc.i8 86400000
@@ -40817,7 +40877,7 @@
   .method public static int32 'dt_month'(int64 'ms') cil managed
   {
     .maxstack 10
-    .locals init (int64 '__idiv1861307988656_a', int64 '__idiv1861307988656_b', int64 '__idiv1861307988656_q', int64 '__idiv1861307988656_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 '__idiv2262450022944_a', int64 '__idiv2262450022944_b', int64 '__idiv2262450022944_q', int64 '__idiv2262450022944_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 0
     ldc.i8 86400000
@@ -40852,7 +40912,7 @@
   .method public static int32 'dt_day'(int64 'ms') cil managed
   {
     .maxstack 10
-    .locals init (int64 '__idiv1861309610912_a', int64 '__idiv1861309610912_b', int64 '__idiv1861309610912_q', int64 '__idiv1861309610912_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 '__idiv2262424771680_a', int64 '__idiv2262424771680_b', int64 '__idiv2262424771680_q', int64 '__idiv2262424771680_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 0
     ldc.i8 86400000
@@ -40887,7 +40947,7 @@
   .method public static int32 'dt_hour'(int64 'ms') cil managed
   {
     .maxstack 8
-    .locals init (int64 'rem', int64 '__idiv1861309138160_a', int64 '__idiv1861309138160_b', int64 '__idiv1861309138160_q', int64 '__idiv1861309138160_r', int64 '__idiv1861309144960_a', int64 '__idiv1861309144960_b', int64 '__idiv1861309144960_q', int64 '__idiv1861309144960_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'rem', int64 '__idiv2262450018064_a', int64 '__idiv2262450018064_b', int64 '__idiv2262450018064_q', int64 '__idiv2262450018064_r', int64 '__idiv2262450026544_a', int64 '__idiv2262450026544_b', int64 '__idiv2262450026544_q', int64 '__idiv2262450026544_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -40955,7 +41015,7 @@
   .method public static int32 'dt_minute'(int64 'ms') cil managed
   {
     .maxstack 8
-    .locals init (int64 'rem', int64 '__idiv1861309145120_a', int64 '__idiv1861309145120_b', int64 '__idiv1861309145120_q', int64 '__idiv1861309145120_r', int64 '__idiv1861305961344_a', int64 '__idiv1861305961344_b', int64 '__idiv1861305961344_q', int64 '__idiv1861305961344_r', int64 '__idiv1861309145280_a', int64 '__idiv1861309145280_b', int64 '__idiv1861309145280_q', int64 '__idiv1861309145280_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'rem', int64 '__idiv2262403643520_a', int64 '__idiv2262403643520_b', int64 '__idiv2262403643520_q', int64 '__idiv2262403643520_r', int64 '__idiv2262403643200_a', int64 '__idiv2262403643200_b', int64 '__idiv2262403643200_q', int64 '__idiv2262403643200_r', int64 '__idiv2262403644240_a', int64 '__idiv2262403644240_b', int64 '__idiv2262403644240_q', int64 '__idiv2262403644240_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -41048,7 +41108,7 @@
   .method public static int32 'dt_second'(int64 'ms') cil managed
   {
     .maxstack 8
-    .locals init (int64 'rem', int64 '__idiv1861305962064_a', int64 '__idiv1861305962064_b', int64 '__idiv1861305962064_q', int64 '__idiv1861305962064_r', int64 '__idiv1861305962384_a', int64 '__idiv1861305962384_b', int64 '__idiv1861305962384_q', int64 '__idiv1861305962384_r', int64 '__idiv1861305962304_a', int64 '__idiv1861305962304_b', int64 '__idiv1861305962304_q', int64 '__idiv1861305962304_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'rem', int64 '__idiv2262403642640_a', int64 '__idiv2262403642640_b', int64 '__idiv2262403642640_q', int64 '__idiv2262403642640_r', int64 '__idiv2262403642320_a', int64 '__idiv2262403642320_b', int64 '__idiv2262403642320_q', int64 '__idiv2262403642320_r', int64 '__idiv2262403644160_a', int64 '__idiv2262403644160_b', int64 '__idiv2262403644160_q', int64 '__idiv2262403644160_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -41141,7 +41201,7 @@
   .method public static int32 'dt_millisecond'(int64 'ms') cil managed
   {
     .maxstack 8
-    .locals init (int64 'rem', int64 '__idiv1861305961264_a', int64 '__idiv1861305961264_b', int64 '__idiv1861305961264_q', int64 '__idiv1861305961264_r', int64 '__idiv1861305963264_a', int64 '__idiv1861305963264_b', int64 '__idiv1861305963264_q', int64 '__idiv1861305963264_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'rem', int64 '__idiv2262450020784_a', int64 '__idiv2262450020784_b', int64 '__idiv2262450020784_q', int64 '__idiv2262450020784_r', int64 '__idiv2262450024944_a', int64 '__idiv2262450024944_b', int64 '__idiv2262450024944_q', int64 '__idiv2262450024944_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -41209,7 +41269,7 @@
   .method public static int32 'dt_weekday'(int64 'ms') cil managed
   {
     .maxstack 8
-    .locals init (int64 'day0', int64 '__idiv1861305963824_a', int64 '__idiv1861305963824_b', int64 '__idiv1861305963824_q', int64 '__idiv1861305963824_r', int64 'wd', int64 '__idiv1861305964144_a', int64 '__idiv1861305964144_b', int64 '__idiv1861305964144_q', int64 '__idiv1861305964144_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'day0', int64 '__idiv2262403643840_a', int64 '__idiv2262403643840_b', int64 '__idiv2262403643840_q', int64 '__idiv2262403643840_r', int64 'wd', int64 '__idiv2262424793424_a', int64 '__idiv2262424793424_b', int64 '__idiv2262424793424_q', int64 '__idiv2262424793424_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     stloc.s 1
     ldc.i8 86400000
@@ -41356,7 +41416,7 @@
   .method public static int64 'dt_diff_days'(int64 'a', int64 'b') cil managed
   {
     .maxstack 8
-    .locals init (int64 '__idiv1861305961264_a', int64 '__idiv1861305961264_b', int64 '__idiv1861305961264_q', int64 '__idiv1861305961264_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 '__idiv2262403643360_a', int64 '__idiv2262403643360_b', int64 '__idiv2262403643360_q', int64 '__idiv2262403643360_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldarg.s 1
     sub.ovf
@@ -41390,7 +41450,7 @@
   .method public static class Series 'dt_range'(string 'start', int32 'periods', string 'freq') cil managed
   {
     .maxstack 11
-    .locals init (int64 'ms0', int32 'nu', valuetype TkvInt 'num', string 'unit', valuetype TkvInt 'j', int32 '__slice1861309145280_start', int32 '__slice1861309138160_start', class [mscorlib]System.Collections.Generic.List`1<int64> 'vals', int32 'cur_y', int32 'cur_m', int32 'cur_d', int64 'tod', int64 '__idiv1861307989376_a', int64 '__idiv1861307989376_b', int64 '__idiv1861307989376_q', int64 '__idiv1861307989376_r', int64 'cur', int32 'i', int32 'dmax', int32 'd_eff', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int64 'ms0', int32 'nu', valuetype TkvInt 'num', string 'unit', valuetype TkvInt 'j', int32 '__slice2262424765920_start', int32 '__slice2262424796624_start', class [mscorlib]System.Collections.Generic.List`1<int64> 'vals', int32 'cur_y', int32 'cur_m', int32 'cur_d', int64 'tod', int64 '__idiv2262424796464_a', int64 '__idiv2262424796464_b', int64 '__idiv2262424796464_q', int64 '__idiv2262424796464_r', int64 'cur', int32 'i', int32 'dmax', int32 'd_eff', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     call int64 TKVApp::'dt_parse'(string)
     stloc.s 0
@@ -41999,7 +42059,7 @@
   .method public static class DataFrame 'resample'(class DataFrame 'df', string 'ts_col', string 'val_col', string 'freq', int32 'agg_type') cil managed
   {
     .maxstack 11
-    .locals init (class Series 'tc', class Series 'vc', int32 'n', int64 't0', int32 'i', int64 'v', int32 'y', int32 'm', int32 'd', int32 'h', string 'unit', valuetype TkvInt 'num', int32 '__slice1861287180256_start', int64 'b0', int64 'day0', int64 '__idiv1861309141520_a', int64 '__idiv1861309141520_b', int64 '__idiv1861309141520_q', int64 '__idiv1861309141520_r', int64 '__idiv1861309141280_a', int64 '__idiv1861309141280_b', int64 '__idiv1861309141280_q', int64 '__idiv1861309141280_r', class [mscorlib]System.Collections.Generic.List`1<int64> 'out_t', class [mscorlib]System.Collections.Generic.List`1<float64> 'out_v', int32 'cy', int32 'cm', int32 '__idiv1861307975936_a', int32 '__idiv1861307975936_b', int32 '__idiv1861307975936_q', int32 '__idiv1861307975936_r', valuetype TkvInt 'cap', int32 'ny', int32 'nm2', int64 'bend', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', int64 'tv', valuetype TkvInt 'step', int64 'total', int64 '__idiv1861309600672_a', int64 '__idiv1861309600672_b', int64 '__idiv1861309600672_q', int64 '__idiv1861309600672_r', class [mscorlib]System.Collections.Generic.List`1<float64> 'sums', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'cnts', class [mscorlib]System.Collections.Generic.List`1<float64> 'fmin', class [mscorlib]System.Collections.Generic.List`1<float64> 'fmax', int64 'b', int64 '__idiv1861309080304_a', int64 '__idiv1861309080304_b', int64 '__idiv1861309080304_q', int64 '__idiv1861309080304_r', float64 'x', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class Series 'tc', class Series 'vc', int32 'n', int64 't0', int32 'i', int64 'v', int32 'y', int32 'm', int32 'd', int32 'h', string 'unit', valuetype TkvInt 'num', int32 '__slice2262450018144_start', int64 'b0', int64 'day0', int64 '__idiv2262403479200_a', int64 '__idiv2262403479200_b', int64 '__idiv2262403479200_q', int64 '__idiv2262403479200_r', int64 '__idiv2262450020464_a', int64 '__idiv2262450020464_b', int64 '__idiv2262450020464_q', int64 '__idiv2262450020464_r', class [mscorlib]System.Collections.Generic.List`1<int64> 'out_t', class [mscorlib]System.Collections.Generic.List`1<float64> 'out_v', int32 'cy', int32 'cm', int32 '__idiv2262403479600_a', int32 '__idiv2262403479600_b', int32 '__idiv2262403479600_q', int32 '__idiv2262403479600_r', valuetype TkvInt 'cap', int32 'ny', int32 'nm2', int64 'bend', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', int64 'tv', valuetype TkvInt 'step', int64 'total', int64 '__idiv2262403476640_a', int64 '__idiv2262403476640_b', int64 '__idiv2262403476640_q', int64 '__idiv2262403476640_r', class [mscorlib]System.Collections.Generic.List`1<float64> 'sums', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'cnts', class [mscorlib]System.Collections.Generic.List`1<float64> 'fmin', class [mscorlib]System.Collections.Generic.List`1<float64> 'fmax', int64 'b', int64 '__idiv2262403479680_a', int64 '__idiv2262403479680_b', int64 '__idiv2262403479680_q', int64 '__idiv2262403479680_r', float64 'x', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldarg.s 1
     callvirt instance class Series DataFrame::'col_by_name'(string)
@@ -43621,6 +43681,9172 @@
     call class Series TKVApp::'make_series_i64_with_mask'(string, class [mscorlib]System.Collections.Generic.List`1<int64>, class Mask)
     ret
   }
+  .method public static string '_str_slice_replace_one'(string 't', int32 'start', int32 'stop', string 'repl') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'a', int32 'b', int32 '__slice2262424023376_start', int32 '__slice2262450019264_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    stloc.s 0
+    ldloc.s 0
+    ldc.i4 0
+    clt
+    brfalse _str_slice_replace_one_If1_else
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 0
+    add.ovf
+    stloc.s 0
+  _str_slice_replace_one_If1_else:
+    ldloc.s 0
+    ldc.i4 0
+    clt
+    brfalse _str_slice_replace_one_If2_else
+    ldc.i4 0
+    stloc.s 0
+  _str_slice_replace_one_If2_else:
+    ldloc.s 0
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    cgt
+    brfalse _str_slice_replace_one_If3_else
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 0
+  _str_slice_replace_one_If3_else:
+    ldarg.s 2
+    stloc.s 1
+    ldloc.s 1
+    ldc.i4 0
+    clt
+    brfalse _str_slice_replace_one_If4_else
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 1
+    add.ovf
+    stloc.s 1
+  _str_slice_replace_one_If4_else:
+    ldloc.s 1
+    ldloc.s 0
+    clt
+    brfalse _str_slice_replace_one_If5_else
+    ldloc.s 0
+    stloc.s 1
+  _str_slice_replace_one_If5_else:
+    ldloc.s 1
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    cgt
+    brfalse _str_slice_replace_one_If6_else
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 1
+  _str_slice_replace_one_If6_else:
+    ldc.i4 0
+    stloc.s 2
+    ldarg.s 0
+    ldloc.s 2
+    ldloc.s 0
+    ldloc.s 2
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldarg.s 3
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 1
+    stloc.s 3
+    ldarg.s 0
+    ldloc.s 3
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 3
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    call string [mscorlib]System.String::Concat(string, string)
+    ret
+  }
+  .method public static class Series 'series_str_slice_replace'(class Series 's', int32 'start', int32 'stop', string 'repl') cil managed
+  {
+    .maxstack 12
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', int32 'i', class Series 'r', class Mask 'sm', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse series_str_slice_replace_If1_else
+    ldstr "series_str_slice_replace: cot khong phai str"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  series_str_slice_replace_If1_else:
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    ldc.i4.0
+    stloc.s 2
+  series_str_slice_replace_L2_start:
+    ldloc.s 2
+    ldloc.s 0
+    bge series_str_slice_replace_L2_end
+    ldarg.s 0
+    ldloc.s 2
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_str_slice_replace_If3_else
+    ldloc.s 1
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br series_str_slice_replace_If3_end
+  series_str_slice_replace_If3_else:
+    ldloc.s 1
+    ldarg.s 0
+    ldloc.s 2
+    callvirt instance string Series::'get_string'(int32)
+    ldarg.s 1
+    ldarg.s 2
+    ldarg.s 3
+    call string TKVApp::'_str_slice_replace_one'(string, int32, int32, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  series_str_slice_replace_If3_end:
+  series_str_slice_replace_L2_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br series_str_slice_replace_L2_start
+  series_str_slice_replace_L2_end:
+    ldarg.s 0
+    ldfld string Series::'name'
+    ldloc.s 1
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 3
+    ldarg.s 0
+    ldfld class Mask Series::'valid'
+    stloc.s 4
+    ldloc.s 3
+    ldloc.s 4
+    callvirt instance class Mask Mask::'clone_mask'()
+    stfld class Mask Series::'valid'
+    ldloc.s 3
+    ret
+  }
+  .method public static class Series 'series_str_fullmatch'(class Series 's', string 'pattern') cil managed
+  {
+    .maxstack 11
+    .locals init (string 'full', int32 'n', class [mscorlib]System.Collections.Generic.List`1<int32> 'vals', class Mask 'mk', int32 'i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse series_str_fullmatch_If1_else
+    ldstr "series_str_fullmatch: cot khong phai str"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  series_str_fullmatch_If1_else:
+    ldstr "^("
+    ldarg.s 1
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ")$"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 0
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 1
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 2
+    ldloc.s 1
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 3
+    ldc.i4.0
+    stloc.s 4
+  series_str_fullmatch_L2_start:
+    ldloc.s 4
+    ldloc.s 1
+    bge series_str_fullmatch_L2_end
+    ldarg.s 0
+    ldloc.s 4
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_str_fullmatch_If3_else
+    ldloc.s 2
+    ldc.i4 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    br series_str_fullmatch_L2_cont
+  series_str_fullmatch_If3_else:
+    ldloc.s 2
+    ldarg.s 0
+    ldloc.s 4
+    callvirt instance string Series::'get_string'(int32)
+    ldloc.s 0
+    call bool [System]System.Text.RegularExpressions.Regex::IsMatch(string, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 3
+    ldloc.s 4
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  series_str_fullmatch_L2_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br series_str_fullmatch_L2_start
+  series_str_fullmatch_L2_end:
+    ldarg.s 0
+    ldfld string Series::'name'
+    ldstr "_fullmatch"
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 2
+    ldloc.s 3
+    call class Series TKVApp::'make_series_bool_with_mask'(string, class [mscorlib]System.Collections.Generic.List`1<int32>, class Mask)
+    ret
+  }
+  .method public static class DataFrame 'series_str_extractall'(class Series 's', string 'pattern', string 'name') cil managed
+  {
+    .maxstack 11
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<int64> 'src', class [mscorlib]System.Collections.Generic.List`1<string> 'mts', int32 'n', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'ms', int32 'j', class Series 'r', class Mask 'rmk', class Mask 'svalid', class [mscorlib]System.Collections.Generic.List`1<int32> 'sbits', class DataFrame 'out', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse series_str_extractall_If1_else
+    ldstr "series_str_extractall: cot khong phai str"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  series_str_extractall_If1_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  series_str_extractall_L2_start:
+    ldloc.s 3
+    ldloc.s 2
+    bge series_str_extractall_L2_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_str_extractall_If3_else
+    br series_str_extractall_L2_cont
+  series_str_extractall_If3_else:
+    ldarg.s 1
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    call class [mscorlib]System.Collections.Generic.List`1<string> TKVApp::'re_find_all'(string, string)
+    stloc.s 4
+    ldc.i4.0
+    stloc.s 5
+  series_str_extractall_L4_start:
+    ldloc.s 5
+    ldloc.s 4
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge series_str_extractall_L4_end
+    ldloc.s 0
+    ldloc.s 3
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    ldloc.s 1
+    ldloc.s 4
+    ldloc.s 5
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  series_str_extractall_L4_cont:
+    ldloc.s 5
+    ldc.i4 1
+    add
+    stloc.s 5
+    br series_str_extractall_L4_start
+  series_str_extractall_L4_end:
+  series_str_extractall_L2_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_str_extractall_L2_start
+  series_str_extractall_L2_end:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse series_str_extractall_If5_else
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    dup
+    ldstr "match"
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    dup
+    ldarg.s 2
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    ret
+  series_str_extractall_If5_else:
+    ldarg.s 2
+    ldloc.s 1
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 6
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 7
+    ldarg.s 0
+    ldfld class Mask Series::'valid'
+    stloc.s 8
+    ldloc.s 8
+    ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
+    stloc.s 9
+    ldc.i4.0
+    stloc.s 3
+  series_str_extractall_L6_start:
+    ldloc.s 3
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge series_str_extractall_L6_end
+    ldloc.s 9
+    ldloc.s 0
+    ldloc.s 3
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int64>::get_Item(int32)
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_str_extractall_If7_else
+    ldloc.s 7
+    ldloc.s 3
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  series_str_extractall_If7_else:
+  series_str_extractall_L6_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_str_extractall_L6_start
+  series_str_extractall_L6_end:
+    ldloc.s 6
+    ldloc.s 7
+    stfld class Mask Series::'valid'
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    dup
+    ldstr "match"
+    ldloc.s 0
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    dup
+    ldloc.s 6
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    stloc.s 10
+    ldloc.s 10
+    ret
+  }
+  .method public static class Series 'series_str_cat'(class Series 's', string 'sep', class Series 'other') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'vals', int32 'i', class Series 'r', class Mask 'a0', class Mask 'a', class Mask 'b', class [mscorlib]System.Collections.Generic.List`1<int32> 'bb', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    ldc.i4.0
+    ceq
+    dup
+    brtrue series_str_cat_sc2_end
+    pop
+    ldarg.s 2
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    ldc.i4.0
+    ceq
+  series_str_cat_sc2_end:
+    brfalse series_str_cat_If1_else
+    ldstr "series_str_cat: cot khong phai str"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  series_str_cat_If1_else:
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    ldarg.s 2
+    callvirt instance int32 Series::'length'()
+    ldloc.s 0
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse series_str_cat_If3_else
+    ldstr "series_str_cat: hai cot khac do dai"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  series_str_cat_If3_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    ldc.i4.0
+    stloc.s 2
+  series_str_cat_L4_start:
+    ldloc.s 2
+    ldloc.s 0
+    bge series_str_cat_L4_end
+    ldarg.s 0
+    ldloc.s 2
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    dup
+    brtrue series_str_cat_sc6_end
+    pop
+    ldarg.s 2
+    ldloc.s 2
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+  series_str_cat_sc6_end:
+    brfalse series_str_cat_If5_else
+    ldloc.s 1
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br series_str_cat_If5_end
+  series_str_cat_If5_else:
+    ldloc.s 1
+    ldarg.s 0
+    ldloc.s 2
+    callvirt instance string Series::'get_string'(int32)
+    ldarg.s 1
+    call string [mscorlib]System.String::Concat(string, string)
+    ldarg.s 2
+    ldloc.s 2
+    callvirt instance string Series::'get_string'(int32)
+    call string [mscorlib]System.String::Concat(string, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  series_str_cat_If5_end:
+  series_str_cat_L4_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br series_str_cat_L4_start
+  series_str_cat_L4_end:
+    ldarg.s 0
+    ldfld string Series::'name'
+    ldloc.s 1
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 3
+    ldarg.s 0
+    ldfld class Mask Series::'valid'
+    stloc.s 4
+    ldloc.s 4
+    callvirt instance class Mask Mask::'clone_mask'()
+    stloc.s 5
+    ldarg.s 2
+    ldfld class Mask Series::'valid'
+    stloc.s 6
+    ldloc.s 6
+    ldfld class [mscorlib]System.Collections.Generic.List`1<int32> Mask::'bits'
+    stloc.s 7
+    ldc.i4.0
+    stloc.s 2
+  series_str_cat_L7_start:
+    ldloc.s 2
+    ldloc.s 0
+    bge series_str_cat_L7_end
+    ldloc.s 7
+    ldloc.s 2
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    ldc.i4 0
+    ceq
+    brfalse series_str_cat_If8_else
+    ldloc.s 5
+    ldloc.s 2
+    ldc.i4 0
+    callvirt instance void Mask::'set'(int32, int32)
+  series_str_cat_If8_else:
+  series_str_cat_L7_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br series_str_cat_L7_start
+  series_str_cat_L7_end:
+    ldloc.s 3
+    ldloc.s 5
+    stfld class Mask Series::'valid'
+    ldloc.s 3
+    ret
+  }
+  .method public static class Series 'series_factorize'(class Series 's') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'umap', class [mscorlib]System.Collections.Generic.List`1<int64> 'codes', int32 'i', string 'k', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::.ctor()
+    stloc.s 1
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  series_factorize_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge series_factorize_L1_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_factorize_If2_else
+    ldloc.s 2
+    ldc.i8 1
+    neg
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br series_factorize_L1_cont
+  series_factorize_If2_else:
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 4
+    ldloc.s 1
+    ldloc.s 4
+    callvirt instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::ContainsKey(!0)
+    brfalse series_factorize_If3_else
+    ldloc.s 2
+    ldloc.s 1
+    ldloc.s 4
+    callvirt instance !1 class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::get_Item(!0)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br series_factorize_If3_end
+  series_factorize_If3_else:
+    ldloc.s 1
+    ldloc.s 4
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::get_Count()
+    callvirt instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::set_Item(!0, !1)
+    ldloc.s 2
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::get_Count()
+    ldc.i8 1
+    sub.ovf
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+  series_factorize_If3_end:
+  series_factorize_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_factorize_L1_start
+  series_factorize_L1_end:
+    ldstr "codes"
+    ldloc.s 2
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    ret
+  }
+  .method public static class Series 'series_factorize_uniques'(class Series 's') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'uniques', class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'umap', int32 'i', string 'k', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::.ctor()
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  series_factorize_uniques_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge series_factorize_uniques_L1_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_factorize_uniques_If2_else
+    br series_factorize_uniques_L1_cont
+  series_factorize_uniques_If2_else:
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 4
+    ldloc.s 2
+    ldloc.s 4
+    callvirt instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::ContainsKey(!0)
+    brfalse series_factorize_uniques_If3_else
+    br series_factorize_uniques_L1_cont
+  series_factorize_uniques_If3_else:
+    ldloc.s 2
+    ldloc.s 4
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    callvirt instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::set_Item(!0, !1)
+    ldloc.s 1
+    ldloc.s 4
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  series_factorize_uniques_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_factorize_uniques_L1_start
+  series_factorize_uniques_L1_end:
+    ldstr "uniques"
+    ldloc.s 1
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    ret
+  }
+  .method public static class Series 'series_category_codes'(class Series 's') cil managed
+  {
+    .maxstack 9
+    .locals init (class Series 'codes', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call class Series TKVApp::'series_factorize'(class Series)
+    stloc.s 0
+    ldloc.s 0
+    ret
+  }
+  .method public static float64 'series_first'(class Series 's') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', int32 'i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    ldc.i4.0
+    stloc.s 1
+  series_first_L1_start:
+    ldloc.s 1
+    ldloc.s 0
+    bge series_first_L1_end
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 0
+    ceq
+    brfalse series_first_If2_else
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance float64 Series::'get_f64'(int32)
+    ret
+  series_first_If2_else:
+  series_first_L1_cont:
+    ldloc.s 1
+    ldc.i4 1
+    add
+    stloc.s 1
+    br series_first_L1_start
+  series_first_L1_end:
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  }
+  .method public static float64 'series_last'(class Series 's') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', int32 'i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    ldloc.s 0
+    ldc.i4 1
+    sub.ovf
+    stloc.s 1
+  series_last_W1_start:
+    ldloc.s 1
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse series_last_W1_end
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 0
+    ceq
+    brfalse series_last_If2_else
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance float64 Series::'get_f64'(int32)
+    ret
+  series_last_If2_else:
+    ldloc.s 1
+    ldc.i4 1
+    sub.ovf
+    stloc.s 1
+    br series_last_W1_start
+  series_last_W1_end:
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  }
+  .method public static float64 'series_nth'(class Series 's', int32 'n_th') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', int32 'k', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    ldarg.s 1
+    stloc.s 1
+    ldloc.s 1
+    ldc.i4 0
+    clt
+    brfalse series_nth_If1_else
+    ldloc.s 0
+    ldloc.s 1
+    add.ovf
+    stloc.s 1
+  series_nth_If1_else:
+    ldloc.s 1
+    ldc.i4 0
+    clt
+    dup
+    brtrue series_nth_sc3_end
+    pop
+    ldloc.s 1
+    ldloc.s 0
+    clt
+    ldc.i4.0
+    ceq
+  series_nth_sc3_end:
+    brfalse series_nth_If2_else
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  series_nth_If2_else:
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse series_nth_If4_else
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  series_nth_If4_else:
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance float64 Series::'get_f64'(int32)
+    ret
+  }
+  .method public static float64 'series_mad'(class Series 's') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', float64 'total', valuetype TkvInt 'cnt', int32 'i', float64 'mu', float64 'ad', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 0
+    ldc.r8 0.0
+    stloc.s 1
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  series_mad_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge series_mad_L1_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 0
+    ceq
+    brfalse series_mad_If2_else
+    ldloc.s 1
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance float64 Series::'get_f64'(int32)
+    add
+    stloc.s 1
+    ldloc.s 2
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue series_mad_int3_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue series_mad_int3_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt series_mad_int3_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br series_mad_int3_done
+  series_mad_int3_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  series_mad_int3_done:
+    stloc.s 2
+  series_mad_If2_else:
+  series_mad_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_mad_L1_start
+  series_mad_L1_end:
+    ldloc.s 2
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse series_mad_If4_else
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  series_mad_If4_else:
+    ldloc.s 1
+    ldloc.s 2
+    call float64 TkvInt::ToF64(valuetype TkvInt)
+    div
+    stloc.s 4
+    ldc.r8 0.0
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 3
+  series_mad_L5_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge series_mad_L5_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 0
+    ceq
+    brfalse series_mad_If6_else
+    ldloc.s 5
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance float64 Series::'get_f64'(int32)
+    ldloc.s 4
+    sub
+    call float64 [mscorlib]System.Math::Abs(float64)
+    add
+    stloc.s 5
+  series_mad_If6_else:
+  series_mad_L5_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br series_mad_L5_start
+  series_mad_L5_end:
+    ldloc.s 5
+    ldloc.s 2
+    call float64 TkvInt::ToF64(valuetype TkvInt)
+    div
+    ret
+  }
+  .method public static class DataFrame 'groupby_first'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', string 'value_column') cil managed
+  {
+    .maxstack 11
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class AggExpr> 'exprs', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class AggExpr>::.ctor()
+    stloc.s 0
+    ldloc.s 0
+    ldarg.s 2
+    ldc.i4 7
+    ldarg.s 2
+    call class AggExpr TKVApp::'make_agg'(string, int32, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class AggExpr>::Add(!0)
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    call class DataFrame TKVApp::'groupby_agg'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<string>, class [mscorlib]System.Collections.Generic.List`1<class AggExpr>)
+    ret
+  }
+  .method public static class DataFrame 'groupby_last'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', string 'value_column') cil managed
+  {
+    .maxstack 11
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class AggExpr> 'exprs', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class AggExpr>::.ctor()
+    stloc.s 0
+    ldloc.s 0
+    ldarg.s 2
+    ldc.i4 8
+    ldarg.s 2
+    call class AggExpr TKVApp::'make_agg'(string, int32, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class AggExpr>::Add(!0)
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    call class DataFrame TKVApp::'groupby_agg'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<string>, class [mscorlib]System.Collections.Generic.List`1<class AggExpr>)
+    ret
+  }
+  .method public static int32 '_pd_group_ids'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'kmap', class [mscorlib]System.Collections.Generic.List`1<int32> 'row_group') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', int32 'nk', valuetype TkvInt 'gcount', int32 'i', string 'key', int32 'k', int32 'gg', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    stloc.s 1
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  _pd_group_ids_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge _pd_group_ids_L1_end
+    ldarg.s 0
+    ldarg.s 1
+    ldc.i4 0
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 4
+    ldc.i4 1
+    stloc.s 5
+  _pd_group_ids_L2_start:
+    ldloc.s 5
+    ldloc.s 1
+    bge _pd_group_ids_L2_end
+    ldloc.s 4
+    ldstr ""
+    call string [mscorlib]System.String::Concat(string, string)
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 5
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 4
+  _pd_group_ids_L2_cont:
+    ldloc.s 5
+    ldc.i4 1
+    add
+    stloc.s 5
+    br _pd_group_ids_L2_start
+  _pd_group_ids_L2_end:
+    ldarg.s 2
+    ldloc.s 4
+    callvirt instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::ContainsKey(!0)
+    brfalse _pd_group_ids_dget3_miss
+    ldarg.s 2
+    ldloc.s 4
+    callvirt instance !1 class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::get_Item(!0)
+    br _pd_group_ids_dget3_end
+  _pd_group_ids_dget3_miss:
+    ldc.i4 0
+    ldc.i4 1
+    sub.ovf
+  _pd_group_ids_dget3_end:
+    stloc.s 6
+    ldloc.s 6
+    ldc.i4 0
+    clt
+    brfalse _pd_group_ids_If4_else
+    ldarg.s 2
+    ldloc.s 4
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::set_Item(!0, !1)
+    ldarg.s 3
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 2
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    stloc.s 7
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _pd_group_ids_int5_slow
+    ldloca.s 8
+    ldfld object TkvInt::big
+    brtrue _pd_group_ids_int5_slow
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 10
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    and
+    ldc.i8 0
+    blt _pd_group_ids_int5_slow
+    ldloca.s 9
+    ldloc.s 10
+    stfld int64 TkvInt::lo
+    ldloca.s 9
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 9
+    br _pd_group_ids_int5_done
+  _pd_group_ids_int5_slow:
+    ldloc.s 7
+    ldloc.s 8
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_group_ids_int5_done:
+    stloc.s 2
+    br _pd_group_ids_If4_end
+  _pd_group_ids_If4_else:
+    ldarg.s 3
+    ldloc.s 6
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+  _pd_group_ids_If4_end:
+  _pd_group_ids_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br _pd_group_ids_L1_start
+  _pd_group_ids_L1_end:
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    ret
+  }
+  .method public static int32 '_pd_group_flat'(class [mscorlib]System.Collections.Generic.List`1<int32> 'row_group', int32 'gcount', class [mscorlib]System.Collections.Generic.List`1<int32> 'flat', class [mscorlib]System.Collections.Generic.List`1<int32> 'starts') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'sizes', int32 'g', int32 'i', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'pos', valuetype TkvInt 'total', valuetype TkvInt 'p', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Count()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 1
+    ldc.i4.0
+    stloc.s 2
+  _pd_group_flat_L1_start:
+    ldloc.s 2
+    ldarg.s 1
+    bge _pd_group_flat_L1_end
+    ldloc.s 1
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+  _pd_group_flat_L1_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br _pd_group_flat_L1_start
+  _pd_group_flat_L1_end:
+    ldc.i4.0
+    stloc.s 3
+  _pd_group_flat_L2_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge _pd_group_flat_L2_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 2
+    ldloc.s 1
+    ldloc.s 2
+    ldloc.s 1
+    ldloc.s 2
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    stloc.s 7
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int3_slow
+    ldloca.s 8
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int3_slow
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 10
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    and
+    ldc.i8 0
+    blt _pd_group_flat_int3_slow
+    ldloca.s 9
+    ldloc.s 10
+    stfld int64 TkvInt::lo
+    ldloca.s 9
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 9
+    br _pd_group_flat_int3_done
+  _pd_group_flat_int3_slow:
+    ldloc.s 7
+    ldloc.s 8
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_group_flat_int3_done:
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::set_Item(int32, !0)
+  _pd_group_flat_L2_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br _pd_group_flat_L2_start
+  _pd_group_flat_L2_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 4
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 2
+  _pd_group_flat_L4_start:
+    ldloc.s 2
+    ldarg.s 1
+    bge _pd_group_flat_L4_end
+    ldloc.s 4
+    ldloc.s 5
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldarg.s 3
+    ldloc.s 5
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 5
+    ldloc.s 1
+    ldloc.s 2
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 8
+    stloc.s 7
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int5_slow
+    ldloca.s 8
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int5_slow
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 10
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    and
+    ldc.i8 0
+    blt _pd_group_flat_int5_slow
+    ldloca.s 9
+    ldloc.s 10
+    stfld int64 TkvInt::lo
+    ldloca.s 9
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 9
+    br _pd_group_flat_int5_done
+  _pd_group_flat_int5_slow:
+    ldloc.s 7
+    ldloc.s 8
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_group_flat_int5_done:
+    stloc.s 5
+  _pd_group_flat_L4_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br _pd_group_flat_L4_start
+  _pd_group_flat_L4_end:
+    ldc.i4.0
+    stloc.s 3
+  _pd_group_flat_L6_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge _pd_group_flat_L6_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 2
+    ldloc.s 4
+    ldloc.s 2
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 6
+    ldarg.s 2
+    ldloc.s 3
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 4
+    ldloc.s 2
+    ldloc.s 6
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    stloc.s 7
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int7_slow
+    ldloca.s 8
+    ldfld object TkvInt::big
+    brtrue _pd_group_flat_int7_slow
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 10
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    ldloca.s 8
+    ldfld int64 TkvInt::lo
+    ldloc.s 10
+    xor
+    and
+    ldc.i8 0
+    blt _pd_group_flat_int7_slow
+    ldloca.s 9
+    ldloc.s 10
+    stfld int64 TkvInt::lo
+    ldloca.s 9
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 9
+    br _pd_group_flat_int7_done
+  _pd_group_flat_int7_slow:
+    ldloc.s 7
+    ldloc.s 8
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_group_flat_int7_done:
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::set_Item(int32, !0)
+  _pd_group_flat_L6_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br _pd_group_flat_L6_start
+  _pd_group_flat_L6_end:
+    ldloc.s 5
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    ret
+  }
+  .method public static class DataFrame '_pd_subdf'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<int32> 'rows') cil managed
+  {
+    .maxstack 10
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class Series> 'cols', int32 'nc', int32 'c', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    stloc.s 0
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'column_count'()
+    stloc.s 1
+    ldc.i4.0
+    stloc.s 2
+  _pd_subdf_L1_start:
+    ldloc.s 2
+    ldloc.s 1
+    bge _pd_subdf_L1_end
+    ldloc.s 0
+    ldarg.s 0
+    ldloc.s 2
+    callvirt instance class Series DataFrame::'col_at'(int32)
+    ldarg.s 1
+    callvirt instance class Series Series::'take'(class [mscorlib]System.Collections.Generic.List`1<int32>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  _pd_subdf_L1_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br _pd_subdf_L1_start
+  _pd_subdf_L1_end:
+    ldloc.s 0
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    ret
+  }
+  .method public static int32 '_pd_nth_one'(class DataFrame 'sub', string 'value_column', int32 'n_th', int32 'dropna') cil managed
+  {
+    .maxstack 10
+    .locals init (class Series 'v', int32 'm', valuetype TkvInt 'picked', valuetype TkvInt 'cnt', valuetype TkvInt 'i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldarg.s 1
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 0
+    ldloc.s 0
+    callvirt instance int32 Series::'length'()
+    stloc.s 1
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 6
+    stloc.s 5
+    ldloca.s 5
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int1_slow
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int1_slow
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    sub
+    stloc.s 8
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    xor
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    and
+    ldc.i8 0
+    blt _pd_nth_one_int1_slow
+    ldloca.s 7
+    ldloc.s 8
+    stfld int64 TkvInt::lo
+    ldloca.s 7
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 7
+    br _pd_nth_one_int1_done
+  _pd_nth_one_int1_slow:
+    ldloc.s 5
+    ldloc.s 6
+    call valuetype TkvInt TkvInt::SubSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_nth_one_int1_done:
+    stloc.s 2
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 3
+    ldarg.s 3
+    ldc.i4 1
+    ceq
+    brfalse _pd_nth_one_If2_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+  _pd_nth_one_W3_start:
+    ldloc.s 4
+    ldloc.s 1
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse _pd_nth_one_W3_end
+    ldloc.s 0
+    ldloc.s 4
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 0
+    ceq
+    brfalse _pd_nth_one_If4_else
+    ldloc.s 3
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    dup
+    brtrue _pd_nth_one_sc6_end
+    pop
+    ldarg.s 2
+    ldc.i4 0
+    clt
+    dup
+    brfalse _pd_nth_one_sc7_end
+    pop
+    ldloc.s 3
+    ldloc.s 1
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 6
+    stloc.s 5
+    ldloca.s 5
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int8_slow
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int8_slow
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 8
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    and
+    ldc.i8 0
+    blt _pd_nth_one_int8_slow
+    ldloca.s 7
+    ldloc.s 8
+    stfld int64 TkvInt::lo
+    ldloca.s 7
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 7
+    br _pd_nth_one_int8_done
+  _pd_nth_one_int8_slow:
+    ldloc.s 5
+    ldloc.s 6
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_nth_one_int8_done:
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+  _pd_nth_one_sc7_end:
+  _pd_nth_one_sc6_end:
+    brfalse _pd_nth_one_If5_else
+    ldloc.s 4
+    stloc.s 2
+    br _pd_nth_one_W3_end
+  _pd_nth_one_If5_else:
+    ldloc.s 3
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 6
+    stloc.s 5
+    ldloca.s 5
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int9_slow
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int9_slow
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 8
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    and
+    ldc.i8 0
+    blt _pd_nth_one_int9_slow
+    ldloca.s 7
+    ldloc.s 8
+    stfld int64 TkvInt::lo
+    ldloca.s 7
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 7
+    br _pd_nth_one_int9_done
+  _pd_nth_one_int9_slow:
+    ldloc.s 5
+    ldloc.s 6
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_nth_one_int9_done:
+    stloc.s 3
+  _pd_nth_one_If4_else:
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 6
+    stloc.s 5
+    ldloca.s 5
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int10_slow
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int10_slow
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 8
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    and
+    ldc.i8 0
+    blt _pd_nth_one_int10_slow
+    ldloca.s 7
+    ldloc.s 8
+    stfld int64 TkvInt::lo
+    ldloca.s 7
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 7
+    br _pd_nth_one_int10_done
+  _pd_nth_one_int10_slow:
+    ldloc.s 5
+    ldloc.s 6
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_nth_one_int10_done:
+    stloc.s 4
+    br _pd_nth_one_W3_start
+  _pd_nth_one_W3_end:
+    br _pd_nth_one_If2_end
+  _pd_nth_one_If2_else:
+    ldarg.s 2
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse _pd_nth_one_If11_else
+    ldarg.s 2
+    ldloc.s 1
+    clt
+    brfalse _pd_nth_one_If12_else
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+  _pd_nth_one_If12_else:
+    br _pd_nth_one_If11_end
+  _pd_nth_one_If11_else:
+    ldloc.s 1
+    ldarg.s 2
+    add.ovf
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse _pd_nth_one_If13_else
+    ldloc.s 1
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 6
+    stloc.s 5
+    ldloca.s 5
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int14_slow
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _pd_nth_one_int14_slow
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 8
+    ldloca.s 5
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 8
+    xor
+    and
+    ldc.i8 0
+    blt _pd_nth_one_int14_slow
+    ldloca.s 7
+    ldloc.s 8
+    stfld int64 TkvInt::lo
+    ldloca.s 7
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 7
+    br _pd_nth_one_int14_done
+  _pd_nth_one_int14_slow:
+    ldloc.s 5
+    ldloc.s 6
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _pd_nth_one_int14_done:
+    stloc.s 2
+  _pd_nth_one_If13_else:
+  _pd_nth_one_If11_end:
+  _pd_nth_one_If2_end:
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    ret
+  }
+  .method public static class DataFrame 'groupby_nth'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', string 'value_column', int32 'n_th', int32 'dropna') cil managed
+  {
+    .maxstack 13
+    .locals init (class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'kmap', class [mscorlib]System.Collections.Generic.List`1<int32> 'row_group', int32 'gcount', class [mscorlib]System.Collections.Generic.List`1<int32> 'flat', class [mscorlib]System.Collections.Generic.List`1<int32> 'starts', class [mscorlib]System.Collections.Generic.List`1<class DataFrame> 'results', int32 'gx', int32 's0', int32 'e0', class [mscorlib]System.Collections.Generic.List`1<int32> 'rows', int32 '__slice2262403478400_start', class DataFrame 'sub', int32 'picked', class DataFrame 'one', class [mscorlib]System.Collections.Generic.List`1<string> 'keep', class DataFrame 'out', int32 'j', string 'kc', string 'kv', class [mscorlib]System.Collections.Generic.List`1<string> 'kcol', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse groupby_nth_If1_else
+    ldstr "At least one key column must be specified."
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  groupby_nth_If1_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::.ctor()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 1
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    call int32 TKVApp::'_pd_group_ids'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<string>, class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 2
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 4
+    ldloc.s 1
+    ldloc.s 2
+    ldloc.s 3
+    ldloc.s 4
+    call int32 TKVApp::'_pd_group_flat'(class [mscorlib]System.Collections.Generic.List`1<int32>, int32, class [mscorlib]System.Collections.Generic.List`1<int32>, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    pop
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class DataFrame>::.ctor()
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  groupby_nth_L2_start:
+    ldloc.s 6
+    ldloc.s 2
+    bge groupby_nth_L2_end
+    ldloc.s 4
+    ldloc.s 6
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 7
+    ldloc.s 6
+    ldc.i4 1
+    add.ovf
+    ldloc.s 2
+    clt
+    brfalse groupby_nth_If3_else
+    ldloc.s 4
+    ldloc.s 6
+    ldc.i4 1
+    add.ovf
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 8
+    br groupby_nth_If3_end
+  groupby_nth_If3_else:
+    ldloc.s 3
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Count()
+    stloc.s 8
+  groupby_nth_If3_end:
+    ldloc.s 7
+    stloc.s 10
+    ldloc.s 3
+    ldloc.s 10
+    ldloc.s 8
+    ldloc.s 10
+    sub
+    callvirt instance class [mscorlib]System.Collections.Generic.List`1<!0> class [mscorlib]System.Collections.Generic.List`1<int32>::GetRange(int32, int32)
+    stloc.s 9
+    ldarg.s 0
+    ldloc.s 9
+    call class DataFrame TKVApp::'_pd_subdf'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 11
+    ldloc.s 11
+    ldarg.s 2
+    ldarg.s 3
+    ldarg.s 4
+    call int32 TKVApp::'_pd_nth_one'(class DataFrame, string, int32, int32)
+    stloc.s 12
+    ldloc.s 12
+    ldc.i4 0
+    clt
+    brfalse groupby_nth_If4_else
+    br groupby_nth_L2_cont
+  groupby_nth_If4_else:
+    ldloc.s 11
+    ldloc.s 12
+    ldc.i4 1
+    callvirt instance class DataFrame DataFrame::'slice_df'(int32, int32)
+    stloc.s 13
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 14
+    ldloc.s 14
+    ldarg.s 2
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldloc.s 13
+    ldloc.s 14
+    callvirt instance class DataFrame DataFrame::'select'(class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 15
+    ldc.i4.0
+    stloc.s 16
+  groupby_nth_L5_start:
+    ldloc.s 16
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge groupby_nth_L5_end
+    ldarg.s 1
+    ldloc.s 16
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 17
+    ldloc.s 15
+    ldloc.s 17
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 0
+    ceq
+    brfalse groupby_nth_If6_else
+    ldloc.s 11
+    ldloc.s 17
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    ldc.i4 0
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 18
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 19
+    ldloc.s 19
+    ldloc.s 18
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldloc.s 15
+    ldloc.s 17
+    ldloc.s 17
+    ldloc.s 19
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    callvirt instance class DataFrame DataFrame::'with_column'(string, class Series)
+    stloc.s 15
+  groupby_nth_If6_else:
+  groupby_nth_L5_cont:
+    ldloc.s 16
+    ldc.i4 1
+    add
+    stloc.s 16
+    br groupby_nth_L5_start
+  groupby_nth_L5_end:
+    ldloc.s 5
+    ldloc.s 15
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class DataFrame>::Add(!0)
+  groupby_nth_L2_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br groupby_nth_L2_start
+  groupby_nth_L2_end:
+    ldloc.s 5
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class DataFrame>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse groupby_nth_If7_else
+    call class DataFrame TKVApp::'empty_df'()
+    ret
+  groupby_nth_If7_else:
+    ldloc.s 5
+    call class DataFrame TKVApp::'concat_vertical'(class [mscorlib]System.Collections.Generic.List`1<class DataFrame>)
+    ret
+  }
+  .method public static class DataFrame 'groupby_head'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', int32 'n_head') cil managed
+  {
+    .maxstack 13
+    .locals init (class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'kmap', class [mscorlib]System.Collections.Generic.List`1<int32> 'row_group', int32 'gcount', int32 'n', class [mscorlib]System.Collections.Generic.List`1<int32> 'take_idx', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'used', int32 'g', int32 'i', valuetype TkvInt 'u', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse groupby_head_If1_else
+    ldstr "At least one key column must be specified."
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  groupby_head_If1_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::.ctor()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 1
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    call int32 TKVApp::'_pd_group_ids'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<string>, class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 2
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    call class [mscorlib]System.Collections.Generic.List`1<int32> TKVApp::'make_idx'(class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 4
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  groupby_head_L2_start:
+    ldloc.s 6
+    ldloc.s 2
+    bge groupby_head_L2_end
+    ldloc.s 5
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+  groupby_head_L2_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br groupby_head_L2_start
+  groupby_head_L2_end:
+    ldc.i4.0
+    stloc.s 7
+  groupby_head_L3_start:
+    ldloc.s 7
+    ldloc.s 3
+    bge groupby_head_L3_end
+    ldloc.s 1
+    ldloc.s 7
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 5
+    ldloc.s 6
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse groupby_head_If4_else
+    ldloc.s 5
+    ldloc.s 6
+    ldloc.s 8
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 10
+    stloc.s 9
+    ldloca.s 9
+    ldfld object TkvInt::big
+    brtrue groupby_head_int5_slow
+    ldloca.s 10
+    ldfld object TkvInt::big
+    brtrue groupby_head_int5_slow
+    ldloca.s 9
+    ldfld int64 TkvInt::lo
+    ldloca.s 10
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 12
+    ldloca.s 9
+    ldfld int64 TkvInt::lo
+    ldloc.s 12
+    xor
+    ldloca.s 10
+    ldfld int64 TkvInt::lo
+    ldloc.s 12
+    xor
+    and
+    ldc.i8 0
+    blt groupby_head_int5_slow
+    ldloca.s 11
+    ldloc.s 12
+    stfld int64 TkvInt::lo
+    ldloca.s 11
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 11
+    br groupby_head_int5_done
+  groupby_head_int5_slow:
+    ldloc.s 9
+    ldloc.s 10
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  groupby_head_int5_done:
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::set_Item(int32, !0)
+    ldloc.s 4
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+  groupby_head_If4_else:
+  groupby_head_L3_cont:
+    ldloc.s 7
+    ldc.i4 1
+    add
+    stloc.s 7
+    br groupby_head_L3_start
+  groupby_head_L3_end:
+    ldarg.s 0
+    ldloc.s 4
+    call class DataFrame TKVApp::'_pd_subdf'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    ret
+  }
+  .method public static class DataFrame 'groupby_tail'(class DataFrame 'df', class [mscorlib]System.Collections.Generic.List`1<string> 'key_columns', int32 'n_tail') cil managed
+  {
+    .maxstack 13
+    .locals init (class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32> 'kmap', class [mscorlib]System.Collections.Generic.List`1<int32> 'row_group', int32 'gcount', int32 'n', class [mscorlib]System.Collections.Generic.List`1<int32> 'take_idx', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'used', int32 'g', int32 'i', valuetype TkvInt 'u', class [mscorlib]System.Collections.Generic.List`1<int32> 'rev', int32 'j', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse groupby_tail_If1_else
+    ldstr "At least one key column must be specified."
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  groupby_tail_If1_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>::.ctor()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 1
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    call int32 TKVApp::'_pd_group_ids'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<string>, class [mscorlib]System.Collections.Generic.Dictionary`2<string, int32>, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 2
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    call class [mscorlib]System.Collections.Generic.List`1<int32> TKVApp::'make_idx'(class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 4
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  groupby_tail_L2_start:
+    ldloc.s 6
+    ldloc.s 2
+    bge groupby_tail_L2_end
+    ldloc.s 5
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+  groupby_tail_L2_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br groupby_tail_L2_start
+  groupby_tail_L2_end:
+    ldloc.s 3
+    ldc.i4 1
+    sub.ovf
+    stloc.s 7
+  groupby_tail_W3_start:
+    ldloc.s 7
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse groupby_tail_W3_end
+    ldloc.s 1
+    ldloc.s 7
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 5
+    ldloc.s 6
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldarg.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse groupby_tail_If4_else
+    ldloc.s 5
+    ldloc.s 6
+    ldloc.s 8
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 12
+    stloc.s 11
+    ldloca.s 11
+    ldfld object TkvInt::big
+    brtrue groupby_tail_int5_slow
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue groupby_tail_int5_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 14
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloc.s 14
+    xor
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 14
+    xor
+    and
+    ldc.i8 0
+    blt groupby_tail_int5_slow
+    ldloca.s 13
+    ldloc.s 14
+    stfld int64 TkvInt::lo
+    ldloca.s 13
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 13
+    br groupby_tail_int5_done
+  groupby_tail_int5_slow:
+    ldloc.s 11
+    ldloc.s 12
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  groupby_tail_int5_done:
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::set_Item(int32, !0)
+    ldloc.s 4
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+  groupby_tail_If4_else:
+    ldloc.s 7
+    ldc.i4 1
+    sub.ovf
+    stloc.s 7
+    br groupby_tail_W3_start
+  groupby_tail_W3_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 9
+    ldloc.s 4
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Count()
+    ldc.i4 1
+    sub.ovf
+    stloc.s 10
+  groupby_tail_W6_start:
+    ldloc.s 10
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse groupby_tail_W6_end
+    ldloc.s 9
+    ldloc.s 4
+    ldloc.s 10
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 10
+    ldc.i4 1
+    sub.ovf
+    stloc.s 10
+    br groupby_tail_W6_start
+  groupby_tail_W6_end:
+    ldarg.s 0
+    ldloc.s 9
+    call class DataFrame TKVApp::'_pd_subdf'(class DataFrame, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    ret
+  }
+  .method public static class DataFrame 'stack'(class DataFrame 'df', string 'value_name') cil managed
+  {
+    .maxstack 10
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'names', int32 'n', class [mscorlib]System.Collections.Generic.List`1<int32> 'idx', class [mscorlib]System.Collections.Generic.List`1<string> 'src_col', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', int32 'c', class Series 'col', int32 'i', class [mscorlib]System.Collections.Generic.List`1<int64> 'i64_vals', class Series 'r', class Series 'v', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance class [mscorlib]System.Collections.Generic.List`1<string> DataFrame::'column_names'()
+    stloc.s 0
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 1
+    ldloc.s 1
+    ldc.i4 0
+    ceq
+    brfalse stack_If1_else
+    call class DataFrame TKVApp::'empty_df'()
+    ret
+  stack_If1_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 2
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 4
+    ldc.i4.0
+    stloc.s 5
+  stack_L2_start:
+    ldloc.s 5
+    ldloc.s 0
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge stack_L2_end
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance class Series DataFrame::'col_at'(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse stack_If3_else
+    br stack_L2_cont
+  stack_If3_else:
+    ldc.i4.0
+    stloc.s 7
+  stack_L4_start:
+    ldloc.s 7
+    ldloc.s 1
+    bge stack_L4_end
+    ldloc.s 6
+    ldloc.s 7
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse stack_If5_else
+    br stack_L4_cont
+  stack_If5_else:
+    ldloc.s 2
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 3
+    ldloc.s 0
+    ldloc.s 5
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldloc.s 4
+    ldloc.s 6
+    ldloc.s 7
+    callvirt instance float64 Series::'get_f64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  stack_L4_cont:
+    ldloc.s 7
+    ldc.i4 1
+    add
+    stloc.s 7
+    br stack_L4_start
+  stack_L4_end:
+  stack_L2_cont:
+    ldloc.s 5
+    ldc.i4 1
+    add
+    stloc.s 5
+    br stack_L2_start
+  stack_L2_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 8
+    ldc.i4.0
+    stloc.s 7
+  stack_L6_start:
+    ldloc.s 7
+    ldloc.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Count()
+    bge stack_L6_end
+    ldloc.s 8
+    ldloc.s 2
+    ldloc.s 7
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<int32>::get_Item(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+  stack_L6_cont:
+    ldloc.s 7
+    ldc.i4 1
+    add
+    stloc.s 7
+    br stack_L6_start
+  stack_L6_end:
+    ldarg.s 1
+    ldloc.s 3
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 9
+    ldloc.s 9
+    ldloc.s 3
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stfld class Mask Series::'valid'
+    ldstr "value"
+    ldloc.s 4
+    call class Series TKVApp::'make_series_f64'(string, class [mscorlib]System.Collections.Generic.List`1<float64>)
+    stloc.s 10
+    ldloc.s 10
+    ldloc.s 4
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4 1
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stfld class Mask Series::'valid'
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    dup
+    ldstr "row"
+    ldloc.s 8
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    dup
+    ldloc.s 9
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    dup
+    ldloc.s 10
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    ret
+  }
+  .method public static class DataFrame 'unstack'(class DataFrame 'stacked', string 'value_name') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'col_order', class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt> 'cmap', class Series 'rows', class Series 'name_col', class Series 'val', int32 'i', string 'nm', valuetype TkvInt 'rmax', int64 'r', valuetype TkvInt 'nrow', class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<float64>> 'cells', int32 'c', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<class Mask> 'filled', class Mask 'fm', valuetype TkvInt 'ci', class [mscorlib]System.Collections.Generic.List`1<float64> 'row_cells', class Mask 'fm_ci', class [mscorlib]System.Collections.Generic.List`1<class Series> 'cols', class Series 'col', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldstr "row"
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 0
+    ceq
+    brfalse unstack_If1_else
+    ldstr "unstack: can cot 'row' (tu stack)"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  unstack_If1_else:
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    newobj instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt>::.ctor()
+    stloc.s 2
+    ldarg.s 0
+    ldstr "row"
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 3
+    ldarg.s 0
+    ldarg.s 1
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 4
+    ldarg.s 0
+    ldstr "value"
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  unstack_L2_start:
+    ldloc.s 6
+    ldloc.s 0
+    bge unstack_L2_end
+    ldloc.s 4
+    ldloc.s 6
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 7
+    ldloc.s 2
+    ldloc.s 7
+    callvirt instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt>::ContainsKey(!0)
+    brfalse unstack_If3_else
+    br unstack_L2_cont
+  unstack_If3_else:
+    ldloc.s 2
+    ldloc.s 7
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    callvirt instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string, valuetype TkvInt>::set_Item(!0, !1)
+    ldloc.s 1
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  unstack_L2_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br unstack_L2_start
+  unstack_L2_end:
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call valuetype TkvInt TkvInt::Neg(valuetype TkvInt)
+    stloc.s 8
+    ldc.i4.0
+    stloc.s 6
+  unstack_L4_start:
+    ldloc.s 6
+    ldloc.s 0
+    bge unstack_L4_end
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance int64 Series::'get_i64'(int32)
+    stloc.s 9
+    ldloc.s 9
+    ldloc.s 8
+    call int64 TkvInt::ToI64(valuetype TkvInt)
+    cgt
+    brfalse unstack_If5_else
+    ldloc.s 9
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+  unstack_If5_else:
+  unstack_L4_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br unstack_L4_start
+  unstack_L4_end:
+    ldloc.s 8
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 22
+    stloc.s 21
+    ldloca.s 21
+    ldfld object TkvInt::big
+    brtrue unstack_int6_slow
+    ldloca.s 22
+    ldfld object TkvInt::big
+    brtrue unstack_int6_slow
+    ldloca.s 21
+    ldfld int64 TkvInt::lo
+    ldloca.s 22
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 24
+    ldloca.s 21
+    ldfld int64 TkvInt::lo
+    ldloc.s 24
+    xor
+    ldloca.s 22
+    ldfld int64 TkvInt::lo
+    ldloc.s 24
+    xor
+    and
+    ldc.i8 0
+    blt unstack_int6_slow
+    ldloca.s 23
+    ldloc.s 24
+    stfld int64 TkvInt::lo
+    ldloca.s 23
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 23
+    br unstack_int6_done
+  unstack_int6_slow:
+    ldloc.s 21
+    ldloc.s 22
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  unstack_int6_done:
+    stloc.s 10
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<float64>>::.ctor()
+    stloc.s 11
+    ldc.i4.0
+    stloc.s 12
+  unstack_L7_start:
+    ldloc.s 12
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge unstack_L7_end
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 13
+    ldc.i4.0
+    stloc.s 9
+  unstack_L8_start:
+    ldloc.s 9
+    ldloc.s 10
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    bge unstack_L8_end
+    ldloc.s 13
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  unstack_L8_cont:
+    ldloc.s 9
+    ldc.i4 1
+    add
+    stloc.s 9
+    br unstack_L8_start
+  unstack_L8_end:
+    ldloc.s 11
+    ldloc.s 13
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<float64>>::Add(!0)
+  unstack_L7_cont:
+    ldloc.s 12
+    ldc.i4 1
+    add
+    stloc.s 12
+    br unstack_L7_start
+  unstack_L7_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Mask>::.ctor()
+    stloc.s 14
+    ldc.i4.0
+    stloc.s 12
+  unstack_L9_start:
+    ldloc.s 12
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge unstack_L9_end
+    ldloc.s 10
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 15
+    ldloc.s 14
+    ldloc.s 15
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Mask>::Add(!0)
+  unstack_L9_cont:
+    ldloc.s 12
+    ldc.i4 1
+    add
+    stloc.s 12
+    br unstack_L9_start
+  unstack_L9_end:
+    ldc.i4.0
+    stloc.s 6
+  unstack_L10_start:
+    ldloc.s 6
+    ldloc.s 0
+    bge unstack_L10_end
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance int64 Series::'get_i64'(int32)
+    stloc.s 9
+    ldloc.s 4
+    ldloc.s 6
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 7
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 16
+    ldc.i4.0
+    stloc.s 12
+  unstack_L11_start:
+    ldloc.s 12
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge unstack_L11_end
+    ldloc.s 1
+    ldloc.s 12
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 7
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse unstack_If12_else
+    ldloc.s 12
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 16
+    br unstack_L11_end
+  unstack_If12_else:
+  unstack_L11_cont:
+    ldloc.s 12
+    ldc.i4 1
+    add
+    stloc.s 12
+    br unstack_L11_start
+  unstack_L11_end:
+    ldloc.s 11
+    ldloc.s 16
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<float64>>::get_Item(int32)
+    stloc.s 17
+    ldloc.s 17
+    ldloc.s 9
+    ldloc.s 5
+    ldloc.s 6
+    callvirt instance float64 Series::'get_f64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::set_Item(int32, !0)
+    ldloc.s 14
+    ldloc.s 16
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class Mask>::get_Item(int32)
+    stloc.s 18
+    ldloc.s 18
+    ldloc.s 9
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  unstack_L10_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br unstack_L10_start
+  unstack_L10_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    stloc.s 19
+    ldc.i4.0
+    stloc.s 12
+  unstack_L13_start:
+    ldloc.s 12
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge unstack_L13_end
+    ldloc.s 1
+    ldloc.s 12
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 11
+    ldloc.s 12
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<float64>>::get_Item(int32)
+    call class Series TKVApp::'make_series_f64'(string, class [mscorlib]System.Collections.Generic.List`1<float64>)
+    stloc.s 20
+    ldloc.s 20
+    ldloc.s 14
+    ldloc.s 12
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class Mask>::get_Item(int32)
+    stfld class Mask Series::'valid'
+    ldloc.s 19
+    ldloc.s 20
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  unstack_L13_cont:
+    ldloc.s 12
+    ldc.i4 1
+    add
+    stloc.s 12
+    br unstack_L13_start
+  unstack_L13_end:
+    ldloc.s 19
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    ret
+  }
+  .method public static class DataFrame 'merge_ordered'(class DataFrame 'left', class DataFrame 'right', string 'on', class [mscorlib]System.Collections.Generic.List`1<string> 'by_cols', string 'fill_method') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'ln', int32 'rn', class Series 'lc', class Series 'rc', valuetype TkvInt 'li', valuetype TkvInt 'ri', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'pick_l', class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt> 'pick_r', valuetype TkvInt 'take_left', valuetype TkvInt 'take_both', int64 'lv', int64 'rv', int32 'merged_n', class [mscorlib]System.Collections.Generic.List`1<string> 'lnames', class [mscorlib]System.Collections.Generic.List`1<string> 'rnames', class [mscorlib]System.Collections.Generic.List`1<class Series> 'cols', int32 'c', string 'nm', class Series 'col', class [mscorlib]System.Collections.Generic.List`1<int64> 'vals_i', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals_f', class [mscorlib]System.Collections.Generic.List`1<string> 'vals_s', class Mask 'vm', int32 'r', valuetype TkvInt 'src', class Series 'ns', class Series 'ni', class Series 'nb', class Series 'nf', valuetype TkvInt 'in_by', int32 'b', class Series 'on_col', class [mscorlib]System.Collections.Generic.List`1<int64> 'ki_vals', class Mask 'ki_vm', class Series 'cs', string 'cname', class DataFrame 'out', float64 'lastv', valuetype TkvInt 'seen', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    ldarg.s 1
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 1
+    ldarg.s 0
+    ldarg.s 2
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 2
+    ldarg.s 1
+    ldarg.s 2
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 3
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 5
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 6
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::.ctor()
+    stloc.s 7
+  merge_ordered_W1_start:
+    ldloc.s 4
+    ldloc.s 0
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    dup
+    brtrue merge_ordered_sc2_end
+    pop
+    ldloc.s 5
+    ldloc.s 1
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+  merge_ordered_sc2_end:
+    brfalse merge_ordered_W1_end
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 9
+    ldloc.s 4
+    ldloc.s 0
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    dup
+    brfalse merge_ordered_sc4_end
+    pop
+    ldloc.s 5
+    ldloc.s 1
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+  merge_ordered_sc4_end:
+    brfalse merge_ordered_If3_else
+    ldloc.s 2
+    ldloc.s 4
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    stloc.s 10
+    ldloc.s 3
+    ldloc.s 5
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    stloc.s 11
+    ldloc.s 10
+    ldloc.s 11
+    ceq
+    brfalse merge_ordered_If5_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 9
+    br merge_ordered_If5_end
+  merge_ordered_If5_else:
+    ldloc.s 10
+    ldloc.s 11
+    clt
+    brfalse merge_ordered_If6_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+  merge_ordered_If6_else:
+  merge_ordered_If5_end:
+    br merge_ordered_If3_end
+  merge_ordered_If3_else:
+    ldloc.s 4
+    ldloc.s 0
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse merge_ordered_If7_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+  merge_ordered_If7_else:
+  merge_ordered_If3_end:
+    ldloc.s 9
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse merge_ordered_If8_else
+    ldloc.s 6
+    ldloc.s 4
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 7
+    ldloc.s 5
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 40
+    stloc.s 39
+    ldloca.s 39
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int9_slow
+    ldloca.s 40
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int9_slow
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 42
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    and
+    ldc.i8 0
+    blt merge_ordered_int9_slow
+    ldloca.s 41
+    ldloc.s 42
+    stfld int64 TkvInt::lo
+    ldloca.s 41
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 41
+    br merge_ordered_int9_done
+  merge_ordered_int9_slow:
+    ldloc.s 39
+    ldloc.s 40
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  merge_ordered_int9_done:
+    stloc.s 4
+    ldloc.s 5
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 40
+    stloc.s 39
+    ldloca.s 39
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int10_slow
+    ldloca.s 40
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int10_slow
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 42
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    and
+    ldc.i8 0
+    blt merge_ordered_int10_slow
+    ldloca.s 41
+    ldloc.s 42
+    stfld int64 TkvInt::lo
+    ldloca.s 41
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 41
+    br merge_ordered_int10_done
+  merge_ordered_int10_slow:
+    ldloc.s 39
+    ldloc.s 40
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  merge_ordered_int10_done:
+    stloc.s 5
+    br merge_ordered_If8_end
+  merge_ordered_If8_else:
+    ldloc.s 8
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse merge_ordered_If11_else
+    ldloc.s 6
+    ldloc.s 4
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 7
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call valuetype TkvInt TkvInt::Neg(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 40
+    stloc.s 39
+    ldloca.s 39
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int12_slow
+    ldloca.s 40
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int12_slow
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 42
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    and
+    ldc.i8 0
+    blt merge_ordered_int12_slow
+    ldloca.s 41
+    ldloc.s 42
+    stfld int64 TkvInt::lo
+    ldloca.s 41
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 41
+    br merge_ordered_int12_done
+  merge_ordered_int12_slow:
+    ldloc.s 39
+    ldloc.s 40
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  merge_ordered_int12_done:
+    stloc.s 4
+    br merge_ordered_If11_end
+  merge_ordered_If11_else:
+    ldloc.s 6
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call valuetype TkvInt TkvInt::Neg(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 7
+    ldloc.s 5
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::Add(!0)
+    ldloc.s 5
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 40
+    stloc.s 39
+    ldloca.s 39
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int13_slow
+    ldloca.s 40
+    ldfld object TkvInt::big
+    brtrue merge_ordered_int13_slow
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 42
+    ldloca.s 39
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    ldloca.s 40
+    ldfld int64 TkvInt::lo
+    ldloc.s 42
+    xor
+    and
+    ldc.i8 0
+    blt merge_ordered_int13_slow
+    ldloca.s 41
+    ldloc.s 42
+    stfld int64 TkvInt::lo
+    ldloca.s 41
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 41
+    br merge_ordered_int13_done
+  merge_ordered_int13_slow:
+    ldloc.s 39
+    ldloc.s 40
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  merge_ordered_int13_done:
+    stloc.s 5
+  merge_ordered_If11_end:
+  merge_ordered_If8_end:
+    br merge_ordered_W1_start
+  merge_ordered_W1_end:
+    ldloc.s 6
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Count()
+    stloc.s 12
+    ldarg.s 0
+    callvirt instance class [mscorlib]System.Collections.Generic.List`1<string> DataFrame::'column_names'()
+    stloc.s 13
+    ldarg.s 1
+    callvirt instance class [mscorlib]System.Collections.Generic.List`1<string> DataFrame::'column_names'()
+    stloc.s 14
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    stloc.s 15
+    ldc.i4.0
+    stloc.s 16
+  merge_ordered_L14_start:
+    ldloc.s 16
+    ldloc.s 13
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge merge_ordered_L14_end
+    ldloc.s 13
+    ldloc.s 16
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 17
+    ldarg.s 0
+    ldloc.s 16
+    callvirt instance class Series DataFrame::'col_at'(int32)
+    stloc.s 18
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 19
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 20
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 21
+    ldloc.s 12
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 22
+    ldc.i4.0
+    stloc.s 23
+  merge_ordered_L15_start:
+    ldloc.s 23
+    ldloc.s 12
+    bge merge_ordered_L15_end
+    ldloc.s 6
+    ldloc.s 23
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 24
+    ldloc.s 24
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse merge_ordered_If16_else
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If17_else
+    ldloc.s 21
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br merge_ordered_If17_end
+  merge_ordered_If17_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If18_else
+    ldloc.s 19
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If18_end
+  merge_ordered_If18_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If19_else
+    ldloc.s 19
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If19_end
+  merge_ordered_If19_else:
+    ldloc.s 20
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  merge_ordered_If19_end:
+  merge_ordered_If18_end:
+  merge_ordered_If17_end:
+    br merge_ordered_L15_cont
+  merge_ordered_If16_else:
+    ldloc.s 22
+    ldloc.s 23
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If20_else
+    ldloc.s 21
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance string Series::'get_string'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br merge_ordered_If20_end
+  merge_ordered_If20_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If21_else
+    ldloc.s 19
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If21_end
+  merge_ordered_If21_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If22_else
+    ldloc.s 19
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int32 Series::'get_bool'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If22_end
+  merge_ordered_If22_else:
+    ldloc.s 20
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance float64 Series::'get_f64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  merge_ordered_If22_end:
+  merge_ordered_If21_end:
+  merge_ordered_If20_end:
+  merge_ordered_L15_cont:
+    ldloc.s 23
+    ldc.i4 1
+    add
+    stloc.s 23
+    br merge_ordered_L15_start
+  merge_ordered_L15_end:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If23_else
+    ldloc.s 17
+    ldloc.s 21
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 25
+    ldloc.s 25
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 25
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If23_end
+  merge_ordered_If23_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If24_else
+    ldloc.s 17
+    ldloc.s 19
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    stloc.s 26
+    ldloc.s 26
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 26
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If24_end
+  merge_ordered_If24_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If25_else
+    ldloc.s 17
+    ldloc.s 19
+    call class Series TKVApp::'make_series_bool'(string, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 27
+    ldloc.s 27
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 27
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If25_end
+  merge_ordered_If25_else:
+    ldloc.s 17
+    ldloc.s 20
+    call class Series TKVApp::'make_series_f64'(string, class [mscorlib]System.Collections.Generic.List`1<float64>)
+    stloc.s 28
+    ldloc.s 28
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 28
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  merge_ordered_If25_end:
+  merge_ordered_If24_end:
+  merge_ordered_If23_end:
+  merge_ordered_L14_cont:
+    ldloc.s 16
+    ldc.i4 1
+    add
+    stloc.s 16
+    br merge_ordered_L14_start
+  merge_ordered_L14_end:
+    ldc.i4.0
+    stloc.s 16
+  merge_ordered_L26_start:
+    ldloc.s 16
+    ldloc.s 14
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge merge_ordered_L26_end
+    ldloc.s 14
+    ldloc.s 16
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 17
+    ldloc.s 17
+    ldarg.s 2
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse merge_ordered_If27_else
+    br merge_ordered_L26_cont
+  merge_ordered_If27_else:
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 29
+    ldc.i4.0
+    stloc.s 30
+  merge_ordered_L28_start:
+    ldloc.s 30
+    ldarg.s 3
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge merge_ordered_L28_end
+    ldarg.s 3
+    ldloc.s 30
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 17
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse merge_ordered_If29_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 29
+    br merge_ordered_L28_end
+  merge_ordered_If29_else:
+  merge_ordered_L28_cont:
+    ldloc.s 30
+    ldc.i4 1
+    add
+    stloc.s 30
+    br merge_ordered_L28_start
+  merge_ordered_L28_end:
+    ldarg.s 0
+    ldloc.s 17
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 1
+    ceq
+    dup
+    brfalse merge_ordered_sc31_end
+    pop
+    ldloc.s 29
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+  merge_ordered_sc31_end:
+    brfalse merge_ordered_If30_else
+    br merge_ordered_L26_cont
+  merge_ordered_If30_else:
+    ldarg.s 1
+    ldloc.s 16
+    callvirt instance class Series DataFrame::'col_at'(int32)
+    stloc.s 18
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 19
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 20
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 21
+    ldloc.s 12
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 22
+    ldc.i4.0
+    stloc.s 23
+  merge_ordered_L32_start:
+    ldloc.s 23
+    ldloc.s 12
+    bge merge_ordered_L32_end
+    ldloc.s 7
+    ldloc.s 23
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    stloc.s 24
+    ldloc.s 24
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse merge_ordered_If33_else
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If34_else
+    ldloc.s 21
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br merge_ordered_If34_end
+  merge_ordered_If34_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If35_else
+    ldloc.s 19
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If35_end
+  merge_ordered_If35_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If36_else
+    ldloc.s 19
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If36_end
+  merge_ordered_If36_else:
+    ldloc.s 20
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  merge_ordered_If36_end:
+  merge_ordered_If35_end:
+  merge_ordered_If34_end:
+    br merge_ordered_L32_cont
+  merge_ordered_If33_else:
+    ldloc.s 22
+    ldloc.s 23
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If37_else
+    ldloc.s 21
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance string Series::'get_string'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br merge_ordered_If37_end
+  merge_ordered_If37_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If38_else
+    ldloc.s 19
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If38_end
+  merge_ordered_If38_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If39_else
+    ldloc.s 19
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int32 Series::'get_bool'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br merge_ordered_If39_end
+  merge_ordered_If39_else:
+    ldloc.s 20
+    ldloc.s 18
+    ldloc.s 24
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance float64 Series::'get_f64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  merge_ordered_If39_end:
+  merge_ordered_If38_end:
+  merge_ordered_If37_end:
+  merge_ordered_L32_cont:
+    ldloc.s 23
+    ldc.i4 1
+    add
+    stloc.s 23
+    br merge_ordered_L32_start
+  merge_ordered_L32_end:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If40_else
+    ldloc.s 17
+    ldloc.s 21
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 25
+    ldloc.s 25
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 25
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If40_end
+  merge_ordered_If40_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse merge_ordered_If41_else
+    ldloc.s 17
+    ldloc.s 19
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    stloc.s 26
+    ldloc.s 26
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 26
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If41_end
+  merge_ordered_If41_else:
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse merge_ordered_If42_else
+    ldloc.s 17
+    ldloc.s 19
+    call class Series TKVApp::'make_series_bool'(string, class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 27
+    ldloc.s 27
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 27
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br merge_ordered_If42_end
+  merge_ordered_If42_else:
+    ldloc.s 17
+    ldloc.s 20
+    call class Series TKVApp::'make_series_f64'(string, class [mscorlib]System.Collections.Generic.List`1<float64>)
+    stloc.s 28
+    ldloc.s 28
+    ldloc.s 22
+    stfld class Mask Series::'valid'
+    ldloc.s 15
+    ldloc.s 28
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  merge_ordered_If42_end:
+  merge_ordered_If41_end:
+  merge_ordered_If40_end:
+  merge_ordered_L26_cont:
+    ldloc.s 16
+    ldc.i4 1
+    add
+    stloc.s 16
+    br merge_ordered_L26_start
+  merge_ordered_L26_end:
+    ldarg.s 0
+    ldarg.s 2
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 31
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 32
+    ldloc.s 12
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 33
+    ldc.i4.0
+    stloc.s 23
+  merge_ordered_L43_start:
+    ldloc.s 23
+    ldloc.s 12
+    bge merge_ordered_L43_end
+    ldloc.s 6
+    ldloc.s 23
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse merge_ordered_If44_else
+    ldloc.s 32
+    ldloc.s 31
+    ldloc.s 6
+    ldloc.s 23
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    ldloc.s 33
+    ldloc.s 23
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+    br merge_ordered_If44_end
+  merge_ordered_If44_else:
+    ldloc.s 32
+    ldloc.s 3
+    ldloc.s 7
+    ldloc.s 23
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<valuetype TkvInt>::get_Item(int32)
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance int64 Series::'get_i64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    ldloc.s 33
+    ldloc.s 23
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  merge_ordered_If44_end:
+  merge_ordered_L43_cont:
+    ldloc.s 23
+    ldc.i4 1
+    add
+    stloc.s 23
+    br merge_ordered_L43_start
+  merge_ordered_L43_end:
+    ldarg.s 2
+    ldloc.s 32
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    stloc.s 26
+    ldloc.s 26
+    ldloc.s 33
+    stfld class Mask Series::'valid'
+    ldc.i4.0
+    stloc.s 16
+  merge_ordered_L45_start:
+    ldloc.s 16
+    ldloc.s 15
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class Series>::get_Count()
+    bge merge_ordered_L45_end
+    ldloc.s 15
+    ldloc.s 16
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class Series>::get_Item(int32)
+    stloc.s 34
+    ldloc.s 34
+    ldfld string Series::'name'
+    stloc.s 35
+    ldloc.s 35
+    ldarg.s 2
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse merge_ordered_If46_else
+    ldloc.s 15
+    ldloc.s 16
+    ldloc.s 26
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::set_Item(int32, !0)
+    br merge_ordered_L45_end
+  merge_ordered_If46_else:
+  merge_ordered_L45_cont:
+    ldloc.s 16
+    ldc.i4 1
+    add
+    stloc.s 16
+    br merge_ordered_L45_start
+  merge_ordered_L45_end:
+    ldloc.s 15
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    stloc.s 36
+    ldarg.s 4
+    ldstr "ffill"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse merge_ordered_If47_else
+    ldc.i4.0
+    stloc.s 16
+  merge_ordered_L48_start:
+    ldloc.s 16
+    ldloc.s 13
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge merge_ordered_L48_end
+    ldloc.s 13
+    ldloc.s 16
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 17
+    ldloc.s 17
+    ldarg.s 2
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue merge_ordered_sc50_end
+    pop
+    ldarg.s 3
+    ldloc.s 17
+    callvirt instance bool class [mscorlib]System.Collections.Generic.List`1<string>::Contains(!0)
+  merge_ordered_sc50_end:
+    brfalse merge_ordered_If49_else
+    br merge_ordered_L48_cont
+  merge_ordered_If49_else:
+    ldloc.s 36
+    ldloc.s 17
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse merge_ordered_If51_else
+    br merge_ordered_L48_cont
+  merge_ordered_If51_else:
+    ldc.r8 0.0
+    stloc.s 37
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 38
+    ldc.i4.0
+    stloc.s 23
+  merge_ordered_L52_start:
+    ldloc.s 23
+    ldloc.s 36
+    callvirt instance int32 DataFrame::'row_count'()
+    bge merge_ordered_L52_end
+    ldloc.s 18
+    ldloc.s 23
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse merge_ordered_If53_else
+    ldloc.s 38
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse merge_ordered_If54_else
+    ldloc.s 18
+    ldloc.s 23
+    ldloc.s 37
+    callvirt instance void Series::'set_f64'(int32, float64)
+  merge_ordered_If54_else:
+    br merge_ordered_If53_end
+  merge_ordered_If53_else:
+    ldloc.s 18
+    ldloc.s 23
+    callvirt instance float64 Series::'get_f64'(int32)
+    stloc.s 37
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 38
+  merge_ordered_If53_end:
+  merge_ordered_L52_cont:
+    ldloc.s 23
+    ldc.i4 1
+    add
+    stloc.s 23
+    br merge_ordered_L52_start
+  merge_ordered_L52_end:
+  merge_ordered_L48_cont:
+    ldloc.s 16
+    ldc.i4 1
+    add
+    stloc.s 16
+    br merge_ordered_L48_start
+  merge_ordered_L48_end:
+    ldloc.s 36
+    ret
+  merge_ordered_If47_else:
+    ldloc.s 36
+    ret
+  }
+  .method public static int64 '_dt_dst_transition_ms_utc'(int64 'year') cil managed
+  {
+    .maxstack 10
+    .locals init (string 'ys', valuetype TkvInt 'spring', int32 'd', string 'ds', int64 'ms', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call string TkvStr::I64(int64)
+    stloc.s 0
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 1
+    ldc.i4 8
+    stloc.s 2
+  _dt_dst_transition_ms_utc_L1_start:
+    ldloc.s 2
+    ldc.i4 15
+    bge _dt_dst_transition_ms_utc_L1_end
+    ldloc.s 2
+    call string TkvStr::I32(int32)
+    stloc.s 3
+    ldloc.s 2
+    ldc.i4 10
+    clt
+    brfalse _dt_dst_transition_ms_utc_If2_else
+    ldstr "0"
+    ldloc.s 3
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 3
+  _dt_dst_transition_ms_utc_If2_else:
+    ldloc.s 0
+    ldstr "-03-"
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 3
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr " 07:00:00"
+    call string [mscorlib]System.String::Concat(string, string)
+    call int64 TKVApp::'dt_parse'(string)
+    stloc.s 4
+    ldloc.s 4
+    call int32 TKVApp::'dt_weekday'(int64)
+    ldc.i4 6
+    ceq
+    brfalse _dt_dst_transition_ms_utc_If3_else
+    ldloc.s 4
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 1
+    br _dt_dst_transition_ms_utc_L1_end
+  _dt_dst_transition_ms_utc_If3_else:
+  _dt_dst_transition_ms_utc_L1_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br _dt_dst_transition_ms_utc_L1_start
+  _dt_dst_transition_ms_utc_L1_end:
+    ldloc.s 1
+    call int64 TkvInt::ToI64(valuetype TkvInt)
+    ret
+  }
+  .method public static int64 'dt_utc_offset'(int64 'ts', string 'tz_name') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'yr', int64 'spring', int64 'fall', string 't', int32 '__slice2262403476800_start', valuetype TkvInt 'sign', int32 '__slice2262403478560_start', int32 '__slice2262403492544_start', valuetype TkvInt 'hh', valuetype TkvInt 'mm', class [mscorlib]System.Collections.Generic.List`1<string> 'parts', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    ldstr "UTC"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse dt_utc_offset_If1_else
+    ldc.i8 0
+    ret
+  dt_utc_offset_If1_else:
+    ldarg.s 1
+    ldstr "US/Eastern"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue dt_utc_offset_sc3_end
+    pop
+    ldarg.s 1
+    ldstr "America/New_York"
+    call bool [mscorlib]System.String::Equals(string, string)
+  dt_utc_offset_sc3_end:
+    brfalse dt_utc_offset_If2_else
+    ldarg.s 0
+    call int32 TKVApp::'dt_year'(int64)
+    stloc.s 0
+    ldloc.s 0
+    call int64 TKVApp::'_dt_dst_transition_ms_utc'(int64)
+    stloc.s 1
+    ldloc.s 1
+    ldc.i4 238
+    call int64 TKVApp::'dt_add_days'(int64, int32)
+    stloc.s 2
+    ldarg.s 0
+    ldloc.s 1
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse dt_utc_offset_sc5_end
+    pop
+    ldarg.s 0
+    ldloc.s 2
+    clt
+  dt_utc_offset_sc5_end:
+    brfalse dt_utc_offset_If4_else
+    ldc.i8 0
+    ldc.i8 4
+    ldc.i8 3600
+    mul.ovf
+    sub.ovf
+    ret
+  dt_utc_offset_If4_else:
+    ldc.i8 0
+    ldc.i8 5
+    ldc.i8 3600
+    mul.ovf
+    sub.ovf
+    ret
+  dt_utc_offset_If2_else:
+    ldarg.s 1
+    stloc.s 3
+    ldloc.s 3
+    ldstr "UTC"
+    callvirt instance int32 [mscorlib]System.String::IndexOf(string)
+    ldc.i4 0
+    ceq
+    brfalse dt_utc_offset_If6_else
+    ldc.i4 3
+    stloc.s 4
+    ldloc.s 3
+    ldloc.s 4
+    ldloc.s 3
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 4
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stloc.s 3
+  dt_utc_offset_If6_else:
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 5
+    ldloc.s 3
+    ldc.i4 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse dt_utc_offset_If7_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 5
+    ldc.i4 1
+    stloc.s 6
+    ldloc.s 3
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 6
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stloc.s 3
+    br dt_utc_offset_If7_end
+  dt_utc_offset_If7_else:
+    ldloc.s 3
+    ldc.i4 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse dt_utc_offset_If8_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call valuetype TkvInt TkvInt::Neg(valuetype TkvInt)
+    stloc.s 5
+    ldc.i4 1
+    stloc.s 7
+    ldloc.s 3
+    ldloc.s 7
+    ldloc.s 3
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    ldloc.s 7
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stloc.s 3
+  dt_utc_offset_If8_else:
+  dt_utc_offset_If7_end:
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 9
+    ldloc.s 3
+    ldc.i4.1
+    newarr [mscorlib]System.Char
+    dup
+    ldc.i4.0
+    ldstr ":"
+    ldc.i4.0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    stelem.i2
+    callvirt instance string[] [mscorlib]System.String::Split(char[])
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor(class [mscorlib]System.Collections.Generic.IEnumerable`1<!0>)
+    stloc.s 10
+    ldloc.s 10
+    ldc.i4 0
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    call valuetype TkvInt TkvInt::FromStr(string)
+    stloc.s 8
+    ldloc.s 10
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    cgt
+    brfalse dt_utc_offset_If9_else
+    ldloc.s 10
+    ldc.i4 1
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    call valuetype TkvInt TkvInt::FromStr(string)
+    stloc.s 9
+  dt_utc_offset_If9_else:
+    ldloc.s 5
+    ldloc.s 8
+    ldc.i8 3600
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 12
+    stloc.s 11
+    ldloca.s 11
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int10_slow
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int10_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int10_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int10_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int10_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int10_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    mul
+    stloc.s 14
+    ldloca.s 13
+    ldloc.s 14
+    stfld int64 TkvInt::lo
+    ldloca.s 13
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 13
+    br dt_utc_offset_int10_done
+  dt_utc_offset_int10_slow:
+    ldloc.s 11
+    ldloc.s 12
+    call valuetype TkvInt TkvInt::MulSlow(valuetype TkvInt, valuetype TkvInt)
+  dt_utc_offset_int10_done:
+    ldloc.s 9
+    ldc.i8 60
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 12
+    stloc.s 11
+    ldloca.s 11
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int11_slow
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int11_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int11_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int11_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int11_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int11_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    mul
+    stloc.s 14
+    ldloca.s 13
+    ldloc.s 14
+    stfld int64 TkvInt::lo
+    ldloca.s 13
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 13
+    br dt_utc_offset_int11_done
+  dt_utc_offset_int11_slow:
+    ldloc.s 11
+    ldloc.s 12
+    call valuetype TkvInt TkvInt::MulSlow(valuetype TkvInt, valuetype TkvInt)
+  dt_utc_offset_int11_done:
+    stloc.s 12
+    stloc.s 11
+    ldloca.s 11
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int12_slow
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int12_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 14
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloc.s 14
+    xor
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 14
+    xor
+    and
+    ldc.i8 0
+    blt dt_utc_offset_int12_slow
+    ldloca.s 13
+    ldloc.s 14
+    stfld int64 TkvInt::lo
+    ldloca.s 13
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 13
+    br dt_utc_offset_int12_done
+  dt_utc_offset_int12_slow:
+    ldloc.s 11
+    ldloc.s 12
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  dt_utc_offset_int12_done:
+    stloc.s 12
+    stloc.s 11
+    ldloca.s 11
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int13_slow
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue dt_utc_offset_int13_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int13_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int13_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 -2147483648
+    blt dt_utc_offset_int13_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldc.i8 2147483647
+    bgt dt_utc_offset_int13_slow
+    ldloca.s 11
+    ldfld int64 TkvInt::lo
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    mul
+    stloc.s 14
+    ldloca.s 13
+    ldloc.s 14
+    stfld int64 TkvInt::lo
+    ldloca.s 13
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 13
+    br dt_utc_offset_int13_done
+  dt_utc_offset_int13_slow:
+    ldloc.s 11
+    ldloc.s 12
+    call valuetype TkvInt TkvInt::MulSlow(valuetype TkvInt, valuetype TkvInt)
+  dt_utc_offset_int13_done:
+    call int64 TkvInt::ToI64(valuetype TkvInt)
+    ret
+  }
+  .method public static int64 'dt_tz_convert'(int64 'ts', string 'tz_name') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldarg.s 0
+    ldarg.s 1
+    call int64 TKVApp::'dt_utc_offset'(int64, string)
+    ldc.i8 1000
+    mul.ovf
+    add.ovf
+    ret
+  }
+  .method public static int64 'dt_tz_to_utc'(int64 'local_ts', string 'tz_name') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldarg.s 0
+    ldarg.s 1
+    call int64 TKVApp::'dt_utc_offset'(int64, string)
+    ldc.i8 1000
+    mul.ovf
+    sub.ovf
+    ret
+  }
+  .method public static class _QTok '_q_token'(string 'text', int32 'pos') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', int32 'i', string 'ch', int32 'j', int32 '__slice2262403479600_start', string 'cj', int32 '__slice2262450080560_start', int32 '__slice2262403416608_start', string 'two', int32 '__slice2262450018144_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 0
+    ldarg.s 1
+    stloc.s 1
+  _q_token_W1_start:
+    ldloc.s 1
+    ldloc.s 0
+    clt
+    brfalse _q_token_W1_end
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 2
+    ldloc.s 2
+    ldstr " "
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_token_sc3_end
+    pop
+    ldloc.s 2
+    ldstr "\t"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc3_end:
+    brfalse _q_token_If2_else
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    stloc.s 1
+    br _q_token_If2_end
+  _q_token_If2_else:
+    br _q_token_W1_end
+  _q_token_If2_end:
+    br _q_token_W1_start
+  _q_token_W1_end:
+    ldloc.s 1
+    ldloc.s 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse _q_token_If4_else
+    ldstr ""
+    ldstr "end"
+    ldloc.s 1
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If4_else:
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 2
+    ldloc.s 2
+    ldstr "("
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_token_If5_else
+    ldstr "("
+    ldstr "lp"
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If5_else:
+    ldloc.s 2
+    ldstr ")"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_token_If6_else
+    ldstr ")"
+    ldstr "rp"
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If6_else:
+    ldloc.s 2
+    ldstr ","
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_token_If7_else
+    ldstr ","
+    ldstr "comma"
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If7_else:
+    ldloc.s 2
+    ldstr "["
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_token_sc9_end
+    pop
+    ldloc.s 2
+    ldstr "]"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc9_end:
+    brfalse _q_token_If8_else
+    ldloc.s 2
+    ldstr "bracket"
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If8_else:
+    ldloc.s 2
+    ldstr "'"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_token_If10_else
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    stloc.s 3
+  _q_token_W11_start:
+    ldloc.s 3
+    ldloc.s 0
+    clt
+    brfalse _q_token_W11_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "'"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_token_If12_else
+    br _q_token_W11_end
+  _q_token_If12_else:
+    ldloc.s 3
+    ldc.i4 1
+    add.ovf
+    stloc.s 3
+    br _q_token_W11_start
+  _q_token_W11_end:
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    stloc.s 4
+    ldarg.s 0
+    ldloc.s 4
+    ldloc.s 3
+    ldloc.s 4
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "str"
+    ldloc.s 3
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If10_else:
+    ldloc.s 2
+    ldstr "0"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc14_end
+    pop
+    ldloc.s 2
+    ldstr "9"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc14_end:
+    brfalse _q_token_If13_else
+    ldloc.s 1
+    stloc.s 3
+  _q_token_W15_start:
+    ldloc.s 3
+    ldloc.s 0
+    clt
+    brfalse _q_token_W15_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 5
+    ldloc.s 5
+    ldstr "0"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc18_end
+    pop
+    ldloc.s 5
+    ldstr "9"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc18_end:
+    dup
+    brtrue _q_token_sc17_end
+    pop
+    ldloc.s 5
+    ldstr "."
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc17_end:
+    brfalse _q_token_If16_else
+    ldloc.s 3
+    ldc.i4 1
+    add.ovf
+    stloc.s 3
+    br _q_token_If16_end
+  _q_token_If16_else:
+    br _q_token_W15_end
+  _q_token_If16_end:
+    br _q_token_W15_start
+  _q_token_W15_end:
+    ldloc.s 1
+    stloc.s 6
+    ldarg.s 0
+    ldloc.s 6
+    ldloc.s 3
+    ldloc.s 6
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "num"
+    ldloc.s 3
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If13_else:
+    ldloc.s 2
+    ldstr "a"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc22_end
+    pop
+    ldloc.s 2
+    ldstr "z"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc22_end:
+    dup
+    brtrue _q_token_sc21_end
+    pop
+    ldloc.s 2
+    ldstr "A"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc23_end
+    pop
+    ldloc.s 2
+    ldstr "Z"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc23_end:
+  _q_token_sc21_end:
+    dup
+    brtrue _q_token_sc20_end
+    pop
+    ldloc.s 2
+    ldstr "_"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc20_end:
+    brfalse _q_token_If19_else
+    ldloc.s 1
+    stloc.s 3
+  _q_token_W24_start:
+    ldloc.s 3
+    ldloc.s 0
+    clt
+    brfalse _q_token_W24_end
+    ldarg.s 0
+    ldloc.s 3
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 5
+    ldloc.s 5
+    ldstr "a"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc29_end
+    pop
+    ldloc.s 5
+    ldstr "z"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc29_end:
+    dup
+    brtrue _q_token_sc28_end
+    pop
+    ldloc.s 5
+    ldstr "A"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc30_end
+    pop
+    ldloc.s 5
+    ldstr "Z"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc30_end:
+  _q_token_sc28_end:
+    dup
+    brtrue _q_token_sc27_end
+    pop
+    ldloc.s 5
+    ldstr "0"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_token_sc31_end
+    pop
+    ldloc.s 5
+    ldstr "9"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _q_token_sc31_end:
+  _q_token_sc27_end:
+    dup
+    brtrue _q_token_sc26_end
+    pop
+    ldloc.s 5
+    ldstr "_"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc26_end:
+    brfalse _q_token_If25_else
+    ldloc.s 3
+    ldc.i4 1
+    add.ovf
+    stloc.s 3
+    br _q_token_If25_end
+  _q_token_If25_else:
+    br _q_token_W24_end
+  _q_token_If25_end:
+    br _q_token_W24_start
+  _q_token_W24_end:
+    ldloc.s 1
+    stloc.s 7
+    ldarg.s 0
+    ldloc.s 7
+    ldloc.s 3
+    ldloc.s 7
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "id"
+    ldloc.s 3
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If19_else:
+    ldstr ""
+    stloc.s 8
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    ldloc.s 0
+    clt
+    brfalse _q_token_If32_else
+    ldloc.s 1
+    stloc.s 9
+    ldarg.s 0
+    ldloc.s 9
+    ldloc.s 1
+    ldc.i4 2
+    add.ovf
+    ldloc.s 9
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stloc.s 8
+  _q_token_If32_else:
+    ldloc.s 8
+    ldstr "=="
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_token_sc38_end
+    pop
+    ldloc.s 8
+    ldstr "!="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc38_end:
+    dup
+    brtrue _q_token_sc37_end
+    pop
+    ldloc.s 8
+    ldstr "<="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc37_end:
+    dup
+    brtrue _q_token_sc36_end
+    pop
+    ldloc.s 8
+    ldstr ">="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc36_end:
+    dup
+    brtrue _q_token_sc35_end
+    pop
+    ldloc.s 8
+    ldstr "**"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc35_end:
+    dup
+    brtrue _q_token_sc34_end
+    pop
+    ldloc.s 8
+    ldstr "//"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc34_end:
+    brfalse _q_token_If33_else
+    ldloc.s 8
+    ldstr "op"
+    ldloc.s 1
+    ldc.i4 2
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If33_else:
+    ldloc.s 2
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_token_sc45_end
+    pop
+    ldloc.s 2
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc45_end:
+    dup
+    brtrue _q_token_sc44_end
+    pop
+    ldloc.s 2
+    ldstr "*"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc44_end:
+    dup
+    brtrue _q_token_sc43_end
+    pop
+    ldloc.s 2
+    ldstr "/"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc43_end:
+    dup
+    brtrue _q_token_sc42_end
+    pop
+    ldloc.s 2
+    ldstr "%"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc42_end:
+    dup
+    brtrue _q_token_sc41_end
+    pop
+    ldloc.s 2
+    ldstr "<"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc41_end:
+    dup
+    brtrue _q_token_sc40_end
+    pop
+    ldloc.s 2
+    ldstr ">"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_token_sc40_end:
+    brfalse _q_token_If39_else
+    ldloc.s 2
+    ldstr "op"
+    ldloc.s 1
+    ldc.i4 1
+    add.ovf
+    newobj instance void _QTok::.ctor(string, string, int32)
+    ret
+  _q_token_If39_else:
+    ldstr "df_eval: ky tu khong hop le '"
+    ldloc.s 2
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr "' tai "
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 1
+    call string TkvStr::I32(int32)
+    call string [mscorlib]System.String::Concat(string, string)
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  }
+  .method public static int32 '_q_precedence'(string 'op') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldstr "or"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_precedence_If1_else
+    ldc.i4 1
+    ret
+  _q_precedence_If1_else:
+    ldarg.s 0
+    ldstr "and"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_precedence_If2_else
+    ldc.i4 2
+    ret
+  _q_precedence_If2_else:
+    ldarg.s 0
+    ldstr "not"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_precedence_If3_else
+    ldc.i4 3
+    ret
+  _q_precedence_If3_else:
+    ldarg.s 0
+    ldstr "=="
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_precedence_sc9_end
+    pop
+    ldarg.s 0
+    ldstr "!="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc9_end:
+    dup
+    brtrue _q_precedence_sc8_end
+    pop
+    ldarg.s 0
+    ldstr "<"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc8_end:
+    dup
+    brtrue _q_precedence_sc7_end
+    pop
+    ldarg.s 0
+    ldstr "<="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc7_end:
+    dup
+    brtrue _q_precedence_sc6_end
+    pop
+    ldarg.s 0
+    ldstr ">"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc6_end:
+    dup
+    brtrue _q_precedence_sc5_end
+    pop
+    ldarg.s 0
+    ldstr ">="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc5_end:
+    brfalse _q_precedence_If4_else
+    ldc.i4 4
+    ret
+  _q_precedence_If4_else:
+    ldarg.s 0
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_precedence_sc11_end
+    pop
+    ldarg.s 0
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc11_end:
+    brfalse _q_precedence_If10_else
+    ldc.i4 5
+    ret
+  _q_precedence_If10_else:
+    ldarg.s 0
+    ldstr "*"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_precedence_sc16_end
+    pop
+    ldarg.s 0
+    ldstr "/"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc16_end:
+    dup
+    brtrue _q_precedence_sc15_end
+    pop
+    ldarg.s 0
+    ldstr "%"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc15_end:
+    dup
+    brtrue _q_precedence_sc14_end
+    pop
+    ldarg.s 0
+    ldstr "//"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc14_end:
+    dup
+    brtrue _q_precedence_sc13_end
+    pop
+    ldarg.s 0
+    ldstr "**"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_precedence_sc13_end:
+    brfalse _q_precedence_If12_else
+    ldc.i4 6
+    ret
+  _q_precedence_If12_else:
+    ldc.i4 0
+    ret
+  }
+  .method public static int32 '_q_is_binop'(string 't') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call int32 TKVApp::'_q_precedence'(string)
+    ldc.i4 4
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_is_binop_sc2_end
+    pop
+    ldarg.s 0
+    ldstr "not"
+    call bool [mscorlib]System.String::Equals(string, string)
+    ldc.i4.0
+    ceq
+  _q_is_binop_sc2_end:
+    brfalse _q_is_binop_If1_else
+    ldc.i4 1
+    ret
+  _q_is_binop_If1_else:
+    ldc.i4 0
+    ret
+  }
+  .method public static float64 '_q_col_value'(class DataFrame 'df', string 'name', int32 'row') cil managed
+  {
+    .maxstack 10
+    .locals init (class Series 'col', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldarg.s 1
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 0
+    ldloc.s 0
+    ldarg.s 2
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse _q_col_value_If1_else
+    ldstr "nan"
+    call float64 TkvStr::ParseF64(string)
+    ret
+  _q_col_value_If1_else:
+    ldloc.s 0
+    ldarg.s 2
+    callvirt instance float64 Series::'get_f64'(int32)
+    ret
+  }
+  .method public static float64 '_q_eval_expr'(class DataFrame 'df', int32 'row', string 'text') cil managed
+  {
+    .maxstack 13
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<string> 'ops', valuetype TkvInt 'i', int32 'n', valuetype TkvInt 'expect_operand', class _QTok 'tk', string 'kind', string 'tok', string 'top', class Series 'colq', class _QTok 'tk2', class _QTok 'tk3', string 'sv', valuetype TkvInt 'eq', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 1
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+    ldarg.s 2
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 3
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+  _q_eval_expr_W1_start:
+    ldloc.s 2
+    ldloc.s 3
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+    brfalse _q_eval_expr_W1_end
+    ldarg.s 2
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    call class _QTok TKVApp::'_q_token'(string, int32)
+    stloc.s 5
+    ldloc.s 5
+    ldfld string _QTok::'kind'
+    stloc.s 6
+    ldloc.s 5
+    ldfld string _QTok::'tok'
+    stloc.s 7
+    ldloc.s 5
+    ldfld int32 _QTok::'nxt'
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+    ldloc.s 6
+    ldstr "end"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If2_else
+    br _q_eval_expr_W1_end
+  _q_eval_expr_If2_else:
+    ldloc.s 6
+    ldstr "num"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If3_else
+    ldloc.s 0
+    ldloc.s 7
+    call float64 TkvStr::ParseF64(string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If3_end
+  _q_eval_expr_If3_else:
+    ldloc.s 6
+    ldstr "id"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If4_else
+    ldloc.s 7
+    ldstr "and"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_eval_expr_sc8_end
+    pop
+    ldloc.s 7
+    ldstr "or"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc8_end:
+    dup
+    brtrue _q_eval_expr_sc7_end
+    pop
+    ldloc.s 7
+    ldstr "not"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc7_end:
+    dup
+    brtrue _q_eval_expr_sc6_end
+    pop
+    ldloc.s 7
+    ldstr "in"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc6_end:
+    brfalse _q_eval_expr_If5_else
+    ldloc.s 7
+    call int32 TKVApp::'_q_precedence'(string)
+    ldc.i4 0
+    cgt
+    brfalse _q_eval_expr_If9_else
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_eval_expr_sc11_end
+    pop
+    ldloc.s 7
+    ldstr "not"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc11_end:
+    brfalse _q_eval_expr_If10_else
+    ldloc.s 1
+    ldstr "not"
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br _q_eval_expr_W1_start
+  _q_eval_expr_If10_else:
+  _q_eval_expr_W12_start:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    cgt
+    brfalse _q_eval_expr_W12_end
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    sub.ovf
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldstr "("
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If13_else
+    br _q_eval_expr_W12_end
+  _q_eval_expr_If13_else:
+    ldloc.s 8
+    call int32 TKVApp::'_q_precedence'(string)
+    ldloc.s 7
+    call int32 TKVApp::'_q_precedence'(string)
+    clt
+    brfalse _q_eval_expr_If14_else
+    br _q_eval_expr_W12_end
+  _q_eval_expr_If14_else:
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    ldloc.s 8
+    call float64 TKVApp::'_q_apply_op'(class DataFrame, int32, class [mscorlib]System.Collections.Generic.List`1<float64>, class [mscorlib]System.Collections.Generic.List`1<string>, string)
+    pop
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::RemoveAt(int32)
+    pop
+    br _q_eval_expr_W12_start
+  _q_eval_expr_W12_end:
+    ldloc.s 1
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_W1_start
+  _q_eval_expr_If9_else:
+  _q_eval_expr_If5_else:
+    ldarg.s 0
+    ldloc.s 7
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 0
+    ceq
+    brfalse _q_eval_expr_If15_else
+    ldstr "df_eval: khong biet ten '"
+    ldloc.s 7
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr "'"
+    call string [mscorlib]System.String::Concat(string, string)
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_eval_expr_If15_else:
+    ldarg.s 0
+    ldloc.s 7
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 9
+    ldloc.s 9
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse _q_eval_expr_If16_else
+    ldarg.s 2
+    ldloc.s 2
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    call class _QTok TKVApp::'_q_token'(string, int32)
+    stloc.s 10
+    ldarg.s 2
+    ldloc.s 10
+    ldfld int32 _QTok::'nxt'
+    call class _QTok TKVApp::'_q_token'(string, int32)
+    stloc.s 11
+    ldloc.s 10
+    ldfld string _QTok::'kind'
+    ldstr "op"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brfalse _q_eval_expr_sc19_end
+    pop
+    ldloc.s 10
+    ldfld string _QTok::'tok'
+    ldstr "=="
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _q_eval_expr_sc20_end
+    pop
+    ldloc.s 10
+    ldfld string _QTok::'tok'
+    ldstr "!="
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc20_end:
+  _q_eval_expr_sc19_end:
+    dup
+    brfalse _q_eval_expr_sc18_end
+    pop
+    ldloc.s 11
+    ldfld string _QTok::'kind'
+    ldstr "str"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _q_eval_expr_sc18_end:
+    brfalse _q_eval_expr_If17_else
+    ldloc.s 9
+    ldarg.s 1
+    callvirt instance string Series::'get_string'(int32)
+    stloc.s 12
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    ldloc.s 12
+    ldloc.s 11
+    ldfld string _QTok::'tok'
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If21_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+  _q_eval_expr_If21_else:
+    ldloc.s 10
+    ldfld string _QTok::'tok'
+    ldstr "!="
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If22_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    ldloc.s 13
+    stloc.s 15
+    stloc.s 14
+    ldloca.s 14
+    ldfld object TkvInt::big
+    brtrue _q_eval_expr_int23_slow
+    ldloca.s 15
+    ldfld object TkvInt::big
+    brtrue _q_eval_expr_int23_slow
+    ldloca.s 14
+    ldfld int64 TkvInt::lo
+    ldloca.s 15
+    ldfld int64 TkvInt::lo
+    sub
+    stloc.s 17
+    ldloca.s 14
+    ldfld int64 TkvInt::lo
+    ldloca.s 15
+    ldfld int64 TkvInt::lo
+    xor
+    ldloca.s 14
+    ldfld int64 TkvInt::lo
+    ldloc.s 17
+    xor
+    and
+    ldc.i8 0
+    blt _q_eval_expr_int23_slow
+    ldloca.s 16
+    ldloc.s 17
+    stfld int64 TkvInt::lo
+    ldloca.s 16
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 16
+    br _q_eval_expr_int23_done
+  _q_eval_expr_int23_slow:
+    ldloc.s 14
+    ldloc.s 15
+    call valuetype TkvInt TkvInt::SubSlow(valuetype TkvInt, valuetype TkvInt)
+  _q_eval_expr_int23_done:
+    stloc.s 13
+  _q_eval_expr_If22_else:
+    ldloc.s 0
+    ldloc.s 13
+    call float64 TkvInt::ToF64(valuetype TkvInt)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldloc.s 11
+    ldfld int32 _QTok::'nxt'
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 2
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_W1_start
+  _q_eval_expr_If17_else:
+    ldstr "df_eval: cot str chi ho tro == / != voi chuoi"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_eval_expr_If16_else:
+    ldloc.s 0
+    ldarg.s 0
+    ldloc.s 7
+    ldarg.s 1
+    call float64 TKVApp::'_q_col_value'(class DataFrame, string, int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If4_end
+  _q_eval_expr_If4_else:
+    ldloc.s 6
+    ldstr "str"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If24_else
+    ldloc.s 0
+    ldloc.s 7
+    call float64 TkvStr::ParseF64(string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If24_end
+  _q_eval_expr_If24_else:
+    ldloc.s 6
+    ldstr "lp"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If25_else
+    ldloc.s 1
+    ldstr "("
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If25_end
+  _q_eval_expr_If25_else:
+    ldloc.s 6
+    ldstr "rp"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If26_else
+  _q_eval_expr_W27_start:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    cgt
+    brfalse _q_eval_expr_W27_end
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    sub.ovf
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldstr "("
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If28_else
+    br _q_eval_expr_W27_end
+  _q_eval_expr_If28_else:
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    ldloc.s 8
+    call float64 TKVApp::'_q_apply_op'(class DataFrame, int32, class [mscorlib]System.Collections.Generic.List`1<float64>, class [mscorlib]System.Collections.Generic.List`1<string>, string)
+    pop
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::RemoveAt(int32)
+    pop
+    br _q_eval_expr_W27_start
+  _q_eval_expr_W27_end:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    ceq
+    brfalse _q_eval_expr_If29_else
+    ldstr "df_eval: ngoac khong khop"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_eval_expr_If29_else:
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::RemoveAt(int32)
+    pop
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If26_end
+  _q_eval_expr_If26_else:
+    ldloc.s 6
+    ldstr "op"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If30_else
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse _q_eval_expr_If31_else
+    ldloc.s 7
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If32_else
+    ldloc.s 0
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_If32_end
+  _q_eval_expr_If32_else:
+    ldloc.s 7
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If33_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _q_eval_expr_W1_start
+  _q_eval_expr_If33_else:
+  _q_eval_expr_If32_end:
+  _q_eval_expr_If31_else:
+  _q_eval_expr_W34_start:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    cgt
+    brfalse _q_eval_expr_W34_end
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    sub.ovf
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldstr "("
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If35_else
+    br _q_eval_expr_W34_end
+  _q_eval_expr_If35_else:
+    ldloc.s 8
+    call int32 TKVApp::'_q_precedence'(string)
+    ldloc.s 7
+    call int32 TKVApp::'_q_precedence'(string)
+    clt
+    brfalse _q_eval_expr_If36_else
+    br _q_eval_expr_W34_end
+  _q_eval_expr_If36_else:
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    ldloc.s 8
+    call float64 TKVApp::'_q_apply_op'(class DataFrame, int32, class [mscorlib]System.Collections.Generic.List`1<float64>, class [mscorlib]System.Collections.Generic.List`1<string>, string)
+    pop
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::RemoveAt(int32)
+    pop
+    br _q_eval_expr_W34_start
+  _q_eval_expr_W34_end:
+    ldloc.s 1
+    ldloc.s 7
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+  _q_eval_expr_If30_else:
+  _q_eval_expr_If26_end:
+  _q_eval_expr_If25_end:
+  _q_eval_expr_If24_end:
+  _q_eval_expr_If4_end:
+  _q_eval_expr_If3_end:
+    br _q_eval_expr_W1_start
+  _q_eval_expr_W1_end:
+  _q_eval_expr_W37_start:
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 0
+    cgt
+    brfalse _q_eval_expr_W37_end
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4 1
+    sub.ovf
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 8
+    ldloc.s 8
+    ldstr "("
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_eval_expr_If38_else
+    ldstr "df_eval: ngoac khong khop"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_eval_expr_If38_else:
+    ldarg.s 0
+    ldarg.s 1
+    ldloc.s 0
+    ldloc.s 1
+    ldloc.s 8
+    call float64 TKVApp::'_q_apply_op'(class DataFrame, int32, class [mscorlib]System.Collections.Generic.List`1<float64>, class [mscorlib]System.Collections.Generic.List`1<string>, string)
+    pop
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::RemoveAt(int32)
+    pop
+    br _q_eval_expr_W37_start
+  _q_eval_expr_W37_end:
+    ldloc.s 0
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4 1
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse _q_eval_expr_If39_else
+    ldstr "df_eval: bieu thuc khong hop le"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_eval_expr_If39_else:
+    ldloc.s 0
+    ldc.i4 0
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
+    ret
+  }
+  .method public static float64 '_q_apply_op'(class DataFrame 'df', int32 'row', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class [mscorlib]System.Collections.Generic.List`1<string> 'ops', string 'op') cil managed
+  {
+    .maxstack 10
+    .locals init (float64 'v', float64 'b', float64 'a', int32 '__idiv2262424783744_a', int32 '__idiv2262424783744_b', int32 '__idiv2262424783744_q', int32 '__idiv2262424783744_r', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 4
+    ldstr "not"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If1_else
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::RemoveAt(int32)
+    stloc.s 0
+    ldloc.s 0
+    ldc.r8 0.0
+    ceq
+    brfalse _q_apply_op_If2_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If2_end
+  _q_apply_op_If2_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If2_end:
+    ldc.r8 0.0
+    ret
+  _q_apply_op_If1_else:
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4 2
+    clt
+    brfalse _q_apply_op_If3_else
+    ldstr "df_eval: thieu toan hang cho '"
+    ldarg.s 4
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr "'"
+    call string [mscorlib]System.String::Concat(string, string)
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _q_apply_op_If3_else:
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::RemoveAt(int32)
+    stloc.s 1
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
+    ldarg.s 2
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Count()
+    ldc.i4.1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::RemoveAt(int32)
+    stloc.s 2
+    ldarg.s 4
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If4_else
+    ldarg.s 2
+    ldloc.s 2
+    ldloc.s 1
+    add
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If4_end
+  _q_apply_op_If4_else:
+    ldarg.s 4
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If5_else
+    ldarg.s 2
+    ldloc.s 2
+    ldloc.s 1
+    sub
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If5_end
+  _q_apply_op_If5_else:
+    ldarg.s 4
+    ldstr "*"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If6_else
+    ldarg.s 2
+    ldloc.s 2
+    ldloc.s 1
+    mul
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If6_end
+  _q_apply_op_If6_else:
+    ldarg.s 4
+    ldstr "/"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If7_else
+    ldarg.s 2
+    ldloc.s 2
+    ldloc.s 1
+    div
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If7_end
+  _q_apply_op_If7_else:
+    ldarg.s 4
+    ldstr "%"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If8_else
+    ldarg.s 2
+    ldloc.s 2
+    ldloc.s 1
+    rem
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If8_end
+  _q_apply_op_If8_else:
+    ldarg.s 4
+    ldstr "//"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If9_else
+    ldarg.s 2
+    ldloc.s 2
+    conv.i4
+    stloc.s 3
+    ldloc.s 1
+    conv.i4
+    stloc.s 4
+    ldloc.s 3
+    ldloc.s 4
+    div
+    stloc.s 5
+    ldloc.s 3
+    ldloc.s 4
+    rem
+    stloc.s 6
+    ldloc.s 6
+    ldc.i4.0
+    beq _q_apply_op_idiv10_done
+    ldloc.s 3
+    ldloc.s 4
+    xor
+    ldc.i4.0
+    bge _q_apply_op_idiv10_done
+    ldloc.s 5
+    ldc.i4.1
+    sub
+    stloc.s 5
+  _q_apply_op_idiv10_done:
+    ldloc.s 5
+    conv.r8
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If9_end
+  _q_apply_op_If9_else:
+    ldarg.s 4
+    ldstr "**"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If11_else
+    ldarg.s 2
+    ldloc.s 2
+    conv.r8
+    ldloc.s 1
+    conv.r8
+    call float64 [mscorlib]System.Math::Pow(float64, float64)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If11_end
+  _q_apply_op_If11_else:
+    ldarg.s 4
+    ldstr "=="
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If12_else
+    ldloc.s 2
+    ldloc.s 1
+    ceq
+    brfalse _q_apply_op_If13_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If13_end
+  _q_apply_op_If13_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If13_end:
+    br _q_apply_op_If12_end
+  _q_apply_op_If12_else:
+    ldarg.s 4
+    ldstr "!="
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If14_else
+    ldloc.s 2
+    ldloc.s 1
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse _q_apply_op_If15_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If15_end
+  _q_apply_op_If15_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If15_end:
+    br _q_apply_op_If14_end
+  _q_apply_op_If14_else:
+    ldarg.s 4
+    ldstr "<"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If16_else
+    ldloc.s 2
+    ldloc.s 1
+    clt
+    brfalse _q_apply_op_If17_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If17_end
+  _q_apply_op_If17_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If17_end:
+    br _q_apply_op_If16_end
+  _q_apply_op_If16_else:
+    ldarg.s 4
+    ldstr "<="
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If18_else
+    ldloc.s 2
+    ldloc.s 1
+    cgt
+    ldc.i4.0
+    ceq
+    brfalse _q_apply_op_If19_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If19_end
+  _q_apply_op_If19_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If19_end:
+    br _q_apply_op_If18_end
+  _q_apply_op_If18_else:
+    ldarg.s 4
+    ldstr ">"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If20_else
+    ldloc.s 2
+    ldloc.s 1
+    cgt
+    brfalse _q_apply_op_If21_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If21_end
+  _q_apply_op_If21_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If21_end:
+    br _q_apply_op_If20_end
+  _q_apply_op_If20_else:
+    ldarg.s 4
+    ldstr ">="
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If22_else
+    ldloc.s 2
+    ldloc.s 1
+    clt
+    ldc.i4.0
+    ceq
+    brfalse _q_apply_op_If23_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If23_end
+  _q_apply_op_If23_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If23_end:
+    br _q_apply_op_If22_end
+  _q_apply_op_If22_else:
+    ldarg.s 4
+    ldstr "and"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If24_else
+    ldloc.s 2
+    ldc.r8 0.0
+    ceq
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _q_apply_op_sc26_end
+    pop
+    ldloc.s 1
+    ldc.r8 0.0
+    ceq
+    ldc.i4.0
+    ceq
+  _q_apply_op_sc26_end:
+    brfalse _q_apply_op_If25_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If25_end
+  _q_apply_op_If25_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If25_end:
+    br _q_apply_op_If24_end
+  _q_apply_op_If24_else:
+    ldarg.s 4
+    ldstr "or"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _q_apply_op_If27_else
+    ldloc.s 2
+    ldc.r8 0.0
+    ceq
+    ldc.i4.0
+    ceq
+    dup
+    brtrue _q_apply_op_sc29_end
+    pop
+    ldloc.s 1
+    ldc.r8 0.0
+    ceq
+    ldc.i4.0
+    ceq
+  _q_apply_op_sc29_end:
+    brfalse _q_apply_op_If28_else
+    ldarg.s 2
+    ldc.r8 1.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br _q_apply_op_If28_end
+  _q_apply_op_If28_else:
+    ldarg.s 2
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+  _q_apply_op_If28_end:
+  _q_apply_op_If27_else:
+  _q_apply_op_If24_end:
+  _q_apply_op_If22_end:
+  _q_apply_op_If20_end:
+  _q_apply_op_If18_end:
+  _q_apply_op_If16_end:
+  _q_apply_op_If14_end:
+  _q_apply_op_If12_end:
+  _q_apply_op_If11_end:
+  _q_apply_op_If9_end:
+  _q_apply_op_If8_end:
+  _q_apply_op_If7_end:
+  _q_apply_op_If6_end:
+  _q_apply_op_If5_end:
+  _q_apply_op_If4_end:
+    ldc.r8 0.0
+    ret
+  }
+  .method public static class Series 'df_eval'(class DataFrame 'df', string 'expr') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals', class Mask 'mk', int32 'i', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 1
+    ldloc.s 0
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  df_eval_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge df_eval_L1_end
+    ldloc.s 1
+    ldarg.s 0
+    ldloc.s 3
+    ldarg.s 1
+    call float64 TKVApp::'_q_eval_expr'(class DataFrame, int32, string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldloc.s 2
+    ldloc.s 3
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  df_eval_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br df_eval_L1_start
+  df_eval_L1_end:
+    ldstr "eval"
+    ldloc.s 1
+    ldloc.s 2
+    call class Series TKVApp::'make_series_f64_with_mask'(string, class [mscorlib]System.Collections.Generic.List`1<float64>, class Mask)
+    ret
+  }
+  .method public static class DataFrame 'df_query'(class DataFrame 'df', string 'expr') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<int32> 'keep', int32 'i', class [mscorlib]System.Collections.Generic.List`1<class Series> 'cols', int32 'c', class DataFrame 'out', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    call class [mscorlib]System.Collections.Generic.List`1<int32> TKVApp::'make_idx'(class [mscorlib]System.Collections.Generic.List`1<int32>)
+    stloc.s 1
+    ldc.i4.0
+    stloc.s 2
+  df_query_L1_start:
+    ldloc.s 2
+    ldloc.s 0
+    bge df_query_L1_end
+    ldarg.s 0
+    ldloc.s 2
+    ldarg.s 1
+    call float64 TKVApp::'_q_eval_expr'(class DataFrame, int32, string)
+    ldc.r8 0.0
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse df_query_If2_else
+    ldloc.s 1
+    ldloc.s 2
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+  df_query_If2_else:
+  df_query_L1_cont:
+    ldloc.s 2
+    ldc.i4 1
+    add
+    stloc.s 2
+    br df_query_L1_start
+  df_query_L1_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    stloc.s 3
+    ldc.i4.0
+    stloc.s 4
+  df_query_L3_start:
+    ldloc.s 4
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'column_count'()
+    bge df_query_L3_end
+    ldloc.s 3
+    ldarg.s 0
+    ldloc.s 4
+    callvirt instance class Series DataFrame::'col_at'(int32)
+    ldloc.s 1
+    callvirt instance class Series Series::'take'(class [mscorlib]System.Collections.Generic.List`1<int32>)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  df_query_L3_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br df_query_L3_start
+  df_query_L3_end:
+    newobj instance void DataFrame::.ctor()
+    stloc.s 5
+    ldloc.s 5
+    ldloc.s 3
+    stfld class [mscorlib]System.Collections.Generic.List`1<class Series> DataFrame::'cols'
+    ldloc.s 5
+    ret
+  }
+  .method public static class _JTok '_jt_new'(int32 'kind') cil managed
+  {
+    .maxstack 13
+    .locals init (class _JTok 't', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldc.r8 0.0
+    ldc.i4 0
+    ldstr ""
+    ldc.i4 0
+    newobj instance void _JTok::.ctor(int32, float64, int32, string, int32)
+    stloc.s 0
+    ldloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class _JTok>::.ctor()
+    stfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    ldloc.s 0
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    ldloc.s 0
+    ret
+  }
+  .method public static string '_jt_str_raw'(string 's') cil managed
+  {
+    .maxstack 10
+    .locals init (string 'out', valuetype TkvInt 'i', int32 'n', class [mscorlib]System.Text.StringBuilder '__sb_out', string 'c', string 'c2', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldstr ""
+    stloc.s 0
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 1
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 2
+    ldloc.s 0
+    newobj instance void [mscorlib]System.Text.StringBuilder::.ctor(string)
+    stloc.s 3
+  _jt_str_raw_W1_start:
+    ldloc.s 1
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse _jt_str_raw_W1_end
+    ldarg.s 0
+    ldloc.s 1
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 4
+    ldloc.s 4
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brfalse _jt_str_raw_sc3_end
+    pop
+    ldloc.s 1
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int4_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int4_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int4_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int4_done
+  _jt_str_raw_int4_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int4_done:
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+  _jt_str_raw_sc3_end:
+    brfalse _jt_str_raw_If2_else
+    ldarg.s 0
+    ldloc.s 1
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int5_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int5_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int5_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int5_done
+  _jt_str_raw_int5_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int5_done:
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 5
+    ldloc.s 5
+    ldstr "n"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If6_else
+    ldloc.s 3
+    ldstr "\n"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int7_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int7_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int7_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int7_done
+  _jt_str_raw_int7_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int7_done:
+    stloc.s 1
+    br _jt_str_raw_If6_end
+  _jt_str_raw_If6_else:
+    ldloc.s 5
+    ldstr "t"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If8_else
+    ldloc.s 3
+    ldstr "\t"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int9_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int9_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int9_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int9_done
+  _jt_str_raw_int9_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int9_done:
+    stloc.s 1
+    br _jt_str_raw_If8_end
+  _jt_str_raw_If8_else:
+    ldloc.s 5
+    ldstr "r"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If10_else
+    ldloc.s 3
+    ldstr "\r"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int11_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int11_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int11_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int11_done
+  _jt_str_raw_int11_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int11_done:
+    stloc.s 1
+    br _jt_str_raw_If10_end
+  _jt_str_raw_If10_else:
+    ldloc.s 5
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If12_else
+    ldloc.s 3
+    ldstr "\""
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int13_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int13_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int13_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int13_done
+  _jt_str_raw_int13_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int13_done:
+    stloc.s 1
+    br _jt_str_raw_If12_end
+  _jt_str_raw_If12_else:
+    ldloc.s 5
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If14_else
+    ldloc.s 3
+    ldstr "\\"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int15_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int15_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int15_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int15_done
+  _jt_str_raw_int15_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int15_done:
+    stloc.s 1
+    br _jt_str_raw_If14_end
+  _jt_str_raw_If14_else:
+    ldloc.s 5
+    ldstr "/"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_str_raw_If16_else
+    ldloc.s 3
+    ldstr "/"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int17_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int17_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int17_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int17_done
+  _jt_str_raw_int17_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int17_done:
+    stloc.s 1
+    br _jt_str_raw_If16_end
+  _jt_str_raw_If16_else:
+    ldloc.s 5
+    ldstr "u"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brfalse _jt_str_raw_sc19_end
+    pop
+    ldloc.s 1
+    ldc.i8 5
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int20_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int20_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int20_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int20_done
+  _jt_str_raw_int20_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int20_done:
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+  _jt_str_raw_sc19_end:
+    brfalse _jt_str_raw_If18_else
+    ldloc.s 1
+    ldc.i8 4
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int21_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int21_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int21_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int21_done
+  _jt_str_raw_int21_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int21_done:
+    stloc.s 1
+    br _jt_str_raw_If18_end
+  _jt_str_raw_If18_else:
+    ldloc.s 3
+    ldloc.s 5
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int22_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int22_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int22_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int22_done
+  _jt_str_raw_int22_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int22_done:
+    stloc.s 1
+  _jt_str_raw_If18_end:
+  _jt_str_raw_If16_end:
+  _jt_str_raw_If14_end:
+  _jt_str_raw_If12_end:
+  _jt_str_raw_If10_end:
+  _jt_str_raw_If8_end:
+  _jt_str_raw_If6_end:
+    br _jt_str_raw_If2_end
+  _jt_str_raw_If2_else:
+    ldloc.s 3
+    ldloc.s 4
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldloc.s 1
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    stloc.s 6
+    ldloca.s 6
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int23_slow
+    ldloca.s 7
+    ldfld object TkvInt::big
+    brtrue _jt_str_raw_int23_slow
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 9
+    ldloca.s 6
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    ldloca.s 7
+    ldfld int64 TkvInt::lo
+    ldloc.s 9
+    xor
+    and
+    ldc.i8 0
+    blt _jt_str_raw_int23_slow
+    ldloca.s 8
+    ldloc.s 9
+    stfld int64 TkvInt::lo
+    ldloca.s 8
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 8
+    br _jt_str_raw_int23_done
+  _jt_str_raw_int23_slow:
+    ldloc.s 6
+    ldloc.s 7
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  _jt_str_raw_int23_done:
+    stloc.s 1
+  _jt_str_raw_If2_end:
+    br _jt_str_raw_W1_start
+  _jt_str_raw_W1_end:
+    ldloc.s 3
+    callvirt instance string [mscorlib]System.Object::ToString()
+    stloc.s 0
+    ldloc.s 0
+    ret
+  }
+  .method public static int32 '_jt_hex_digit'(string 'ch') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldstr "0"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If1_else
+    ldc.i4 0
+    ret
+  _jt_hex_digit_If1_else:
+    ldarg.s 0
+    ldstr "1"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If2_else
+    ldc.i4 1
+    ret
+  _jt_hex_digit_If2_else:
+    ldarg.s 0
+    ldstr "2"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If3_else
+    ldc.i4 2
+    ret
+  _jt_hex_digit_If3_else:
+    ldarg.s 0
+    ldstr "3"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If4_else
+    ldc.i4 3
+    ret
+  _jt_hex_digit_If4_else:
+    ldarg.s 0
+    ldstr "4"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If5_else
+    ldc.i4 4
+    ret
+  _jt_hex_digit_If5_else:
+    ldarg.s 0
+    ldstr "5"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If6_else
+    ldc.i4 5
+    ret
+  _jt_hex_digit_If6_else:
+    ldarg.s 0
+    ldstr "6"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If7_else
+    ldc.i4 6
+    ret
+  _jt_hex_digit_If7_else:
+    ldarg.s 0
+    ldstr "7"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If8_else
+    ldc.i4 7
+    ret
+  _jt_hex_digit_If8_else:
+    ldarg.s 0
+    ldstr "8"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If9_else
+    ldc.i4 8
+    ret
+  _jt_hex_digit_If9_else:
+    ldarg.s 0
+    ldstr "9"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_hex_digit_If10_else
+    ldc.i4 9
+    ret
+  _jt_hex_digit_If10_else:
+    ldarg.s 0
+    ldstr "a"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc12_end
+    pop
+    ldarg.s 0
+    ldstr "A"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc12_end:
+    brfalse _jt_hex_digit_If11_else
+    ldc.i4 10
+    ret
+  _jt_hex_digit_If11_else:
+    ldarg.s 0
+    ldstr "b"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc14_end
+    pop
+    ldarg.s 0
+    ldstr "B"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc14_end:
+    brfalse _jt_hex_digit_If13_else
+    ldc.i4 11
+    ret
+  _jt_hex_digit_If13_else:
+    ldarg.s 0
+    ldstr "c"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc16_end
+    pop
+    ldarg.s 0
+    ldstr "C"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc16_end:
+    brfalse _jt_hex_digit_If15_else
+    ldc.i4 12
+    ret
+  _jt_hex_digit_If15_else:
+    ldarg.s 0
+    ldstr "d"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc18_end
+    pop
+    ldarg.s 0
+    ldstr "D"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc18_end:
+    brfalse _jt_hex_digit_If17_else
+    ldc.i4 13
+    ret
+  _jt_hex_digit_If17_else:
+    ldarg.s 0
+    ldstr "e"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc20_end
+    pop
+    ldarg.s 0
+    ldstr "E"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc20_end:
+    brfalse _jt_hex_digit_If19_else
+    ldc.i4 14
+    ret
+  _jt_hex_digit_If19_else:
+    ldarg.s 0
+    ldstr "f"
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_hex_digit_sc22_end
+    pop
+    ldarg.s 0
+    ldstr "F"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_hex_digit_sc22_end:
+    brfalse _jt_hex_digit_If21_else
+    ldc.i4 15
+    ret
+  _jt_hex_digit_If21_else:
+    ldc.i4 1
+    neg
+    ret
+  }
+  .method public static int32 '_jt_hex4'(string 's') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'd0', int32 'd1', int32 'd2', int32 'd3', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldc.i4 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    call int32 TKVApp::'_jt_hex_digit'(string)
+    stloc.s 0
+    ldarg.s 0
+    ldc.i4 1
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    call int32 TKVApp::'_jt_hex_digit'(string)
+    stloc.s 1
+    ldarg.s 0
+    ldc.i4 2
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    call int32 TKVApp::'_jt_hex_digit'(string)
+    stloc.s 2
+    ldarg.s 0
+    ldc.i4 3
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    call int32 TKVApp::'_jt_hex_digit'(string)
+    stloc.s 3
+    ldloc.s 0
+    ldc.i4 0
+    clt
+    dup
+    brtrue _jt_hex4_sc4_end
+    pop
+    ldloc.s 1
+    ldc.i4 0
+    clt
+  _jt_hex4_sc4_end:
+    dup
+    brtrue _jt_hex4_sc3_end
+    pop
+    ldloc.s 2
+    ldc.i4 0
+    clt
+  _jt_hex4_sc3_end:
+    dup
+    brtrue _jt_hex4_sc2_end
+    pop
+    ldloc.s 3
+    ldc.i4 0
+    clt
+  _jt_hex4_sc2_end:
+    brfalse _jt_hex4_If1_else
+    ldc.i4 1
+    neg
+    ret
+  _jt_hex4_If1_else:
+    ldloc.s 0
+    ldc.i4 4096
+    mul.ovf
+    ldloc.s 1
+    ldc.i4 256
+    mul.ovf
+    add.ovf
+    ldloc.s 2
+    ldc.i4 16
+    mul.ovf
+    add.ovf
+    ldloc.s 3
+    add.ovf
+    ret
+  }
+  .method public static int32 '_jt_skip_ws'(string 's', int32 'i') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', string 'c', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 0
+  _jt_skip_ws_W1_start:
+    ldarg.s 1
+    ldloc.s 0
+    clt
+    brfalse _jt_skip_ws_W1_end
+    ldarg.s 0
+    ldarg.s 1
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 1
+    ldloc.s 1
+    ldstr " "
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue _jt_skip_ws_sc5_end
+    pop
+    ldloc.s 1
+    ldstr "\t"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_skip_ws_sc5_end:
+    dup
+    brtrue _jt_skip_ws_sc4_end
+    pop
+    ldloc.s 1
+    ldstr "\n"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_skip_ws_sc4_end:
+    dup
+    brtrue _jt_skip_ws_sc3_end
+    pop
+    ldloc.s 1
+    ldstr "\r"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_skip_ws_sc3_end:
+    brfalse _jt_skip_ws_If2_else
+    ldarg.s 1
+    ldc.i4 1
+    add.ovf
+    starg.s 1
+    br _jt_skip_ws_If2_end
+  _jt_skip_ws_If2_else:
+    br _jt_skip_ws_W1_end
+  _jt_skip_ws_If2_end:
+    br _jt_skip_ws_W1_start
+  _jt_skip_ws_W1_end:
+    ldarg.s 1
+    ret
+  }
+  .method public static class _JTok '_jt_parse'(string 's', int32 'pos') cil managed
+  {
+    .maxstack 11
+    .locals init (int32 'i', int32 'n', string 'c', class _JTok 't', valuetype TkvInt 'more', int32 'j', string 'key', int32 '__slice2262430603824_start', class _JTok 'v', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist81', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist82', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist83', int32 '__slice2262430439264_start', int32 '__slice2262430598464_start', int32 '__slice2262430598944_start', int32 '__slice2262430592240_start', string 'cj', int32 '__slice2262430593920_start', int32 '__slice2262430594000_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldarg.s 1
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 1
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    ldc.i4.0
+    ceq
+    brfalse _jt_parse_If1_else
+    ldstr "json: het chuoi khi con dang parse"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If1_else:
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 2
+    ldloc.s 2
+    ldstr "{"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If2_else
+    ldc.i4 1
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    ldarg.s 0
+    ldloc.s 0
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc4_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "}"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc4_end:
+    brfalse _jt_parse_If3_else
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If3_else:
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+  _jt_parse_W5_start:
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse _jt_parse_W5_end
+    ldarg.s 0
+    ldloc.s 0
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brtrue _jt_parse_sc7_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    ldc.i4.0
+    ceq
+  _jt_parse_sc7_end:
+    brfalse _jt_parse_If6_else
+    ldstr "json: doi key string"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If6_else:
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 5
+  _jt_parse_W8_start:
+    ldloc.s 5
+    ldloc.s 1
+    clt
+    brfalse _jt_parse_W8_end
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If9_else
+    ldloc.s 5
+    ldc.i4 2
+    add.ovf
+    stloc.s 5
+    br _jt_parse_W8_start
+  _jt_parse_If9_else:
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If10_else
+    br _jt_parse_W8_end
+  _jt_parse_If10_else:
+    ldloc.s 5
+    ldc.i4 1
+    add.ovf
+    stloc.s 5
+    br _jt_parse_W8_start
+  _jt_parse_W8_end:
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 7
+    ldarg.s 0
+    ldloc.s 7
+    ldloc.s 5
+    ldloc.s 7
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    call string TKVApp::'_jt_str_raw'(string)
+    stloc.s 6
+    ldarg.s 0
+    ldloc.s 5
+    ldc.i4 1
+    add.ovf
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brtrue _jt_parse_sc12_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr ":"
+    call bool [mscorlib]System.String::Equals(string, string)
+    ldc.i4.0
+    ceq
+  _jt_parse_sc12_end:
+    brfalse _jt_parse_If11_else
+    ldstr "json: doi ':'"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If11_else:
+    ldarg.s 0
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    call class _JTok TKVApp::'_jt_parse'(string, int32)
+    stloc.s 8
+    ldloc.s 3
+    ldfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    stloc.s 9
+    ldloc.s 9
+    ldloc.s 6
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldloc.s 3
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 10
+    ldloc.s 10
+    ldloc.s 8
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class _JTok>::Add(!0)
+    ldarg.s 0
+    ldloc.s 8
+    ldfld int32 _JTok::'end'
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc14_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr ","
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc14_end:
+    brfalse _jt_parse_If13_else
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    br _jt_parse_W5_start
+  _jt_parse_If13_else:
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc16_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "}"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc16_end:
+    brfalse _jt_parse_If15_else
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    ldloc.s 3
+    ldloc.s 0
+    stfld int32 _JTok::'end'
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _jt_parse_If15_end
+  _jt_parse_If15_else:
+    ldstr "json: doi ',' hoac '}' trong object"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If15_end:
+    br _jt_parse_W5_start
+  _jt_parse_W5_end:
+    ldloc.s 3
+    ret
+  _jt_parse_If2_else:
+    ldloc.s 2
+    ldstr "["
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If17_else
+    ldc.i4 2
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    ldarg.s 0
+    ldloc.s 0
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc19_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "]"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc19_end:
+    brfalse _jt_parse_If18_else
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If18_else:
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+  _jt_parse_W20_start:
+    ldloc.s 4
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse _jt_parse_W20_end
+    ldarg.s 0
+    ldloc.s 0
+    call class _JTok TKVApp::'_jt_parse'(string, int32)
+    stloc.s 8
+    ldloc.s 3
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 11
+    ldloc.s 11
+    ldloc.s 8
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class _JTok>::Add(!0)
+    ldarg.s 0
+    ldloc.s 8
+    ldfld int32 _JTok::'end'
+    call int32 TKVApp::'_jt_skip_ws'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc22_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr ","
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc22_end:
+    brfalse _jt_parse_If21_else
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    br _jt_parse_W20_start
+  _jt_parse_If21_else:
+    ldloc.s 0
+    ldloc.s 1
+    clt
+    dup
+    brfalse _jt_parse_sc24_end
+    pop
+    ldarg.s 0
+    ldloc.s 0
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "]"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc24_end:
+    brfalse _jt_parse_If23_else
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 0
+    ldloc.s 3
+    ldloc.s 0
+    stfld int32 _JTok::'end'
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 4
+    br _jt_parse_If23_end
+  _jt_parse_If23_else:
+    ldstr "json: doi ',' hoac ']' trong array"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If23_end:
+    br _jt_parse_W20_start
+  _jt_parse_W20_end:
+    ldloc.s 3
+    ret
+  _jt_parse_If17_else:
+    ldloc.s 2
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If25_else
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 5
+  _jt_parse_W26_start:
+    ldloc.s 5
+    ldloc.s 1
+    clt
+    brfalse _jt_parse_W26_end
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If27_else
+    ldloc.s 5
+    ldc.i4 2
+    add.ovf
+    stloc.s 5
+    br _jt_parse_W26_start
+  _jt_parse_If27_else:
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_parse_If28_else
+    br _jt_parse_W26_end
+  _jt_parse_If28_else:
+    ldloc.s 5
+    ldc.i4 1
+    add.ovf
+    stloc.s 5
+    br _jt_parse_W26_start
+  _jt_parse_W26_end:
+    ldc.i4 4
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 1
+    add.ovf
+    stloc.s 12
+    ldarg.s 0
+    ldloc.s 12
+    ldloc.s 5
+    ldloc.s 12
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    call string TKVApp::'_jt_str_raw'(string)
+    stfld string _JTok::'s'
+    ldloc.s 3
+    ldloc.s 5
+    ldc.i4 1
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If25_else:
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    ldloc.s 1
+    cgt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _jt_parse_sc30_end
+    pop
+    ldloc.s 0
+    stloc.s 13
+    ldarg.s 0
+    ldloc.s 13
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    ldloc.s 13
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "true"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc30_end:
+    brfalse _jt_parse_If29_else
+    ldc.i4 5
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 3
+    ldc.i4 1
+    stfld int32 _JTok::'b'
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If29_else:
+    ldloc.s 0
+    ldc.i4 5
+    add.ovf
+    ldloc.s 1
+    cgt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _jt_parse_sc32_end
+    pop
+    ldloc.s 0
+    stloc.s 14
+    ldarg.s 0
+    ldloc.s 14
+    ldloc.s 0
+    ldc.i4 5
+    add.ovf
+    ldloc.s 14
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "false"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc32_end:
+    brfalse _jt_parse_If31_else
+    ldc.i4 5
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 5
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If31_else:
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    ldloc.s 1
+    cgt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _jt_parse_sc34_end
+    pop
+    ldloc.s 0
+    stloc.s 15
+    ldarg.s 0
+    ldloc.s 15
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    ldloc.s 15
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    ldstr "null"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc34_end:
+    brfalse _jt_parse_If33_else
+    ldc.i4 6
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 3
+    ldloc.s 0
+    ldc.i4 4
+    add.ovf
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  _jt_parse_If33_else:
+    ldloc.s 0
+    stloc.s 5
+  _jt_parse_W35_start:
+    ldloc.s 5
+    ldloc.s 1
+    clt
+    brfalse _jt_parse_W35_end
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 16
+    ldloc.s 16
+    ldstr "0"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    dup
+    brfalse _jt_parse_sc42_end
+    pop
+    ldloc.s 16
+    ldstr "9"
+    call int32 [mscorlib]System.String::CompareOrdinal(string, string)
+    ldc.i4.0
+    cgt
+    ldc.i4.0
+    ceq
+  _jt_parse_sc42_end:
+    dup
+    brtrue _jt_parse_sc41_end
+    pop
+    ldloc.s 16
+    ldstr "-"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc41_end:
+    dup
+    brtrue _jt_parse_sc40_end
+    pop
+    ldloc.s 16
+    ldstr "+"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc40_end:
+    dup
+    brtrue _jt_parse_sc39_end
+    pop
+    ldloc.s 16
+    ldstr "."
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc39_end:
+    dup
+    brtrue _jt_parse_sc38_end
+    pop
+    ldloc.s 16
+    ldstr "e"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc38_end:
+    dup
+    brtrue _jt_parse_sc37_end
+    pop
+    ldloc.s 16
+    ldstr "E"
+    call bool [mscorlib]System.String::Equals(string, string)
+  _jt_parse_sc37_end:
+    brfalse _jt_parse_If36_else
+    ldloc.s 5
+    ldc.i4 1
+    add.ovf
+    stloc.s 5
+    br _jt_parse_If36_end
+  _jt_parse_If36_else:
+    br _jt_parse_W35_end
+  _jt_parse_If36_end:
+    br _jt_parse_W35_start
+  _jt_parse_W35_end:
+    ldloc.s 5
+    ldloc.s 0
+    ceq
+    brfalse _jt_parse_If43_else
+    ldstr "json: ky tu khong hop le '"
+    ldloc.s 2
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr "'"
+    call string [mscorlib]System.String::Concat(string, string)
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  _jt_parse_If43_else:
+    ldc.i4 3
+    call class _JTok TKVApp::'_jt_new'(int32)
+    stloc.s 3
+    ldloc.s 3
+    ldloc.s 0
+    stloc.s 17
+    ldarg.s 0
+    ldloc.s 17
+    ldloc.s 5
+    ldloc.s 17
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    call float64 TkvStr::ParseF64(string)
+    stfld float64 _JTok::'f'
+    ldloc.s 3
+    ldloc.s 0
+    stloc.s 18
+    ldarg.s 0
+    ldloc.s 18
+    ldloc.s 5
+    ldloc.s 18
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stfld string _JTok::'s'
+    ldloc.s 3
+    ldloc.s 5
+    stfld int32 _JTok::'end'
+    ldloc.s 3
+    ret
+  }
+  .method public static class _JTok '_jt_obj_get'(class _JTok 'o', string 'key') cil managed
+  {
+    .maxstack 10
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> '__hoist84', int32 'k', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist85', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    stloc.s 0
+    ldc.i4.0
+    stloc.s 1
+  _jt_obj_get_L1_start:
+    ldloc.s 1
+    ldloc.s 0
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge _jt_obj_get_L1_end
+    ldarg.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    ldloc.s 1
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    ldarg.s 1
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jt_obj_get_If2_else
+    ldarg.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 2
+    ldloc.s 2
+    ldloc.s 1
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    ret
+  _jt_obj_get_If2_else:
+  _jt_obj_get_L1_cont:
+    ldloc.s 1
+    ldc.i4 1
+    add
+    stloc.s 1
+    br _jt_obj_get_L1_start
+  _jt_obj_get_L1_end:
+    ldc.i4 0
+    call class _JTok TKVApp::'_jt_new'(int32)
+    ret
+  }
+  .method public static class DataFrame 'json_read_string'(string 'json_text') cil managed
+  {
+    .maxstack 11
+    .locals init (class _JTok 'root', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist86', int32 'n_obj', class [mscorlib]System.Collections.Generic.List`1<string> 'keys', int32 'oi', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist87', class _JTok 'o', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist88', int32 'k', class [mscorlib]System.Collections.Generic.List`1<string> '__hoist89', string 'kn', class [mscorlib]System.Collections.Generic.List`1<class Series> 'result_cols', int32 'ki', valuetype TkvInt 'is_bool', valuetype TkvInt 'is_int', valuetype TkvInt 'is_num', valuetype TkvInt 'non_null', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist90', class _JTok 'val', string 'vs', class Mask 'vm', class [mscorlib]System.Collections.Generic.List`1<string> 'vals_s0', class Series 'out', class [mscorlib]System.Collections.Generic.List`1<int32> 'vals_b', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist91', class Col 'c2', class [mscorlib]System.Collections.Generic.List`1<int64> 'vals_i', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist92', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals_f', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist93', class [mscorlib]System.Collections.Generic.List`1<string> 'vals_s', class [mscorlib]System.Collections.Generic.List`1<class _JTok> '__hoist94', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldc.i4 0
+    call class _JTok TKVApp::'_jt_parse'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldfld int32 _JTok::'kind'
+    ldc.i4 2
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If1_else
+    ldstr "json_read_string: root phai la JSON array"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  json_read_string_If1_else:
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 1
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Count()
+    stloc.s 2
+    ldloc.s 2
+    ldc.i4 0
+    ceq
+    brfalse json_read_string_If2_else
+    call class DataFrame TKVApp::'empty_df'()
+    ret
+  json_read_string_If2_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 3
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L3_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L3_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 5
+    ldloc.s 5
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldfld int32 _JTok::'kind'
+    ldc.i4 1
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If4_else
+    br json_read_string_L3_cont
+  json_read_string_If4_else:
+    ldloc.s 6
+    ldfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    stloc.s 7
+    ldc.i4.0
+    stloc.s 8
+  json_read_string_L5_start:
+    ldloc.s 8
+    ldloc.s 7
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge json_read_string_L5_end
+    ldloc.s 6
+    ldfld class [mscorlib]System.Collections.Generic.List`1<string> _JTok::'keys'
+    stloc.s 9
+    ldloc.s 9
+    ldloc.s 8
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 10
+    ldloc.s 3
+    ldloc.s 10
+    callvirt instance bool class [mscorlib]System.Collections.Generic.List`1<string>::Contains(!0)
+    brfalse json_read_string_If6_else
+    br json_read_string_L5_cont
+  json_read_string_If6_else:
+    ldloc.s 3
+    ldloc.s 10
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  json_read_string_L5_cont:
+    ldloc.s 8
+    ldc.i4 1
+    add
+    stloc.s 8
+    br json_read_string_L5_start
+  json_read_string_L5_end:
+  json_read_string_L3_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L3_start
+  json_read_string_L3_end:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
+    stloc.s 11
+    ldc.i4.0
+    stloc.s 12
+  json_read_string_L7_start:
+    ldloc.s 12
+    ldloc.s 3
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge json_read_string_L7_end
+    ldloc.s 3
+    ldloc.s 12
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 10
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 14
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 15
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 16
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L8_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L8_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 17
+    ldloc.s 17
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldfld int32 _JTok::'kind'
+    ldc.i4 1
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If9_else
+    br json_read_string_L8_cont
+  json_read_string_If9_else:
+    ldloc.s 6
+    ldloc.s 10
+    call class _JTok TKVApp::'_jt_obj_get'(class _JTok, string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 0
+    ceq
+    dup
+    brtrue json_read_string_sc11_end
+    pop
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 6
+    ceq
+  json_read_string_sc11_end:
+    brfalse json_read_string_If10_else
+    br json_read_string_L8_cont
+  json_read_string_If10_else:
+    ldloc.s 16
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 33
+    stloc.s 32
+    ldloca.s 32
+    ldfld object TkvInt::big
+    brtrue json_read_string_int12_slow
+    ldloca.s 33
+    ldfld object TkvInt::big
+    brtrue json_read_string_int12_slow
+    ldloca.s 32
+    ldfld int64 TkvInt::lo
+    ldloca.s 33
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 35
+    ldloca.s 32
+    ldfld int64 TkvInt::lo
+    ldloc.s 35
+    xor
+    ldloca.s 33
+    ldfld int64 TkvInt::lo
+    ldloc.s 35
+    xor
+    and
+    ldc.i8 0
+    blt json_read_string_int12_slow
+    ldloca.s 34
+    ldloc.s 35
+    stfld int64 TkvInt::lo
+    ldloca.s 34
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 34
+    br json_read_string_int12_done
+  json_read_string_int12_slow:
+    ldloc.s 32
+    ldloc.s 33
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  json_read_string_int12_done:
+    stloc.s 16
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 5
+    ceq
+    brfalse json_read_string_If13_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 14
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 15
+    br json_read_string_If13_end
+  json_read_string_If13_else:
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 3
+    ceq
+    brfalse json_read_string_If14_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    ldloc.s 18
+    ldfld string _JTok::'s'
+    stloc.s 19
+    ldloc.s 19
+    ldstr "."
+    callvirt instance int32 [mscorlib]System.String::IndexOf(string)
+    ldc.i4 0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If15_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 14
+  json_read_string_If15_else:
+    br json_read_string_If14_end
+  json_read_string_If14_else:
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 4
+    ceq
+    brfalse json_read_string_If16_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 14
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 15
+    br json_read_string_If16_end
+  json_read_string_If16_else:
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 14
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 15
+  json_read_string_If16_end:
+  json_read_string_If14_end:
+  json_read_string_If13_end:
+  json_read_string_L8_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L8_start
+  json_read_string_L8_end:
+    ldloc.s 2
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 20
+    ldloc.s 16
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If17_else
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 21
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L18_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L18_end
+    ldloc.s 21
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+  json_read_string_L18_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L18_start
+  json_read_string_L18_end:
+    ldloc.s 10
+    ldloc.s 21
+    call class Series TKVApp::'make_series_str'(string, class [mscorlib]System.Collections.Generic.List`1<string>)
+    stloc.s 22
+    ldloc.s 11
+    ldloc.s 22
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+    br json_read_string_L7_cont
+  json_read_string_If17_else:
+    ldloc.s 13
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If19_else
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    stloc.s 23
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L20_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L20_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 24
+    ldloc.s 24
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldloc.s 10
+    call class _JTok TKVApp::'_jt_obj_get'(class _JTok, string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 0
+    ceq
+    dup
+    brtrue json_read_string_sc22_end
+    pop
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 5
+    ceq
+    ldc.i4.0
+    ceq
+  json_read_string_sc22_end:
+    brfalse json_read_string_If21_else
+    ldloc.s 23
+    ldc.i4 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    br json_read_string_L20_cont
+  json_read_string_If21_else:
+    ldloc.s 23
+    ldloc.s 18
+    ldfld int32 _JTok::'b'
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    ldloc.s 20
+    ldloc.s 4
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_string_L20_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L20_start
+  json_read_string_L20_end:
+    ldloc.s 23
+    ldloc.s 20
+    call class Col TKVApp::'make_col_bool_with_mask'(class [mscorlib]System.Collections.Generic.List`1<int32>, class Mask)
+    stloc.s 25
+    ldloc.s 10
+    ldloc.s 25
+    call class Series TKVApp::'make_series'(string, class Col)
+    stloc.s 22
+    br json_read_string_If19_end
+  json_read_string_If19_else:
+    ldloc.s 14
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If23_else
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 26
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L24_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L24_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 27
+    ldloc.s 27
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldloc.s 10
+    call class _JTok TKVApp::'_jt_obj_get'(class _JTok, string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 0
+    ceq
+    dup
+    brtrue json_read_string_sc26_end
+    pop
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 3
+    ceq
+    ldc.i4.0
+    ceq
+  json_read_string_sc26_end:
+    brfalse json_read_string_If25_else
+    ldloc.s 26
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br json_read_string_L24_cont
+  json_read_string_If25_else:
+    ldloc.s 26
+    ldloc.s 18
+    ldfld float64 _JTok::'f'
+    conv.i4
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    ldloc.s 20
+    ldloc.s 4
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_string_L24_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L24_start
+  json_read_string_L24_end:
+    ldloc.s 26
+    ldloc.s 20
+    call class Col TKVApp::'make_col_i64_with_mask'(class [mscorlib]System.Collections.Generic.List`1<int64>, class Mask)
+    stloc.s 25
+    ldloc.s 10
+    ldloc.s 25
+    call class Series TKVApp::'make_series'(string, class Col)
+    stloc.s 22
+    br json_read_string_If23_end
+  json_read_string_If23_else:
+    ldloc.s 15
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse json_read_string_If27_else
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 28
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L28_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L28_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 29
+    ldloc.s 29
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldloc.s 10
+    call class _JTok TKVApp::'_jt_obj_get'(class _JTok, string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 0
+    ceq
+    dup
+    brtrue json_read_string_sc30_end
+    pop
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 3
+    ceq
+    ldc.i4.0
+    ceq
+  json_read_string_sc30_end:
+    brfalse json_read_string_If29_else
+    ldloc.s 28
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br json_read_string_L28_cont
+  json_read_string_If29_else:
+    ldloc.s 28
+    ldloc.s 18
+    ldfld float64 _JTok::'f'
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldloc.s 20
+    ldloc.s 4
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_string_L28_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L28_start
+  json_read_string_L28_end:
+    ldloc.s 28
+    ldloc.s 20
+    call class Col TKVApp::'make_col_f64_with_mask'(class [mscorlib]System.Collections.Generic.List`1<float64>, class Mask)
+    stloc.s 25
+    ldloc.s 10
+    ldloc.s 25
+    call class Series TKVApp::'make_series'(string, class Col)
+    stloc.s 22
+    br json_read_string_If27_end
+  json_read_string_If27_else:
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<string>::.ctor()
+    stloc.s 30
+    ldc.i4.0
+    stloc.s 4
+  json_read_string_L31_start:
+    ldloc.s 4
+    ldloc.s 2
+    bge json_read_string_L31_end
+    ldloc.s 0
+    ldfld class [mscorlib]System.Collections.Generic.List`1<class _JTok> _JTok::'items'
+    stloc.s 31
+    ldloc.s 31
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<class _JTok>::get_Item(int32)
+    stloc.s 6
+    ldloc.s 6
+    ldloc.s 10
+    call class _JTok TKVApp::'_jt_obj_get'(class _JTok, string)
+    stloc.s 18
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 0
+    ceq
+    dup
+    brtrue json_read_string_sc33_end
+    pop
+    ldloc.s 18
+    ldfld int32 _JTok::'kind'
+    ldc.i4 4
+    ceq
+    ldc.i4.0
+    ceq
+  json_read_string_sc33_end:
+    brfalse json_read_string_If32_else
+    ldloc.s 30
+    ldstr ""
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    br json_read_string_L31_cont
+  json_read_string_If32_else:
+    ldloc.s 30
+    ldloc.s 18
+    ldfld string _JTok::'s'
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<string>::Add(!0)
+    ldloc.s 20
+    ldloc.s 4
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_string_L31_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_read_string_L31_start
+  json_read_string_L31_end:
+    ldloc.s 10
+    ldloc.s 30
+    ldloc.s 20
+    call class Series TKVApp::'make_series_str_with_mask'(string, class [mscorlib]System.Collections.Generic.List`1<string>, class Mask)
+    stloc.s 22
+  json_read_string_If27_end:
+  json_read_string_If23_end:
+  json_read_string_If19_end:
+    ldloc.s 11
+    ldloc.s 22
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::Add(!0)
+  json_read_string_L7_cont:
+    ldloc.s 12
+    ldc.i4 1
+    add
+    stloc.s 12
+    br json_read_string_L7_start
+  json_read_string_L7_end:
+    ldloc.s 11
+    call class DataFrame TKVApp::'make_df'(class [mscorlib]System.Collections.Generic.List`1<class Series>)
+    ret
+  }
+  .method public static class DataFrame 'json_read_file'(string 'file_path') cil managed
+  {
+    .maxstack 11
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call string [mscorlib]System.IO.File::ReadAllText(string)
+    ldstr "\r\n"
+    ldstr "\n"
+    callvirt instance string [mscorlib]System.String::Replace(string, string)
+    ldstr "\r"
+    ldstr "\n"
+    callvirt instance string [mscorlib]System.String::Replace(string, string)
+    call class DataFrame TKVApp::'json_read_string'(string)
+    ret
+  }
+  .method public static class DataFrame 'json_read_records'(string 'json_text', class [mscorlib]System.Collections.Generic.List`1<string> 'num_cols', class [mscorlib]System.Collections.Generic.List`1<string> 'time_cols') cil managed
+  {
+    .maxstack 11
+    .locals init (class DataFrame 'df', int32 'i', string 'nm', class Series 'col', class [mscorlib]System.Collections.Generic.List`1<float64> 'vals_f2', class Mask 'vm', int32 'r', class Series 'nf', class [mscorlib]System.Collections.Generic.List`1<int64> 'vals_i2', class Series 'ni', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call class DataFrame TKVApp::'json_read_string'(string)
+    stloc.s 0
+    ldc.i4.0
+    stloc.s 1
+  json_read_records_L1_start:
+    ldloc.s 1
+    ldarg.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge json_read_records_L1_end
+    ldarg.s 1
+    ldloc.s 1
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 2
+    ldloc.s 0
+    ldloc.s 2
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 0
+    ceq
+    brfalse json_read_records_If2_else
+    br json_read_records_L1_cont
+  json_read_records_If2_else:
+    ldloc.s 0
+    ldloc.s 2
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<float64>::.ctor()
+    stloc.s 4
+    ldloc.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  json_read_records_L3_start:
+    ldloc.s 6
+    ldloc.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    bge json_read_records_L3_end
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse json_read_records_If4_else
+    ldloc.s 4
+    ldc.r8 0.0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    br json_read_records_L3_cont
+  json_read_records_If4_else:
+    ldloc.s 4
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance float64 Series::'get_f64'(int32)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<float64>::Add(!0)
+    ldloc.s 5
+    ldloc.s 6
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_records_L3_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br json_read_records_L3_start
+  json_read_records_L3_end:
+    ldloc.s 2
+    ldloc.s 4
+    call class Series TKVApp::'make_series_f64'(string, class [mscorlib]System.Collections.Generic.List`1<float64>)
+    stloc.s 7
+    ldloc.s 7
+    ldloc.s 5
+    stfld class Mask Series::'valid'
+    ldloc.s 0
+    ldloc.s 2
+    ldloc.s 7
+    callvirt instance class DataFrame DataFrame::'with_column'(string, class Series)
+    stloc.s 0
+  json_read_records_L1_cont:
+    ldloc.s 1
+    ldc.i4 1
+    add
+    stloc.s 1
+    br json_read_records_L1_start
+  json_read_records_L1_end:
+    ldc.i4.0
+    stloc.s 1
+  json_read_records_L5_start:
+    ldloc.s 1
+    ldarg.s 2
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge json_read_records_L5_end
+    ldarg.s 2
+    ldloc.s 1
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 2
+    ldloc.s 0
+    ldloc.s 2
+    callvirt instance int32 DataFrame::'has_col'(string)
+    ldc.i4 0
+    ceq
+    brfalse json_read_records_If6_else
+    br json_read_records_L5_cont
+  json_read_records_If6_else:
+    ldloc.s 0
+    ldloc.s 2
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 3
+    newobj instance void class [mscorlib]System.Collections.Generic.List`1<int64>::.ctor()
+    stloc.s 8
+    ldloc.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    ldc.i4 0
+    call class Mask TKVApp::'make_mask'(int32, int32)
+    stloc.s 5
+    ldc.i4.0
+    stloc.s 6
+  json_read_records_L7_start:
+    ldloc.s 6
+    ldloc.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    bge json_read_records_L7_end
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse json_read_records_If8_else
+    ldloc.s 8
+    ldc.i8 0
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    br json_read_records_L7_cont
+  json_read_records_If8_else:
+    ldloc.s 8
+    ldloc.s 3
+    ldloc.s 6
+    callvirt instance string Series::'get_string'(int32)
+    call int64 TKVApp::'dt_parse'(string)
+    callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int64>::Add(!0)
+    ldloc.s 5
+    ldloc.s 6
+    ldc.i4 1
+    callvirt instance void Mask::'set'(int32, int32)
+  json_read_records_L7_cont:
+    ldloc.s 6
+    ldc.i4 1
+    add
+    stloc.s 6
+    br json_read_records_L7_start
+  json_read_records_L7_end:
+    ldloc.s 2
+    ldloc.s 8
+    call class Series TKVApp::'make_series_i64'(string, class [mscorlib]System.Collections.Generic.List`1<int64>)
+    stloc.s 9
+    ldloc.s 9
+    ldloc.s 5
+    stfld class Mask Series::'valid'
+    ldloc.s 0
+    ldloc.s 2
+    ldloc.s 9
+    callvirt instance class DataFrame DataFrame::'with_column'(string, class Series)
+    stloc.s 0
+  json_read_records_L5_cont:
+    ldloc.s 1
+    ldc.i4 1
+    add
+    stloc.s 1
+    br json_read_records_L5_start
+  json_read_records_L5_end:
+    ldloc.s 0
+    ret
+  }
+  .method public static string '_jw_quote'(string 's') cil managed
+  {
+    .maxstack 10
+    .locals init (string 'out', int32 'i', class [mscorlib]System.Text.StringBuilder '__sb_out', string 'c', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldstr "\""
+    stloc.s 0
+    ldc.i4.0
+    stloc.s 1
+    ldloc.s 0
+    newobj instance void [mscorlib]System.Text.StringBuilder::.ctor(string)
+    stloc.s 2
+  _jw_quote_L1_start:
+    ldloc.s 1
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    bge _jw_quote_L1_end
+    ldarg.s 0
+    ldloc.s 1
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 3
+    ldloc.s 3
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jw_quote_If2_else
+    ldloc.s 2
+    ldstr "\\\""
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    br _jw_quote_If2_end
+  _jw_quote_If2_else:
+    ldloc.s 3
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jw_quote_If3_else
+    ldloc.s 2
+    ldstr "\\\\"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    br _jw_quote_If3_end
+  _jw_quote_If3_else:
+    ldloc.s 3
+    ldstr "\n"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jw_quote_If4_else
+    ldloc.s 2
+    ldstr "\\n"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    br _jw_quote_If4_end
+  _jw_quote_If4_else:
+    ldloc.s 3
+    ldstr "\t"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jw_quote_If5_else
+    ldloc.s 2
+    ldstr "\\t"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    br _jw_quote_If5_end
+  _jw_quote_If5_else:
+    ldloc.s 3
+    ldstr "\r"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse _jw_quote_If6_else
+    ldloc.s 2
+    ldstr "\\r"
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    br _jw_quote_If6_end
+  _jw_quote_If6_else:
+    ldloc.s 2
+    ldloc.s 3
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+  _jw_quote_If6_end:
+  _jw_quote_If5_end:
+  _jw_quote_If4_end:
+  _jw_quote_If3_end:
+  _jw_quote_If2_end:
+  _jw_quote_L1_cont:
+    ldloc.s 1
+    ldc.i4 1
+    add
+    stloc.s 1
+    br _jw_quote_L1_start
+  _jw_quote_L1_end:
+    ldloc.s 2
+    callvirt instance string [mscorlib]System.Object::ToString()
+    stloc.s 0
+    ldloc.s 0
+    ldstr "\""
+    call string [mscorlib]System.String::Concat(string, string)
+    ret
+  }
+  .method public static string 'json_write_string'(class DataFrame 'df') cil managed
+  {
+    .maxstack 10
+    .locals init (int32 'n', class [mscorlib]System.Collections.Generic.List`1<string> 'names', string 'out', int32 'r', int32 'c', string 'nm', class Series 'col', int64 '__strtmp2262424792624', float64 'fv', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    callvirt instance int32 DataFrame::'row_count'()
+    stloc.s 0
+    ldarg.s 0
+    callvirt instance class [mscorlib]System.Collections.Generic.List`1<string> DataFrame::'column_names'()
+    stloc.s 1
+    ldstr "["
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 3
+  json_write_string_L1_start:
+    ldloc.s 3
+    ldloc.s 0
+    bge json_write_string_L1_end
+    ldloc.s 3
+    ldc.i4 0
+    cgt
+    brfalse json_write_string_If2_else
+    ldloc.s 2
+    ldstr ","
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+  json_write_string_If2_else:
+    ldloc.s 2
+    ldstr "{"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+    ldc.i4.0
+    stloc.s 4
+  json_write_string_L3_start:
+    ldloc.s 4
+    ldloc.s 1
+    callvirt instance int32 class [mscorlib]System.Collections.Generic.List`1<string>::get_Count()
+    bge json_write_string_L3_end
+    ldloc.s 1
+    ldloc.s 4
+    callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<string>::get_Item(int32)
+    stloc.s 5
+    ldarg.s 0
+    ldloc.s 5
+    callvirt instance class Series DataFrame::'col_by_name'(string)
+    stloc.s 6
+    ldloc.s 4
+    ldc.i4 0
+    cgt
+    brfalse json_write_string_If4_else
+    ldloc.s 2
+    ldstr ","
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+  json_write_string_If4_else:
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance int32 Series::'is_null'(int32)
+    ldc.i4 1
+    ceq
+    brfalse json_write_string_If5_else
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":null"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+    br json_write_string_If5_end
+  json_write_string_If5_else:
+    ldloc.s 6
+    ldfld int32 Series::'dtype'
+    ldc.i4 12
+    ceq
+    brfalse json_write_string_If6_else
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":"
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance string Series::'get_string'(int32)
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+    br json_write_string_If6_end
+  json_write_string_If6_else:
+    ldloc.s 6
+    ldfld int32 Series::'dtype'
+    ldc.i4 4
+    ceq
+    brfalse json_write_string_If7_else
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":"
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance int64 Series::'get_i64'(int32)
+    call string TkvStr::I64(int64)
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+    br json_write_string_If7_end
+  json_write_string_If7_else:
+    ldloc.s 6
+    ldfld int32 Series::'dtype'
+    ldc.i4 11
+    ceq
+    brfalse json_write_string_If8_else
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance int32 Series::'get_bool'(int32)
+    ldc.i4 1
+    ceq
+    brfalse json_write_string_If9_else
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":true"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+    br json_write_string_If9_end
+  json_write_string_If9_else:
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":false"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+  json_write_string_If9_end:
+    br json_write_string_If8_end
+  json_write_string_If8_else:
+    ldloc.s 6
+    ldloc.s 3
+    callvirt instance float64 Series::'get_f64'(int32)
+    stloc.s 8
+    ldloc.s 2
+    ldloc.s 5
+    call string TKVApp::'_jw_quote'(string)
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr ":"
+    call string [mscorlib]System.String::Concat(string, string)
+    ldloc.s 8
+    call string TkvStr::F64(float64)
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+  json_write_string_If8_end:
+  json_write_string_If7_end:
+  json_write_string_If6_end:
+  json_write_string_If5_end:
+  json_write_string_L3_cont:
+    ldloc.s 4
+    ldc.i4 1
+    add
+    stloc.s 4
+    br json_write_string_L3_start
+  json_write_string_L3_end:
+    ldloc.s 2
+    ldstr "}"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 2
+  json_write_string_L1_cont:
+    ldloc.s 3
+    ldc.i4 1
+    add
+    stloc.s 3
+    br json_write_string_L1_start
+  json_write_string_L1_end:
+    ldloc.s 2
+    ldstr "]"
+    call string [mscorlib]System.String::Concat(string, string)
+    ret
+  }
+  .method public static int32 'json_write_file'(class DataFrame 'df', string 'file_path') cil managed
+  {
+    .maxstack 10
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 1
+    ldarg.s 0
+    call string TKVApp::'json_write_string'(class DataFrame)
+    call void [mscorlib]System.IO.File::WriteAllText(string, string)
+    ldc.i4 0
+    ret
+  }
+  .method public static class DataFrame 'jsonl_read_string'(string 'text') cil managed
+  {
+    .maxstack 11
+    .locals init (string 'arr', valuetype TkvInt 'i', int32 'n', valuetype TkvInt 'first', class [mscorlib]System.Text.StringBuilder '__sb_arr', string 'c', valuetype TkvInt 'j', valuetype TkvInt 'depth', valuetype TkvInt 'instr', string 'cj', string 'seg', int32 '__slice2262456458416_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldstr "["
+    stloc.s 0
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 1
+    ldarg.s 0
+    callvirt instance int32 [mscorlib]System.String::get_Length()
+    stloc.s 2
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 3
+    ldloc.s 0
+    newobj instance void [mscorlib]System.Text.StringBuilder::.ctor(string)
+    stloc.s 4
+  jsonl_read_string_W1_start:
+    ldloc.s 1
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse jsonl_read_string_W1_end
+  jsonl_read_string_W2_start:
+    ldloc.s 1
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse jsonl_read_string_W2_end
+    ldarg.s 0
+    ldloc.s 1
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 5
+    ldloc.s 5
+    ldstr " "
+    call bool [mscorlib]System.String::Equals(string, string)
+    dup
+    brtrue jsonl_read_string_sc6_end
+    pop
+    ldloc.s 5
+    ldstr "\t"
+    call bool [mscorlib]System.String::Equals(string, string)
+  jsonl_read_string_sc6_end:
+    dup
+    brtrue jsonl_read_string_sc5_end
+    pop
+    ldloc.s 5
+    ldstr "\n"
+    call bool [mscorlib]System.String::Equals(string, string)
+  jsonl_read_string_sc5_end:
+    dup
+    brtrue jsonl_read_string_sc4_end
+    pop
+    ldloc.s 5
+    ldstr "\r"
+    call bool [mscorlib]System.String::Equals(string, string)
+  jsonl_read_string_sc4_end:
+    brfalse jsonl_read_string_If3_else
+    ldloc.s 1
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int7_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int7_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int7_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int7_done
+  jsonl_read_string_int7_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int7_done:
+    stloc.s 1
+    br jsonl_read_string_If3_end
+  jsonl_read_string_If3_else:
+    br jsonl_read_string_W2_end
+  jsonl_read_string_If3_end:
+    br jsonl_read_string_W2_start
+  jsonl_read_string_W2_end:
+    ldloc.s 1
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If8_else
+    br jsonl_read_string_W1_end
+  jsonl_read_string_If8_else:
+    ldarg.s 0
+    ldloc.s 1
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "{"
+    call bool [mscorlib]System.String::Equals(string, string)
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If9_else
+  jsonl_read_string_W10_start:
+    ldloc.s 1
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    dup
+    brfalse jsonl_read_string_sc11_end
+    pop
+    ldarg.s 0
+    ldloc.s 1
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    ldstr "\n"
+    call bool [mscorlib]System.String::Equals(string, string)
+    ldc.i4.0
+    ceq
+  jsonl_read_string_sc11_end:
+    brfalse jsonl_read_string_W10_end
+    ldloc.s 1
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int12_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int12_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int12_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int12_done
+  jsonl_read_string_int12_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int12_done:
+    stloc.s 1
+    br jsonl_read_string_W10_start
+  jsonl_read_string_W10_end:
+    br jsonl_read_string_W1_start
+  jsonl_read_string_If9_else:
+    ldloc.s 1
+    stloc.s 6
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 7
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+  jsonl_read_string_W13_start:
+    ldloc.s 6
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    brfalse jsonl_read_string_W13_end
+    ldarg.s 0
+    ldloc.s 6
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    callvirt instance char [mscorlib]System.String::get_Chars(int32)
+    ldc.i4.1
+    newobj instance void [mscorlib]System.String::.ctor(char, int32)
+    stloc.s 9
+    ldloc.s 8
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If14_else
+    ldloc.s 9
+    ldstr "\\"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse jsonl_read_string_If15_else
+    ldloc.s 6
+    ldc.i8 2
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int16_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int16_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int16_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int16_done
+  jsonl_read_string_int16_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int16_done:
+    stloc.s 6
+    br jsonl_read_string_W13_start
+  jsonl_read_string_If15_else:
+    ldloc.s 9
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse jsonl_read_string_If17_else
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+  jsonl_read_string_If17_else:
+    br jsonl_read_string_If14_end
+  jsonl_read_string_If14_else:
+    ldloc.s 9
+    ldstr "\""
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse jsonl_read_string_If18_else
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 8
+    br jsonl_read_string_If18_end
+  jsonl_read_string_If18_else:
+    ldloc.s 9
+    ldstr "{"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse jsonl_read_string_If19_else
+    ldloc.s 7
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int20_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int20_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int20_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int20_done
+  jsonl_read_string_int20_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int20_done:
+    stloc.s 7
+    br jsonl_read_string_If19_end
+  jsonl_read_string_If19_else:
+    ldloc.s 9
+    ldstr "}"
+    call bool [mscorlib]System.String::Equals(string, string)
+    brfalse jsonl_read_string_If21_else
+    ldloc.s 7
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int22_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int22_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    sub
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    xor
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int22_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int22_done
+  jsonl_read_string_int22_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::SubSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int22_done:
+    stloc.s 7
+    ldloc.s 7
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If23_else
+    br jsonl_read_string_W13_end
+  jsonl_read_string_If23_else:
+  jsonl_read_string_If21_else:
+  jsonl_read_string_If19_end:
+  jsonl_read_string_If18_end:
+  jsonl_read_string_If14_end:
+    ldloc.s 6
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int24_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int24_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int24_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int24_done
+  jsonl_read_string_int24_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int24_done:
+    stloc.s 6
+    br jsonl_read_string_W13_start
+  jsonl_read_string_W13_end:
+    ldloc.s 6
+    ldloc.s 2
+    conv.i8
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    clt
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If25_else
+    br jsonl_read_string_W1_end
+  jsonl_read_string_If25_else:
+    ldloc.s 1
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    stloc.s 11
+    ldarg.s 0
+    ldloc.s 11
+    ldloc.s 6
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int26_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int26_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int26_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int26_done
+  jsonl_read_string_int26_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int26_done:
+    call int32 TkvInt::ToI32(valuetype TkvInt)
+    ldloc.s 11
+    sub
+    callvirt instance string [mscorlib]System.String::Substring(int32, int32)
+    stloc.s 10
+    ldloc.s 3
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If27_else
+    ldloc.s 4
+    ldstr ","
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+  jsonl_read_string_If27_else:
+    ldloc.s 4
+    ldloc.s 10
+    callvirt instance class [mscorlib]System.Text.StringBuilder [mscorlib]System.Text.StringBuilder::Append(string)
+    pop
+    ldc.i8 0
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 3
+    ldloc.s 6
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    stloc.s 13
+    stloc.s 12
+    ldloca.s 12
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int28_slow
+    ldloca.s 13
+    ldfld object TkvInt::big
+    brtrue jsonl_read_string_int28_slow
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    add
+    stloc.s 15
+    ldloca.s 12
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    ldloca.s 13
+    ldfld int64 TkvInt::lo
+    ldloc.s 15
+    xor
+    and
+    ldc.i8 0
+    blt jsonl_read_string_int28_slow
+    ldloca.s 14
+    ldloc.s 15
+    stfld int64 TkvInt::lo
+    ldloca.s 14
+    ldnull
+    stfld object TkvInt::big
+    ldloc.s 14
+    br jsonl_read_string_int28_done
+  jsonl_read_string_int28_slow:
+    ldloc.s 12
+    ldloc.s 13
+    call valuetype TkvInt TkvInt::AddSlow(valuetype TkvInt, valuetype TkvInt)
+  jsonl_read_string_int28_done:
+    stloc.s 1
+    br jsonl_read_string_W1_start
+  jsonl_read_string_W1_end:
+    ldloc.s 4
+    callvirt instance string [mscorlib]System.Object::ToString()
+    stloc.s 0
+    ldloc.s 0
+    ldstr "]"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 0
+    ldloc.s 3
+    ldc.i8 1
+    call valuetype TkvInt TkvInt::FromI64(int64)
+    call int32 TkvInt::Cmp(valuetype TkvInt, valuetype TkvInt)
+    ldc.i4.0
+    ceq
+    brfalse jsonl_read_string_If29_else
+    call class DataFrame TKVApp::'empty_df'()
+    ret
+  jsonl_read_string_If29_else:
+    ldloc.s 0
+    call class DataFrame TKVApp::'json_read_string'(string)
+    ret
+  }
+  .method public static class DataFrame 'jsonl_read_file'(string 'file_path') cil managed
+  {
+    .maxstack 11
+    .locals init (valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    call string [mscorlib]System.IO.File::ReadAllText(string)
+    ldstr "\r\n"
+    ldstr "\n"
+    callvirt instance string [mscorlib]System.String::Replace(string, string)
+    ldstr "\r"
+    ldstr "\n"
+    callvirt instance string [mscorlib]System.String::Replace(string, string)
+    call class DataFrame TKVApp::'jsonl_read_string'(string)
+    ret
+  }
+  .method public static class DataFrame 'json_read_object'(string 'json_text') cil managed
+  {
+    .maxstack 10
+    .locals init (class _JTok 'root', string 'arr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    ldarg.s 0
+    ldc.i4 0
+    call class _JTok TKVApp::'_jt_parse'(string, int32)
+    stloc.s 0
+    ldloc.s 0
+    ldfld int32 _JTok::'kind'
+    ldc.i4 1
+    ceq
+    ldc.i4.0
+    ceq
+    brfalse json_read_object_If1_else
+    ldstr "json_read_object: root phai la JSON object"
+    newobj instance void [mscorlib]System.FormatException::.ctor(string)
+    throw
+  json_read_object_If1_else:
+    ldstr "["
+    ldarg.s 0
+    call string [mscorlib]System.String::Concat(string, string)
+    ldstr "]"
+    call string [mscorlib]System.String::Concat(string, string)
+    stloc.s 1
+    ldloc.s 1
+    call class DataFrame TKVApp::'json_read_string'(string)
+    ret
+  }
   .method public static class [mscorlib]System.Collections.Generic.List`1<string> '_split_csv_line'(string 'line', string 'delimiter', string 'quote') cil managed
   {
     .maxstack 10
@@ -44142,7 +53368,7 @@
   .method public static int64 '_try_parse_i64'(string 's') cil managed
   {
     .maxstack 11
-    .locals init (valuetype TkvInt 'neg', string 't', int32 '__slice1861287179696_start', int32 '__slice1861287179776_start', valuetype TkvInt 'total', int32 'i', string 'ch', valuetype TkvInt 'd', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (valuetype TkvInt 'neg', string 't', int32 '__slice2262424789424_start', int32 '__slice2262424022496_start', valuetype TkvInt 'total', int32 'i', string 'ch', valuetype TkvInt 'd', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldc.i8 1
     call valuetype TkvInt TkvInt::FromI64(int64)
     stloc.s 0
@@ -44528,7 +53754,7 @@
   .method public static int32 '_is_int'(string 's') cil managed
   {
     .maxstack 11
-    .locals init (string 't', int32 '__slice1861309084784_start', int32 'i', string 'ch', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (string 't', int32 '__slice2262450080720_start', int32 'i', string 'ch', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance string [mscorlib]System.String::Trim()
     stloc.s 0
@@ -45242,7 +54468,7 @@
   .method public static class DataFrame 'csv_read_ex'(string 'csv_text', string 'delimiter', int32 'has_header', string 'null_value', class [mscorlib]System.Collections.Generic.List`1<string> 'names', class [mscorlib]System.Collections.Generic.List`1<string> 'dtypes_spec', class [mscorlib]System.Collections.Generic.List`1<string> 'na_values', int32 'skiprows', class [mscorlib]System.Collections.Generic.List`1<string> 'parse_dates') cil managed
   {
     .maxstack 12
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'all_lines', class [mscorlib]System.Collections.Generic.List`1<string> 'kept', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'lines', int32 'n_lines', class [mscorlib]System.Collections.Generic.List`1<string> 'column_names', valuetype TkvInt 'data_start', valuetype TkvInt 'use_names', string 'header_line', int32 'hl', int32 '__slice1861306236528_start', class [mscorlib]System.Collections.Generic.List`1<string> 'header_fields', int32 'f', string 'first_line', int32 'fl', int32 '__slice1861306322752_start', class [mscorlib]System.Collections.Generic.List`1<string> 'first_fields', int32 'n_first', int32 'n_cols', valuetype TkvInt 'n_spec', valuetype TkvInt 'n_na', class [mscorlib]System.Collections.Generic.List`1<class Series> 'result_cols', int32 'c', class [mscorlib]System.Collections.Generic.List`1<string> 'grid', valuetype TkvInt 'total_data', string 'line', int32 'ln', int32 '__slice1861309087504_start', class [mscorlib]System.Collections.Generic.List`1<string> 'fields', int32 'nf', string 'col_name', valuetype TkvInt 'dt', string 'spec', class [mscorlib]System.Collections.Generic.List`1<string> 'sub', class [mscorlib]System.Collections.Generic.List`1<int64> 'ivals', class Mask 'vm', string 'raw', class [mscorlib]System.Collections.Generic.List`1<float64> 'fvals', class [mscorlib]System.Collections.Generic.List`1<int32> 'bvals', class [mscorlib]System.Collections.Generic.List`1<string> 'strs', string 'val', valuetype TkvInt 'n_pd', int32 'pi', string 'pname', class Series 'ts_col', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<string> 'all_lines', class [mscorlib]System.Collections.Generic.List`1<string> 'kept', int32 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'lines', int32 'n_lines', class [mscorlib]System.Collections.Generic.List`1<string> 'column_names', valuetype TkvInt 'data_start', valuetype TkvInt 'use_names', string 'header_line', int32 'hl', int32 '__slice2262450078080_start', class [mscorlib]System.Collections.Generic.List`1<string> 'header_fields', int32 'f', string 'first_line', int32 'fl', int32 '__slice2262450019664_start', class [mscorlib]System.Collections.Generic.List`1<string> 'first_fields', int32 'n_first', int32 'n_cols', valuetype TkvInt 'n_spec', valuetype TkvInt 'n_na', class [mscorlib]System.Collections.Generic.List`1<class Series> 'result_cols', int32 'c', class [mscorlib]System.Collections.Generic.List`1<string> 'grid', valuetype TkvInt 'total_data', string 'line', int32 'ln', int32 '__slice2262403479200_start', class [mscorlib]System.Collections.Generic.List`1<string> 'fields', int32 'nf', string 'col_name', valuetype TkvInt 'dt', string 'spec', class [mscorlib]System.Collections.Generic.List`1<string> 'sub', class [mscorlib]System.Collections.Generic.List`1<int64> 'ivals', class Mask 'vm', string 'raw', class [mscorlib]System.Collections.Generic.List`1<float64> 'fvals', class [mscorlib]System.Collections.Generic.List`1<int32> 'bvals', class [mscorlib]System.Collections.Generic.List`1<string> 'strs', string 'val', valuetype TkvInt 'n_pd', int32 'pi', string 'pname', class Series 'ts_col', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldstr ""
     call bool [mscorlib]System.String::Equals(string, string)
@@ -47077,7 +56303,7 @@
   .method public static class [mscorlib]System.Collections.Generic.List`1<class DataFrame> 'csv_read_chunks_file'(string 'file_path', string 'delimiter', int32 'has_header', string 'null_value', class [mscorlib]System.Collections.Generic.List`1<string> 'names', class [mscorlib]System.Collections.Generic.List`1<string> 'dtypes_spec', class [mscorlib]System.Collections.Generic.List`1<string> 'na_values', int32 'skiprows', int32 'chunksize', class [mscorlib]System.Collections.Generic.List`1<string> 'parse_dates') cil managed
   {
     .maxstack 17
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<class DataFrame> 'out', class [mscorlib]System.IO.StreamReader 'f', valuetype TkvInt 'first', valuetype TkvInt 'more', valuetype TkvInt 'sr', string 'jline', int32 '__slice1861308118288_start', string 'skip_tmp', class [mscorlib]System.Collections.Generic.List`1<string> 'lines_acc', string 'hline', int32 '__slice1861307978336_start', int32 '__slice1861308112928_start', valuetype TkvInt 'got', string 'dline', int32 '__slice1861308113008_start', int32 '__slice1861307975856_start', string 'cbody', valuetype TkvInt 'k', class DataFrame 'cdf', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class DataFrame> 'out', class [mscorlib]System.IO.StreamReader 'f', valuetype TkvInt 'first', valuetype TkvInt 'more', valuetype TkvInt 'sr', string 'jline', int32 '__slice2262456457776_start', string 'skip_tmp', class [mscorlib]System.Collections.Generic.List`1<string> 'lines_acc', string 'hline', int32 '__slice2262450026544_start', int32 '__slice2262456459056_start', valuetype TkvInt 'got', string 'dline', int32 '__slice2262450018064_start', int32 '__slice2262456459536_start', string 'cbody', valuetype TkvInt 'k', class DataFrame 'cdf', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 8
     ldc.i4 0
     cgt
@@ -48402,7 +57628,7 @@
   .method public static string '_str_before_sep'(string 's') cil managed
   {
     .maxstack 11
-    .locals init (int32 'p', int32 '__slice1861307875168_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'p', int32 '__slice2262430542288_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldstr ""
     callvirt instance int32 [mscorlib]System.String::IndexOf(string)
@@ -48427,7 +57653,7 @@
   .method public static string '_str_after_sep'(string 's') cil managed
   {
     .maxstack 11
-    .locals init (int32 'p', int32 'q', int32 '__slice1861307981616_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'p', int32 'q', int32 '__slice2262430542528_start', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldstr ""
     callvirt instance int32 [mscorlib]System.String::IndexOf(string)
@@ -48457,7 +57683,7 @@
   .method public static string '_json_parse_string'(string 's', int32 'i') cil managed
   {
     .maxstack 10
-    .locals init (string 'out', int32 'n', string 'ch', string 'esc', int32 '__strtmp1861305962304', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (string 'out', int32 'n', string 'ch', string 'esc', int32 '__strtmp2262430604064', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldstr ""
     stloc.s 0
     ldarg.s 1
@@ -48599,7 +57825,7 @@
   .method public static string '_json_parse_number'(string 's', int32 'i') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', int32 'j', valuetype TkvInt 'is_float', string 'ch', string 'raw', int32 '__slice1861309086704_start', float64 '__strtmp1861309395280', int64 '__strtmp1861309393680', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', int32 'j', valuetype TkvInt 'is_float', string 'ch', string 'raw', int32 '__slice2262430606064_start', float64 '__strtmp2262424793664', int64 '__strtmp2262450344464', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 [mscorlib]System.String::get_Length()
     stloc.s 0
@@ -48729,7 +57955,7 @@
   .method public static string '_json_parse_value'(string 's', int32 'i') cil managed
   {
     .maxstack 11
-    .locals init (int32 'n', string 'ch', string 'pair', int32 '__strtmp1861308110448', int32 '__strtmp1861305964384', int32 '__strtmp1861322156336', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'n', string 'ch', string 'pair', int32 '__strtmp2262430592080', int32 '__strtmp2262430598544', int32 '__strtmp2262430592480', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldarg.s 1
     call int32 TKVApp::'_json_skip_ws'(string, int32)
@@ -49006,7 +58232,7 @@
   .method public static string '_parse_json_object_kv'(string 'obj_text', class [mscorlib]System.Collections.Generic.List`1<string> 'all_keys') cil managed
   {
     .maxstack 11
-    .locals init (string 'inner', int32 '__slice1861322156896_start', int32 'n', valuetype TkvInt 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'chunks', string 'kp', string 'key', string 'vp', class [mscorlib]System.Collections.Generic.List`1<string> 'vparts', int32 'kind', string 'val', string 'tag', string 'sval', valuetype TkvInt 'seen', int32 'k', string 'row_text', int32 'c', class [mscorlib]System.Text.StringBuilder '__sb_row_text', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (string 'inner', int32 '__slice2262430593120_start', int32 'n', valuetype TkvInt 'i', class [mscorlib]System.Collections.Generic.List`1<string> 'chunks', string 'kp', string 'key', string 'vp', class [mscorlib]System.Collections.Generic.List`1<string> 'vparts', int32 'kind', string 'val', string 'tag', string 'sval', valuetype TkvInt 'seen', int32 'k', string 'row_text', int32 'c', class [mscorlib]System.Text.StringBuilder '__sb_row_text', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldc.i4 1
     stloc.s 1
     ldarg.s 0
@@ -50096,7 +59322,7 @@
   .method public static class DataFrame 'json_array_read_string'(string 'json_text') cil managed
   {
     .maxstack 12
-    .locals init (int32 'start', int32 'end', int32 'sb', string 'body', int32 '__slice1861308117008_start', class [mscorlib]System.Collections.Generic.List`1<string> 'objs', int32 'n', valuetype TkvInt 'i', int32 'close', int32 'ce', string 'seg', int32 '__slice1861309080304_start', string 'ndjson', int32 'li', class [mscorlib]System.Text.StringBuilder '__sb_ndjson', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'start', int32 'end', int32 'sb', string 'body', int32 '__slice2262430603664_start', class [mscorlib]System.Collections.Generic.List`1<string> 'objs', int32 'n', valuetype TkvInt 'i', int32 'close', int32 'ce', string 'seg', int32 '__slice2262430603184_start', string 'ndjson', int32 'li', class [mscorlib]System.Text.StringBuilder '__sb_ndjson', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldstr "["
     callvirt instance int32 [mscorlib]System.String::IndexOf(string)
@@ -50399,7 +59625,7 @@
   .method public static int32 'mat_total_length'(class Mat 'm') cil managed
   {
     .maxstack 9
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist81', int32 'n1', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist95', int32 'n1', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Mat::'rank'
     ldc.i4 1
@@ -50424,7 +59650,7 @@
   .method public static float64 'mat_at'(class Mat 'm', int32 'r', int32 'c') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist82', float64 'v1', int32 'idx', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist83', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist96', float64 'v1', int32 'idx', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist97', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Mat::'rank'
     ldc.i4 1
@@ -50458,7 +59684,7 @@
   .method public static int32 'mat_set'(class Mat 'm', int32 'r', int32 'c', float64 'val') cil managed
   {
     .maxstack 11
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist84', int32 'idx', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist85', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist98', int32 'idx', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist99', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld int32 Mat::'rank'
     ldc.i4 1
@@ -50494,7 +59720,7 @@
   .method public static class Mat 'series_to_mat'(class Series 's') cil managed
   {
     .maxstack 12
-    .locals init (class Mask 'vm', int32 'n', valuetype TkvInt 'any_null', int32 'i', class Mat 'mz', class [mscorlib]System.Collections.Generic.List`1<float64> 'out', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist86', float64 'v', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist87', int64 'v2', class Mat 'mc', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class Mask 'vm', int32 'n', valuetype TkvInt 'any_null', int32 'i', class Mat 'mz', class [mscorlib]System.Collections.Generic.List`1<float64> 'out', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist100', float64 'v', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist101', int64 'v2', class Mat 'mc', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class Mask Series::'valid'
     stloc.s 0
@@ -50651,7 +59877,7 @@
   .method public static class Mat 'df_to_mat_2d'(class DataFrame 'df') cil managed
   {
     .maxstack 12
-    .locals init (int32 'nc', int32 'nr', class [mscorlib]System.Collections.Generic.List`1<int32> 'numeric_dtypes', int32 'c', class Series 's', valuetype TkvInt 'cnum', class Mat 'me', class [mscorlib]System.Collections.Generic.List`1<float64> 'flat', int32 'r', int32 'dt', class Series 'sc', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist88', float64 'v', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist89', int64 'v2', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist90', int32 'v3', class Mat 'm2', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'nc', int32 'nr', class [mscorlib]System.Collections.Generic.List`1<int32> 'numeric_dtypes', int32 'c', class Series 's', valuetype TkvInt 'cnum', class Mat 'me', class [mscorlib]System.Collections.Generic.List`1<float64> 'flat', int32 'r', int32 'dt', class Series 'sc', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist102', float64 'v', class [mscorlib]System.Collections.Generic.List`1<int64> '__hoist103', int64 'v2', class [mscorlib]System.Collections.Generic.List`1<int32> '__hoist104', int32 'v3', class Mat 'm2', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 DataFrame::'column_count'()
     stloc.s 0
@@ -50913,7 +60139,7 @@
   .method public static class DataFrame 'mat_to_df'(class Mat 'm', class [mscorlib]System.Collections.Generic.List`1<string> 'names') cil managed
   {
     .maxstack 10
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<class Series> 'result_cols', string 'col_name', class [mscorlib]System.Collections.Generic.List`1<float64> 'sv', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist91', int32 'i', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist92', float64 'vv', int32 'c', class [mscorlib]System.Collections.Generic.List`1<float64> 'col_data', int32 'r', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist93', float64 'v', string 'cname', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class Series> 'result_cols', string 'col_name', class [mscorlib]System.Collections.Generic.List`1<float64> 'sv', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist105', int32 'i', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist106', float64 'vv', int32 'c', class [mscorlib]System.Collections.Generic.List`1<float64> 'col_data', int32 'r', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist107', float64 'v', string 'cname', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<class Series>::.ctor()
     stloc.s 0
     ldarg.s 0
@@ -51062,7 +60288,7 @@
   .method public static class Mat 'mat_square_sum'(class Mat 'm') cil managed
   {
     .maxstack 12
-    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist94', int32 'n', class [mscorlib]System.Collections.Generic.List`1<float64> 'out', int32 'i', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist95', float64 'v', class Mat 'mr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist108', int32 'n', class [mscorlib]System.Collections.Generic.List`1<float64> 'out', int32 'i', class [mscorlib]System.Collections.Generic.List`1<float64> '__hoist109', float64 'v', class Mat 'mr', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     ldfld class [mscorlib]System.Collections.Generic.List`1<float64> Mat::'f64s'
     stloc.s 0
@@ -51210,7 +60436,7 @@
   .method public static string 'json_array_write_string'(class DataFrame 'df') cil managed
   {
     .maxstack 10
-    .locals init (int32 'nc', class [mscorlib]System.Collections.Generic.List`1<string> 'names', int32 'n', string 'out', int32 'r', int32 'c', class Series 'col', string 'nm', int64 '__strtmp1861307989456', float64 '__strtmp1861307986896', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
+    .locals init (int32 'nc', class [mscorlib]System.Collections.Generic.List`1<string> 'names', int32 'n', string 'out', int32 'r', int32 'c', class Series 'col', string 'nm', int64 '__strtmp2262450020944', float64 '__strtmp2262424011216', valuetype TkvInt '__tkvint_a', valuetype TkvInt '__tkvint_b', valuetype TkvInt '__tkvint_r', int64 '__tkvint_x', valuetype [System.Numerics]System.Numerics.Complex '__tkvcplx_str', object '__arr2d_src', object '__arr2d_dst', int32 '__arr2d_i', int32 '__arr2d_n')
     ldarg.s 0
     callvirt instance int32 DataFrame::'column_count'()
     stloc.s 0
