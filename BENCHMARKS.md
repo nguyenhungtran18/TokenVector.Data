@@ -46,6 +46,54 @@
 
 > **Engine update 2026-09-19 (all-valid fast paths):** the vec/comparison ops now scan the validity mask once and hoist dtype/null branches out of the loop. At 500k B1 improves 20.4 → 17.7 ms and B2 20.3 → 18.1 ms (later runs 15.6 ms after warm-up variance).
 
+## 0b. Same-session re-run 2026-09-23 (tvsrc v1.9 / DLL 1.0.6-dev) + v1.9 feature bench
+
+> Re-measured both engines in the same session after the v1.9 (pandas-100 closure)
+> build. Best-of-3 per workload on both sides, same machine. Scripts:
+> `tvsrc/bench.tkv` + `benchmarks/bench_pandas.py` (B1-B7),
+> `benchmarks/bench_p100.tkv` + `benchmarks/bench_p100_pandas.py` (C1-C6, new).
+
+**B1-B7 (legacy):**
+
+| Workload | N | TokenVector v1.9 | pandas 2.3.3 | pandas faster by |
+| :--- | ---: | ---: | ---: | ---: |
+| B1 Vector arithmetic (`a*2.5 + b`) | 500,000 | **4.6** | **2.8** | ~1.6× |
+| B2 Filter (`val > 5.0`) | 500,000 | **20.2** | **4.1** | ~4.9× |
+| B3 GroupBy 3 groups × 3 aggs | 500,000 | **60.9** | **29.7** | ~2.1× |
+| B4 Hash join inner (100k×100k → 10M) | 200,000 input | **1,507** | **514** | ~2.9× |
+| B5 CSV parse 100k×3 cols | 100,000 | **259** | **38.2** | ~6.8× |
+| B6 Arrow round-trip | — | **299** | n/a | — |
+| B7 Sort (`sort_by`, merge sort) | 100,000 | **120** | **8.7** | ~13.8× |
+
+**C1-C6 (v1.9 features — mới):**
+
+| Workload | N | TokenVector v1.9 | pandas 2.3.3 | pandas faster by |
+| :--- | ---: | ---: | ---: | ---: |
+| C1 `Series.shift(1)` | 500,000 | **4.4** | **1.2** | ~3.7× |
+| C2 `Series.fillna` (10% null) | 500,000 | **16.0** | **2.6** | ~6.2× |
+| C3 `groupby().rolling(7).sum()` | 500,000 | **2,117** | **177** | ~12.0× |
+| C4 `groupby().resample(5min).mean()` | 500,000 | **675** | **91** | ~7.4× |
+| C5 `df.reindex` (str index, 20% missing) | 500,000 | **122** | **67** | ~1.8× |
+| C6 merge on index inner (N × N/2) | 500,000 | **61** | **86** | **TKV ~1.4× faster** |
+
+> **Perf fix shipped with this bench:** `groupby_rolling` previously sorted each
+> group with a per-group **selection sort O(n²)** — at 500k rows × 3 groups the
+> C3 workload did not finish in 10 minutes. Replaced with the engine merge sort
+> (`sort_by`, O(n log n), stable): now **2,117 ms** end-to-end (group
+> materialization + sort + window scan). `p100_check` 73/73 stays green.
+>
+> **Where the remaining C3/C4 gap lives:** per-row `groupby_group` sub-DataFrame
+> materialization (records + masks) and the per-window `vals` list appends —
+> engine-level costs the compiler's per-element append floor (~10 ns/elt,
+> see BENCHMARKS.md §1) dominates. A pre-allocated, array-slice rolling kernel
+> would close most of it; deferred until compiler-side allocation lands.
+>
+> **C6 is a real win for the two-pointer merge:** sorted index columns let the
+> TKV merge skip hashing entirely — 61 ms vs pandas hash-join 86 ms. Note the
+> TKV `merge_on_index`/`df_reindex` require lexicographically sorted string keys
+> (use zero-padded ids for numeric data) — documented in FUNCTION_PARITY §3i.
+
+
 ## 1a. Compiler update 2026-09-21 — đa luồng output THẬT đã mở khóa (TKV 8T thắng numpy 8.6×)
 
 Phiên tkvc hôm nay vá 2 gap compiler chặn đa luồng output từ KERNEL_LAB 6.2:

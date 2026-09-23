@@ -34,6 +34,16 @@ groupby_resample, df_set_index/df_reindex/merge_on_index, csv_write_ex
 blocked-by-compiler (bitwise R5 + binary IO); MultiIndex = loại trừ có chủ đích
 (mô hình position-based). Phần "đóng được ở tầng thư viện" = **0**.
 
+**Bench so pandas (same-session 2026-09-23, v1.9):**
+- Script mới `benchmarks/bench_p100.tkv` + `bench_p100_pandas.py` (C1-C6);
+  B1-B7 re-run best-of-3. Kết quả đầy đủ ở BENCHMARKS.md §0b.
+- **Cảm bấy perf đã vá:** `groupby_rolling` selection sort O(n²) → `sort_by`
+  O(n log n) (500k × 3 nhóm: treo >10 phút → 2.117 ms). p100_check 73/73.
+- **TKV thắng pandas ở C6** merge-on-index inner (61 vs 86 ms) nhờ two-pointer
+  trên keys đã sort — lưu ý: API cần keys sort (zero-pad id số).
+- Gap còn lại C3/C4: groupby_group materialize + per-window append (sàn
+  append compiler). Kernel pre-allocated đã ghi ledger, hoán đợi compiler.
+
 **Toolchain:** tkvc dist compiler tree vẫn hỏng — dùng
 `/d/TokenVector._head_wt/3.code/dist/tkvc.exe`. Worktree giữ nguyên.
 

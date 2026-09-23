@@ -371,8 +371,8 @@ riêng từng nhánh (`vb`, `vi`) — cùng bản chất với bài học `vals_
 | `groupby().rolling` | `groupby_rolling(df, key, col, win, agg)` | ✅ |
 | `groupby().resample` | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms` | ✅ |
 | `df.set_index` (positional) | `df_set_index` (vị trí dòng giữ nguyên — TKV position-based) | ✅ |
-| `df.reindex(new_index)` | `df_reindex(df, keys)` — union, key thiếu → null cells | ✅ |
-| `merge(left, right, left_index=True, right_index=True)` | `merge_on_index(left, right, kcol, how)` — inner/left/right coalesce key bằng nhau | ✅ |
+| `df.reindex(new_index)` | `df_reindex(df, keys)` — union, key thiếu → null cells. Lưu ý: keys phải đã sort (zero-pad id số) | ✅ |
+| `merge(left, right, left_index=True, right_index=True)` | `merge_on_index(left, right, kcol, how)` — two-pointer merge, cần keys đã sort (nhanh hơn pandas hash-join ~1.4×). Lưu ý: zero-pad id số | ✅ |
 | `to_csv(date_format=, quoting=QUOTE_ALL)` | `csv_write_ex(..., date_format, quote_all)` — chỉ áp date_format cho cột datetime64 | ✅ |
 | `to_json(orient=values/split/index/columns)` | `json_write_values/split/index` + đọc lại `json_read_object`/`json_read_string` | ✅ (records có từ v1.7) |
 

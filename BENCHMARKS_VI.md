@@ -8,6 +8,33 @@
 
 ---
 
+## 0b. Chạy lại cùng phiên 2026-09-23 (tvsrc v1.9 / DLL 1.0.6-dev) + bench tính năng mới
+
+> So lại cả 2 engine cùng phiên sau khi build v1.9 (pandas-100 closure).
+> Best-of-3 cả hai phía, cùng máy. Script: `tvsrc/bench.tkv` +
+> `benchmarks/bench_pandas.py` (B1-B7), `benchmarks/bench_p100.tkv` +
+> `benchmarks/bench_p100_pandas.py` (C1-C6, mới).
+
+**B1-B7:** B1 4.6 vs 2.8 ms (pandas ~1.6×) · B2 20.2 vs 4.1 (~4.9×) ·
+B3 60.9 vs 29.7 (~2.1×) · B4 1.507 vs 514 ms (~2.9×) · B5 259 vs 38 ms (~6.8×) ·
+B6 299 ms · B7 120 vs 8.7 ms (~13.8×).
+
+**C1-C6 (tính năng v1.9 — mới):** C1 shift 4.4 vs 1.2 ms · C2 fillna 16.0 vs 2.6 ·
+C3 groupby_rolling(7) 2.117 vs 177 ms · C4 resample(5min) 675 vs 91 ·
+C5 reindex 122 vs 67 · **C6 merge-on-index inner 61 vs 86 ms — TKV thắng ~1.4×**
+(two-pointer trên keys đã sort, không hash).
+
+> **Sửa perf kèm bench này:** `groupby_rolling` trước đây sort mỗi nhóm bằng
+> **selection sort O(n²)** — ở 500k dòng × 3 nhóm thì C3 không chạy xong trong
+> 10 phút. Đã thay bằng merge sort của engine (`sort_by`, O(n log n), stable):
+> giờ là **2.117 ms**. `p100_check` 73/73 vẫn xanh.
+>
+> **Phần gap còn lại ở C3/C4:** materialize sub-DataFrame theo dòng
+> (`groupby_group`) + append list từng window — sàn per-element append
+> (~10 ns/elt) của compiler là chi phí trội. Kernel rolling pre-allocated
+> sẽ đóng phần lớn; hoãn đến khi compiler có pre-allocation.
+
+
 ## 1. Điều kiện đo
 
 | Thành phần | Giá trị |
