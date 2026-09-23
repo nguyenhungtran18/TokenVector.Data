@@ -13,8 +13,8 @@ os.makedirs(os.path.join(STAGE, 'package', 'services', 'metadata', 'core-propert
 zold = zipfile.ZipFile('packages/TokenVector.Data.1.0.7-dev.nupkg')
 rels = zold.read('_rels/.rels')
 ct = zold.read('[Content_Types].xml')
-readme = zold.read('README.md')
 zold.close()
+readme = io.open('tvsrc/package/README.md', 'rb').read()
 
 desc = ('High-performance columnar DataFrame and tabular data processing '
         'library, natively implemented in the TokenVector language (tkv) and '
