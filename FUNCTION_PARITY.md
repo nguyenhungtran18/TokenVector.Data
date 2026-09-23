@@ -25,7 +25,7 @@
 | MultiIndex / hierarchical | ✅ | ❌ | — |
 | I/O Arrow thực (Parquet/Feather) | ✅ | 🟡 | `ARROW1` stream format **tự chế**, không tương thích Arrow thật; OOC có |
 | Thống kê đa luồng | ✅ (bản 3.x) | ❌ (engine) | Engine 1T; nhưng ngôn ngữ TKV đã có thread 8T output thật |
-| Index alignment (set_index, reindex) | ✅ | ❌ | Không có khái niệm index — chỉ vị trí |
+| Index alignment (set_index, reindex) | ✅ | 🞡 (v1.9, positional) | `df_set_index`/`df_reindex`/`merge_on_index` — emulation trên cột key; không có Index làm sống (xem MultiIndex) |
 | Missing data nâng cao | ✅ | 🟡 | v1.9 đã đủ: `df_isna/notna/empty`, `df_fillna_rows`, `df_dropna_rows_any/all`, `df_ffill_cols`, `series_fillna/interpolate/where/mask`; missing-join nắm trong `merge_on_index` (null cells) |
 | Interop (NumPy/tensor) | ✅ | ✅ | Mat zero-copy bridge — điểm mạnh riêng, pandas không có sẵn |
 
@@ -50,7 +50,7 @@
 | `df.drop` | `drop` (cột) | ✅ |
 | `df.insert` | `with_column` | ✅ |
 | `df.shape`, `df.columns`, `df.dtypes` | `row_count/column_count/names/schema_dtypes` | ✅ |
-| `df.empty` | `row_count == 0` | 🟡 (thủ công) |
+| `df.empty` | `df_empty(df)` (v1.9) | ✅ |
 | `df.describe` | `describe` | ✅ |
 
 ### 2.2 I/O (tokenvector_io.tkv)
@@ -131,7 +131,7 @@
 | `explode` | `explode(column)` | ✅ (v1.5: cột JSON-list) |
 | `crosstab` | `crosstab(index, columns)` | ✅ (v1.5: đếm số dòng) |
 | `merge_ordered` | `merge_ordered(left, right, on, by, fill)` (v1.7 — outer gộp key bằng nhau, ffill tùy chọn) | ✅ |
-| `df.join(on index)` | ❌ (join theo cột) | — |
+| `df.join(on index)` | `merge_on_index(left, right, kcol, how)` (v1.9 — two-pointer, cần keys sort) | ✅ |
 
 ### 2.8 Window (tokenvector_compute.tkv)
 
@@ -145,7 +145,7 @@
 | `pct_change / diff(periods=k)` | `win_diff` (k=1), `win_pct_change` | ✅ (v1.4, pct k=1) |
 | `cumsum / cummax / cummin / cumprod` | `win_cumsum`, `win_cummax`, `win_cummin`, `win_cumprod` | ✅ (v1.4) |
 | `rank(method=…)` | `win_rank` | 🟡 (1 method) |
-| `groupby().rolling` | ❌ | Thiếu |
+| `groupby().rolling` | `groupby_rolling(df, [key], ts_col, val_col, win, agg)` (v1.9 — O(n log n) sort + window) | ✅ |
 
 ### 2.9 String (Series.str, tokenvector_data.tkv)
 
