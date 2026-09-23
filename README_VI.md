@@ -45,8 +45,19 @@ vì vòng lặp viết tay.
 
 **Cách dùng — toàn bộ quy trình 5 bước:**
 
-1. Import cái cần:
+1. Import cái cần — mỗi tên là một module, bạn chỉ trả giá cho cái mình
+   liệt kê:
    `__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_sql"]`
+   - `tokenvector_data` — nền móng: kiểu `DataFrame`/`Series`, hàm dựng
+     `make_df` / `make_series_i64|str|f64`, dtype và mask null. Luôn import
+     cái này; mọi module khác đều đứng trên nó.
+   - `tokenvector_io` — đọc/ghi file và chuỗi: `csv_read_file`,
+     `csv_write_string`, JSON/NDJSON. Import khi dữ liệu đi từ (hoặc ra)
+     đĩa hay chuỗi.
+   - `tokenvector_sql` — hỏi đáp: `sql_query` / `sql_query2`. Import khi
+     bạn muốn `SELECT … WHERE … GROUP BY …` thay vì vòng lặp viết tay.
+   Cần Excel? thêm `"tokenvector_excel"`. Ngày tháng? `"tokenvector_datetime"`.
+   Xem bảng module đầy đủ bên dưới.
 2. Lấy `DataFrame` — tự dựng (`make_df` + `make_series_i64/str/f64`) hoặc
    đọc (`csv_read_file`, `excel_read_file`, `json_read_string`…).
 3. Biến đổi bằng hàm thường — `filter`, `groupby_agg`, `join_frames`,

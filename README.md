@@ -46,8 +46,20 @@ hand-rolled loops.
 
 **How to use it — the whole pattern in 5 steps:**
 
-1. Import what you need:
+1. Import what you need — each name is one module, you only pay for what
+   you list:
    `__tkv_import__ = ["tokenvector_data", "tokenvector_io", "tokenvector_sql"]`
+   - `tokenvector_data` — the foundation: the `DataFrame`/`Series` types,
+     the `make_df` / `make_series_i64|str|f64` builders, dtypes and
+     null-masks. Always import this; every other module builds on it.
+   - `tokenvector_io` — reading and writing files and text: `csv_read_file`,
+     `csv_write_string`, JSON/NDJSON. Import it when data comes from (or
+     goes to) disk or a string.
+   - `tokenvector_sql` — asking questions: `sql_query` / `sql_query2`.
+     Import it when you want `SELECT … WHERE … GROUP BY …` instead of
+     hand-written loops.
+   Need Excel? add `"tokenvector_excel"`. Dates? `"tokenvector_datetime"`.
+   See the full module table below.
 2. Get a `DataFrame` — build one (`make_df` + `make_series_i64/str/f64`) or
    read one (`csv_read_file`, `excel_read_file`, `json_read_string`…).
 3. Transform it with plain functions — `filter`, `groupby_agg`,
