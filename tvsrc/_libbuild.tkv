@@ -9758,5 +9758,342 @@ def json_read_object(json_text: "str") -> "DataFrame":
     return json_read_string(arr)
 
 
+# ==================== tokenvector_dtype ====================
+
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module dtype hepl + sort_index + groupby iteration (v1.8)
+# Đóng 3 gap pandas cuối (FUNCTION_PARITY §4 còn lại, trừ nhóm bị chặn):
+#   1. DTYPE HỆP (i32/u8/f32/datetime64): tag trên storage chuẩn của TKV.
+#      - i32/u16/u32/u64/i8/i16/datetime64 -> mảng i64s (get_i64 không đổi,
+#        get_f64/float() tự widen như DT_I64)
+#      - f32 -> mảng f64s (get_f64 không đổi)
+#      - Mọi consumer (sort/filter/compute/agg) đi qua get_i64/get_f64 nên
+#        hoạt động đúng mà không cần đổi.
+#      - series_dtype(s) trả dtype hẹp; series_astype(s, dt) đổi tag (có cast
+#        range-check cho i32/u8; datetime64 chỉ là tag, giá trị vẫn epoch ms).
+#   2. sort_index: axis=1 (sắp cột DataFrame theo tên), axis=0 trả nguyên
+#      (TKV giữ thứ tự dòng mặc định như RangeIndex của pandas).
+#   3. Iterating groups: groupby_groups(df, keys) -> list[DataFrame] con theo
+#      thứ tự nhóm xuất hiện; groupby_group_keys -> list[str] key (join '\x01'
+#      nếu multi-key) - cho vòng lặp `for i in range(len(...))`.
+# Không đụng record Series/Col của core; dtype hẹp chỉ là giá trị dtype mới.
+# =============================================================================
+
+# ---- helpers nội bộ tránh literal trùng loại trong list ----------------------
+
+def _dt_int_list(n: "i32") -> "list[i64]":
+    iv = []
+    for i in range(n):
+        iv.append(0)
+    return iv
+
+
+def _dt_f_list(n: "i32") -> "list[f64]":
+    fv = []
+    for i in range(n):
+        fv.append(0.0)
+    return fv
+
+
+def _dt_str_list(n: "i32") -> "list[str]":
+    sv = []
+    for i in range(n):
+        sv.append("")
+    return sv
+
+
+# ---- 1. dtype hepl: nhận diện + astype --------------------------------------
+
+def dt_is_narrow(dt: "i32") -> "i32":
+    # dtype hepl: khong phai 4 storage dtype chuan (I64/F64/BOOL/STR/DT64-legacy)
+    if dt == DT_I64 or dt == DT_F64 or dt == DT_BOOL or dt == DT_STR:
+        return 0
+    if dt == DT_DT64:
+        return 1
+    if dt >= DT_I8 and dt <= DT_F32:
+        return 1
+    return 0
+
+
+def _dt_narrow_in_i64(dt: "i32") -> "i32":
+    # narrow dtype luu trong mang i64s
+    if dt == DT_DT64:
+        return 1
+    if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+        return 1
+    if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+        return 1
+    return 0
+
+
+def _dt_narrow_in_f64(dt: "i32") -> "i32":
+    if dt == DT_F32:
+        return 1
+    return 0
+
+
+def _dt_narrow_name(dt: "i32") -> "str":
+    if dt == DT_I8:
+        return "int8"
+    if dt == DT_I16:
+        return "int16"
+    if dt == DT_I32:
+        return "int32"
+    if dt == DT_U8:
+        return "uint8"
+    if dt == DT_U16:
+        return "uint16"
+    if dt == DT_U32:
+        return "uint32"
+    if dt == DT_U64:
+        return "uint64"
+    if dt == DT_F32:
+        return "float32"
+    if dt == DT_DT64:
+        return "datetime64"
+    return ""
+
+
+def dt_parse_spec(spec: "str") -> "i32":
+    # "i32"/"int32" -> DT_I32 ... cho dtype_spec cua CSV/JSON
+    if spec == "i32" or spec == "int32":
+        return DT_I32
+    if spec == "i16" or spec == "int16":
+        return DT_I16
+    if spec == "i8" or spec == "int8":
+        return DT_I8
+    if spec == "u8" or spec == "uint8":
+        return DT_U8
+    if spec == "u16" or spec == "uint16":
+        return DT_U16
+    if spec == "u32" or spec == "uint32":
+        return DT_U32
+    if spec == "u64" or spec == "uint64":
+        return DT_U64
+    if spec == "f32" or spec == "float32":
+        return DT_F32
+    if spec == "datetime64" or spec == "dt64":
+        return DT_DT64
+    return 0 - 1
+
+
+def _dt_series_from_i64(nm: "str", dt: "i32", iv: "list[i64]", vm: "Mask") -> "Series":
+    r = Series(nm, dt, vm)
+    r.f64s = []
+    r.i64s = iv
+    r.bools = []
+    r.strings = []
+    return r
+
+
+def _dt_series_from_f64(nm: "str", dt: "i32", fv: "list[f64]", vm: "Mask") -> "Series":
+    r = Series(nm, dt, vm)
+    r.f64s = fv
+    r.i64s = []
+    r.bools = []
+    r.strings = []
+    return r
+
+
+def series_astype(s: "Series", dt: "i32") -> "Series":
+    # Doi dtype tag; gia tri duoc cast theo nghia pandas (astype):
+    #  - sang kieu nguyen: bo phan thap phan (int()), range-check CLAMP cho
+    #    i8/i16/i32/u8/u16/u32 (pandas se overflow wrap; TKV chon clamp an toan)
+    #  - sang f32/f64: float()
+    #  - sang str: get_string; sang bool: != 0
+    #  - datetime64: nhan tag DT_DT64, gia tri giu nguyen (da la epoch ms)
+    n = s.length()
+    vm = s.valid
+    nm = s.name
+    if dt == DT_STR:
+        sv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                sv.append("")
+            else:
+                sv.append(s.get_string(i))
+        r = make_series_str_with_mask(nm, sv, vm)
+        return r
+    if dt == DT_BOOL:
+        bv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                bv.append(0)
+            else:
+                vb = s.get_f64(i)
+                if vb != 0.0:
+                    bv.append(1)
+                else:
+                    bv.append(0)
+        r = make_series_bool_with_mask(nm, bv, vm)
+        return r
+    if dt == DT_F64:
+        fv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                fv.append(0.0)
+            else:
+                fv.append(s.get_f64(i))
+        r = make_series_f64_with_mask(nm, fv, vm)
+        return r
+    if dt == DT_F32:
+        fv2 = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                fv2.append(0.0)
+            else:
+                fv2.append(s.get_f64(i))
+        return _dt_series_from_f64(nm, DT_F32, fv2, vm)
+    # cac dtype nguyen hepl + datetime64 -> luu i64s
+    lo = 0 - 9223372036854775808
+    hi = 9223372036854775807
+    if dt == DT_I8:
+        lo = 0 - 128
+        hi = 127
+    elif dt == DT_I16:
+        lo = 0 - 32768
+        hi = 32767
+    elif dt == DT_I32:
+        lo = 0 - 2147483648
+        hi = 2147483647
+    elif dt == DT_U8:
+        lo = 0
+        hi = 255
+    elif dt == DT_U16:
+        lo = 0
+        hi = 65535
+    elif dt == DT_U32:
+        lo = 0
+        hi = 4294967295
+    iv = []
+    src_i64 = 0
+    if s.dtype == DT_I64:
+        src_i64 = 1
+    if _dt_narrow_in_i64(s.dtype) == 1:
+        src_i64 = 1
+    for i in range(n):
+        if s.is_null(i) == 1:
+            iv.append(0)
+        else:
+            if src_i64 == 1:
+                vi = s.get_i64(i)
+            else:
+                vi = int(s.get_f64(i))
+            if vi < lo:
+                vi = lo
+            elif vi > hi:
+                vi = hi
+            iv.append(vi)
+    return _dt_series_from_i64(nm, dt, iv, vm)
+
+
+def series_to_narrow(s: "Series", spec: "str") -> "Series":
+    # wrapper tien loi: astype theo chuoi ("i32", "u8", "f32", "datetime64"...)
+    dt = dt_parse_spec(spec)
+    if dt < 0:
+        raise ValueError("series_to_narrow: dtype spec khong.hep '" + spec + "'")
+    return series_astype(s, dt)
+
+
+# ---- 2. sort_index ------------------------------------------------------------
+
+def df_sort_index_cols(df: "DataFrame") -> "DataFrame":
+    # axis=1: sap xep COT theo ten (pandas sort_index(axis=1))
+    names = df.column_names()
+    n = len(names)
+    if n <= 1:
+        return df
+    # selection sort theo ten (stable, n cot thuong nho)
+    order = []
+    for i in range(n):
+        order.append(i)
+    for i in range(n):
+        mi = i
+        for j in range(i + 1, n):
+            if names[order[j]] < names[order[mi]]:
+                mi = j
+        if mi != i:
+            t = order[i]
+            order[i] = order[mi]
+            order[mi] = t
+    cols = []
+    for i in range(n):
+        cols.append(df.col_at(order[i]))
+    return make_df(cols)
+
+
+def df_sort_index_rows_identity(df: "DataFrame") -> "DataFrame":
+    # axis=0: TKV DataFrame luon giu thu tu dong (tuong duong RangeIndex
+    # da sort) -> tra nguyen nhu pandas sort_index(axis=0) tren index da thu.
+    return df
+
+
+# ---- 3. iterating groups ------------------------------------------------------
+
+def _dt_group_ids(df: "DataFrame", key_columns: "list[str]", kmap: "dict[str,i32]",
+                  row_group: "list[i32]") -> "i32":
+    n = df.row_count()
+    nk = len(key_columns)
+    gcount = 0
+    for i in range(n):
+        key = df.col_by_name(key_columns[0]).get_string(i)
+        for k in range(1, nk):
+            key = key + "" + df.col_by_name(key_columns[k]).get_string(i)
+        g = kmap.get(key, 0 - 1)
+        if g < 0:
+            kmap[key] = gcount
+            row_group.append(gcount)
+            gcount = gcount + 1
+        else:
+            row_group.append(g)
+    return gcount
+
+
+def groupby_group_keys(df: "DataFrame", key_columns: "list[str]") -> "list[str]":
+    # List key theo thu tu nhom xuat hien - de iterate groups:
+    #   keys = groupby_group_keys(df, ["k"])
+    #   for gi in range(len(keys)):
+    #       sub = groupby_group(df, ["k"], keys[gi])
+    # Multi-key: key la join bang ky tu  (nhu groupby ben relational).
+    kmap = {}
+    row_group = []
+    gcount = _dt_group_ids(df, key_columns, kmap, row_group)
+    keys = []
+    n = df.row_count()
+    filled = []
+    for g in range(gcount):
+        filled.append(0)
+    for i in range(n):
+        key = df.col_by_name(key_columns[0]).get_string(i)
+        for k in range(1, len(key_columns)):
+            key = key + "" + df.col_by_name(key_columns[k]).get_string(i)
+        g = row_group[i]
+        if filled[g] == 0:
+            filled[g] = 1
+            keys.append(key)
+    return keys
+
+
+def groupby_group(df: "DataFrame", key_columns: "list[str]", key: "str") -> "DataFrame":
+    # Sub-DF cua nhom co key = key (join '' cho multi-key, giong keys o tren)
+    nk = len(key_columns)
+    pick = []
+    n = df.row_count()
+    for i in range(n):
+        key_i = df.col_by_name(key_columns[0]).get_string(i)
+        for k in range(1, nk):
+            key_i = key_i + "" + df.col_by_name(key_columns[k]).get_string(i)
+        if key_i == key:
+            pick.append(i)
+    rows = make_idx(pick)
+    names = df.column_names()
+    cols = []
+    for c in range(len(names)):
+        col = df.col_at(c)
+        cols.append(col.take(rows))
+    return make_df(cols)
+
+
 def run() -> "i32":
     return 0

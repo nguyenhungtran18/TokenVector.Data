@@ -29,7 +29,17 @@ class Smoke
             else Console.WriteLine("MISSING: " + fn);
         }
         Console.WriteLine("newFns=" + okNew + "/" + newFns.Length);
-        if (okNew != newFns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
+        // v1.8: dtype hep + sort_index + groupby iteration
+        string[] v18Fns = new string[] { "series_astype", "series_to_narrow", "df_sort_index_cols", "df_sort_index_rows_identity", "groupby_group_keys", "groupby_group", "dt_is_narrow", "dt_parse_spec" };
+        int ok18 = 0;
+        foreach (var fn in v18Fns)
+        {
+            bool have = t.GetMethod(fn) != null;
+            if (have) ok18++;
+            else Console.WriteLine("MISSING18: " + fn);
+        }
+        Console.WriteLine("v18Fns=" + ok18 + "/" + v18Fns.Length);
+        if (okNew != newFns.Length || ok18 != v18Fns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
         Console.WriteLine("SMOKE OK");
         return 0;
     }
