@@ -11,10 +11,10 @@
 | Nhóm chức năng | pandas | TKV hiện tại | Chênh lệch chính |
 | :--- | :---: | :--- | :--- |
 | Cấu trúc cột + null mask | ✅ | ✅ | Sắp ngang — TKV thiếu `Nullable<T>`/object, nhưng có Arrow-style bitmask |
-| I/O (CSV/JSON) | ✅ | 🟡 | CSV v1.6.x: quote-aware, chunks streaming, parse_dates, encoding. JSON: đọc + ghi orient=records (v1.5). Thiếu: Excel/Parquet thực |
+| I/O (CSV/JSON) | ✅ | 🟡 | CSV v1.6.x + dtype hẹp v1.8, chunks streaming, parse_dates, encoding. JSON: đọc + ghi orient=records + JSONL (v1.7). Thiếu: Excel/Parquet thực (blocked-by-compiler), orient khác |
 | Vec math + so sánh | ✅ | 🟡 | ~40 op (arith/compare/scalar + rounding v1.5, isin, interpolate/where/mask v1.4) nhưng **không chaining/method API** |
 | Filter / boolean | ✅ | ✅ | Đủ (and/or/evaluate/take) |
-| GroupBy / agg | ✅ | 🟡 | v1.5: + `groupby_size/transform/filter/apply`, prod/sem/mode. Thiếu: iterating groups, agg tự định nghĩa nội tuyến |
+| GroupBy / agg | ✅ | 🟡 | v1.5/v1.8: + `groupby_size/transform/filter/apply/head/tail/nth`, prod/sem/mad/mode, iterating groups. Còn: `groupby().resample/rolling`, agg nội tuyến |
 | Join / AsOf / pivot / melt | ✅ | 🟡 | v1.5: + `crosstab`, `explode`, `pivot_table` (agg mean/sum/min/max/count). Thiếu: `merge_on_index` |
 | Sort | ✅ | ✅ (v1.1) | `sort_by_multi` multi-key stable (multi-pass, hỗ trợ key str), `nlargest/nsmallest` |
 | Window / rolling | ✅ | ✅ (v1.4) | + `win_apply(f)` (rolling.apply — **func(list[f64])**, min_periods), expanding sum/mean/min/max/std, `win_ewm_mean` (khớp pandas adjust=True/False, verify từng chữ số), `win_pct_change`, `win_cumprod/cummax/cummin` |
