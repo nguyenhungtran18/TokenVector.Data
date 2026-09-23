@@ -1,0 +1,143 @@
+# -*- coding: utf-8 -*-
+# Benchmark v1.9 features (pandas-100 closure) - doi chieu voi
+# benchmarks/bench_p100_pandas.py (cung du lieu, cung N).
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_datetime", "tokenvector_pandas", "tokenvector_dtype", "tokenvector_p100"]
+
+def _ms(t1, t2) -> "f64":
+    d = t2 - t1
+    ticks = datetime_ticks(d)
+    return float(ticks) / 10000.0
+
+def _mkdf(n: "i32") -> "DataFrame":
+    ids = []
+    vals = []
+    grps = []
+    ts = []
+    sids = []
+    for i in range(n):
+        ids.append(i)
+        vals.append(float(i % 10000) * 0.001)
+        if i % 3 == 0:
+            grps.append("A")
+        elif i % 3 == 1:
+            grps.append("B")
+        else:
+            grps.append("C")
+        ts.append(1735689600000 + i * 60000)
+        p = str(i)
+        while len(p) < 7:
+            p = "0" + p
+        sids.append(p)
+    return make_df([make_series_i64("id", ids), make_series_f64("v", vals),
+                    make_series_str("g", grps), make_series_i64("ts", ts),
+                    make_series_str("sid", sids)])
+
+def run() -> "i32":
+    N = 500000
+    df = _mkdf(N)
+    s = df.col_by_name("v")
+
+    # C1: Series.shift(1)
+    best1 = 999999999.0
+    chk1 = 0.0
+    for r in range(3):
+        t1 = datetime()
+        sh = series_shift(s, 1)
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best1:
+            best1 = m
+        if r == 2:
+            chk1 = sh.get_f64(10)
+    print("C1 shift+1 n=" + str(N) + " best_ms=" + str(best1) + " chk=" + str(chk1))
+
+    # C2: series_fillna tren series co null (moi 10 phan tu 1 null)
+    vm = make_mask(N, 0)
+    for i in range(N):
+        if i % 10 != 3:
+            vm.set(i, 1)
+    ns = make_series_f64_with_mask("v", s.f64s, vm)
+    best2 = 999999999.0
+    for r in range(3):
+        t1 = datetime()
+        fs = series_fillna(ns, 0.0 - 1.0, 0, "")
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best2:
+            best2 = m
+    print("C2 fillna n=" + str(N) + " best_ms=" + str(best2) + " rows=" + str(fs.length()))
+
+    # C3: groupby_rolling win=7 (SUM), sort theo ts trong nhom
+    best3 = 999999999.0
+    rows3 = 0
+    for r in range(3):
+        t1 = datetime()
+        gres = groupby_rolling(df, ["g"], "ts", "v", 7, "sum")
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best3:
+            best3 = m
+        rows3 = gres.row_count()
+    print("C3 groupby_rolling w7 n=" + str(N) + " best_ms=" + str(best3) + " rows=" + str(rows3))
+
+    # C4: groupby_resample bucket 5 phut x group (MEAN)
+    best4 = 999999999.0
+    rows4 = 0
+    for r in range(3):
+        t1 = datetime()
+        rres = groupby_resample(df, ["g"], "ts", "v", "5T", "mean")
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best4:
+            best4 = m
+        rows4 = rres.row_count()
+    print("C4 groupby_resample 5min n=" + str(N) + " best_ms=" + str(best4) + " buckets=" + str(rows4))
+
+    # C5: df_reindex (key buoc 2 + 20% key moi o cuoi) tren index string sid
+    keys = []
+    for i in range(N // 2):
+        q = str(i * 2)
+        while len(q) < 7:
+            q = "0" + q
+        keys.append(q)
+    for i in range(N // 5):
+        q = str(2 * N + i)
+        while len(q) < 7:
+            q = "0" + q
+        keys.append(q)
+    best5 = 999999999.0
+    rows5 = 0
+    for r in range(3):
+        t1 = datetime()
+        rdf = df_reindex(df, "sid", keys)
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best5:
+            best5 = m
+        rows5 = rdf.row_count()
+    print("C5 reindex best_ms=" + str(best5) + " rows=" + str(rows5))
+
+    # C6: merge_on_index inner (N x N/2 tren sid)
+    rid = []
+    rv = []
+    for i in range(N // 2):
+        q = str(i * 2)
+        while len(q) < 7:
+            q = "0" + q
+        rid.append(q)
+        rv.append(float(i) * 0.5)
+    rdf2 = make_df([make_series_str("sid", rid), make_series_f64("rv", rv)])
+    best6 = 999999999.0
+    rows6 = 0
+    for r in range(3):
+        t1 = datetime()
+        mres = merge_on_index(df, rdf2, "sid", "inner")
+        t2 = datetime()
+        m = _ms(t1, t2)
+        if m < best6:
+            best6 = m
+        rows6 = mres.row_count()
+    print("C6 merge_on_index inner best_ms=" + str(best6) + " rows=" + str(rows6))
+
+    print("BENCHP100 DONE")
+    return 0

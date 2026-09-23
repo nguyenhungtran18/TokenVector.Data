@@ -25,3 +25,6 @@ tvsrc/test_out.csv
 
 ## Test runner output
 TestResults/
+
+## Benchmark runtime fixtures (suite-tao, khong track)
+tvsrc/_*.csv

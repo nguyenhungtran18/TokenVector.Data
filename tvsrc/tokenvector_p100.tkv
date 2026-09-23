@@ -268,21 +268,14 @@ def groupby_rolling(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
     for gi in range(len(keys)):
         sub = groupby_group(df, key_cols, keys[gi])
         n = sub.row_count()
-        # sort chi so dong trong nhom theo ts (selection sort, n nho)
-        order = []
-        for i in range(n):
-            order.append(i)
-        tc = sub.col_by_name(ts_col)
-        for i in range(n):
-            mi = i
-            for j in range(i + 1, n):
-                if tc.get_i64(order[j]) < tc.get_i64(order[mi]):
-                    mi = j
-            if mi != i:
-                tmp = order[i]
-                order[i] = order[mi]
-                order[mi] = tmp
-        vc = sub.col_by_name(val_col)
+        # sort trong nhom theo ts: dung merge sort O(n log n) cua sort_by
+        # (selection sort cu la O(n^2) -> 500k rows x 3 nhom treo hon 10 phut).
+        ssub = sub.sort_by(ts_col, 1)
+        tc = ssub.col_by_name(ts_col)
+        vc = ssub.col_by_name(val_col)
+        kcols_in = []
+        for k in range(len(key_cols)):
+            kcols_in.append(ssub.col_by_name(key_cols[k]))
         for pos in range(n):
             # window [pos - window + 1, pos] trong thu tu da sort
             vals = []
@@ -290,15 +283,11 @@ def groupby_rolling(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
             if start < 0:
                 start = 0
             for j in range(start, pos + 1):
-                src = order[j]
-                if vc.is_null(src) == 0:
-                    vals.append(vc.get_f64(src))
-            ksrc = order[pos]
+                if vc.is_null(j) == 0:
+                    vals.append(vc.get_f64(j))
             for k in range(len(key_cols)):
-                ksrc_col = sub.col_by_name(key_cols[k])
-                kv = ksrc_col.get_string(ksrc)
-                out_key.append(kv)
-            out_ts.append(tc.get_i64(ksrc))
+                out_key.append(kcols_in[k].get_string(pos))
+            out_ts.append(tc.get_i64(pos))
             if len(vals) == 0:
                 out_v.append(0.0)
             elif agg == "sum":
