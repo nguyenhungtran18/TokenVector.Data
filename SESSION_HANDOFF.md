@@ -21,6 +21,11 @@ Mục tiêu user: "làm tiếp đạt phủ 100%" — đóng các gap pandas cò
 FUNCTION_PARITY.md §2.x (trừ nhóm loại trừ có chủ đích: Parquet/Excel thật,
 dtype system, MultiIndex, index alignment).
 
+**Ghi chú toolchain:** worktree `D:\TokenVector._head_wt` (tkvc TỐT, HEAD=18deb7d)
+ĐƯỢC GIỮ LẠI — dist tkvc của compiler repo vẫn hỏng (tree dirty của phiên R4/R6
+dở), đây là toolchain sạch duy nhất. Xóa worktree SAU KHI compiler repo được
+sạch + rebuild tkvc chuẩn.
+
 ### File mới (chưa commit, chưa build pass hết):
 - `tvsrc/tokenvector_pandas.tkv` — 34 defs: slice_replace/fullmatch/extractall/cat,
   factorize, first/last/nth/mad, groupby_first/last/nth/head/tail, stack/unstack,
