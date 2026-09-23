@@ -206,3 +206,20 @@ cd tvsrc && /d/SkillSpector-TKV/tkvc.exe build --entry run ../benchmarks/bench_t
 ```
 
 To add a **Polars/DuckDB/pyarrow** column on this machine: `pip install polars duckdb pyarrow`, then extend `benchmarks/bench_pandas.py` — the script's structure makes adding engines straightforward.
+
+---
+
+## v2.2 — CSV nhanh tang thu vien (2026-09-24, same-machine; best-of-3, riêng dong quoted là single run)
+
+Fixture: 500k rows x 3 cols (`id,cat,v`, 8.6MB, khong quote) + file 15k rows
+co quote (346KB). Phuong phap: `_bench_par.tkv` (DIST tkvc) vs pandas/polars.
+
+| Workload | TKV truoc | TKV v2.2 | pandas | polars | Nhan xet |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| CSV read 500k serial | 1127 ms | 1150 ms | 209 ms | 6.8 ms | quoteless dung duong `split` cu nen toc do giu nguyen (±2% noise); loi chinh la infer/build serial |
+| CSV read 500k parallel (`csv_read_par`) | — | **1055 ms** | 209 ms | 6.8 ms | parse dong+field 8 worker; infer/build van serial -> ~1.1x |
+| CSV quoted 15k, serial vs par (v2.2, single run) | — | 101 ms / **56 ms** | — | — | quote phai di duong `_split_csv_line` -> song song an ~1.8x; par khop serial 1-1 (csv2 t9) |
+
+Ket luan trung thuc: tran tang thu vien dat ~1.1–1.8x. Build theo cot khong
+song song duoc vi worker khong nhan param (BUG-4/BUG-5 compiler) — can
+bulk-convert primitives hoac worker co param de tien tiep (xem SESSION_HANDOFF 0g).

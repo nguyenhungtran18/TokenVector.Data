@@ -5,17 +5,11 @@
 [![Language](https://img.shields.io/badge/Language-TokenVector%20(tkv)-purple.svg)]()
 [![Target](https://img.shields.io/badge/Target-.NET%20CIL%20DLL-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Checks-9%2F9%20Suites%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Checks-21%2F21%20Suites%20Passed-brightgreen.svg)]()
 
 **TokenVector.Data** là thư viện xử lý dữ liệu dạng bảng và DataFrame dạng cột (columnar) hiệu năng cao, được hiện thực **hoàn toàn bằng ngôn ngữ lập trình TokenVector (tkv)** và biên dịch ra assembly .NET CIL (`TokenVector.Data.dll`) qua `tkvc` + `ilasm`.
 
-Phiên bản **1.0.1** đánh dấu việc chuyển dịch hoàn toàn thư viện từ C# sang ngôn ngữ TokenVector: toàn bộ 22 file C# đã được port sang 6 module `.tkv` thuần chủng, và 51 unit test được ánh xạ lại thành các check tkv bản ngữ — **51/51 PASS**.
-
-Phiên bản **1.0.2** là đợt nâng cấp hiệu năng & tính năng:
-
-* **Hiệu năng** — `DataFrame.sort_by` dùng merge sort ổn định **O(n log n)** (trước là insertion sort O(n²)); `asof_join` sort frame phải 1 lần rồi **binary search** từng dòng trái — tổng thể **O(n log m)** (trước là quét tuyến tính O(n·m)), đồng thời hỗ trợ frame phải **chưa sort**; rolling `mean`/`std` đạt **O(n)** (std trước là O(n·window) với 2 lượt quét).
-* **Null propagation** — `vec_add/sub/mul/div`, `vec_add_scalar/mul_scalar`, `vec_abs/sqrt/exp/log/pow` truyền null xuyên suốt (null vào → null ra).
-* **API mới** — `Series.ffill/bfill`, `Series.str_map_contains/startswith/endswith/upper/lower/replace`, `Series.between`, `Series.is_in_f64/is_in_str`, `DataFrame.drop_duplicates/duplicated_mask/value_counts`.
+Phiên bản **1.0.8-dev** (thư viện v2.1–v2.2): SQL SELECT engine trên DataFrame, đọc/ghi Excel SpreadsheetML, stub trung thực cho Parquet, parse CSV đa luồng — trên nền lõi đã ngang pandas (group-by, join kể cả AsOf, window/ewm, chuỗi, datetime, dtype hẹp). Lịch sử gọn: **1.0.1** port 22 file C# sang tkv thuần; **1.0.2** thêm sort O(n log n), AsOf join O(n log m) và null propagation.
 
 ---
 
@@ -24,39 +18,65 @@ Phiên bản **1.0.2** là đợt nâng cấp hiệu năng & tính năng:
 | Module (tkv) | Nội dung |
 | :--- | :--- |
 | `tokenvector_data.tkv` | `DataTypes`, `Schema`, `Mask` (bitmap null), `Col`, `StrCol`, `Series`, `DataFrame`, các helper `ChunkedArray` |
-| `tokenvector_compute.tkv` | `VectorMath` (cộng/trừ/nhân/chia, exp, log, abs, phép với scalar), `FilterEngine`, `Aggregations` (sum/mean/min/max/std/var/quantile), `WindowFunctions` (rolling, shift, diff, cumsum, rank) |
-| `tokenvector_relational.tkv` | `GroupByEngine` (đa khóa, đa tổng hợp), `JoinEngine` (Inner/Left/Right/Full/Cross + `AsOfJoin` tài chính), `ReshapeEngine` (Pivot, Melt, Concat dọc/ngang) |
-| `tokenvector_io.tkv` | `FastCsvReader/Writer` (quoted field, tự suy luận kiểu), `FastJsonReader` (NDJSON + JSON array) |
-| `tokenvector_numerics.tkv` | `NumericsInterop` — cầu nối `Series`/`DataFrame` ⇄ `Mat` (mô hình NDArray/Tensor) với **zero-copy** cho cột f64 không null, kèm cờ `requires_grad` |
-| `tokenvector_arrow.tkv` | `ArrowIpcEngine` (round-trip dòng ARROW1, giữ nguyên mask null) + `OutOfCoreDataFrame` (persist / open / read batch) |
+| `tokenvector_compute.tkv` | `VectorMath` (số học/so sánh/scalar, làm tròn, isin, interpolate/where/mask), `FilterEngine`, `Aggregations` (sum/mean/min/max/std/var/quantile/mode/sem), `WindowFunctions` (rolling/expanding/ewm/pct_change/cumsum/rank, `win_apply`) |
+| `tokenvector_relational.tkv` | `GroupByEngine` (đa khóa, đa tổng hợp, size/transform/filter/apply/head/tail/nth, rolling/resample), `JoinEngine` (Inner/Left/Right/Full/Cross + `AsOfJoin` tài chính + `merge_on_index`), `ReshapeEngine` (Pivot/pivot_table, Melt, Concat, stack/unstack, explode, crosstab, `merge_ordered`) |
+| `tokenvector_sort.tkv` | Sort ổn định đa khóa (`sort_by_multi`), `nlargest`/`nsmallest` |
+| `tokenvector_stats.tkv` | `corr`/`cov` (Welford 1-pass), `skew`/`kurt` (Fisher-Pearson hiệu chỉnh), `nunique`, ma trận tương quan |
+| `tokenvector_datetime.tkv` | `dt_parse`/`dt_format` ISO-8601, 11 accessor, `dt_range`, `resample`, nền epoch-ms UTC |
+| `tokenvector_strings.tkv` | ~34 phép `Series.str` + regex .NET đầy đủ (`extract`/`extractall`, `fullmatch`, `slice_replace`, `cat`, `pad`…) |
+| `tokenvector_apply.tkv` | `series_apply`, `df_apply_col`/`transform`/`filter_rows` (hàm top-level và lambda) |
+| `tokenvector_dtype.tkv` | Dtype hẹp (`series_astype`: i8…u64, f32, tag datetime64), `sort_index`, duyệt group |
+| `tokenvector_pandas.tkv` | Helper đóng parity pandas (`factorize`, first/last/nth/mad, `df_eval`/`df_query`, stack/unstack, đổi múi giờ) |
+| `tokenvector_read_json.tkv` | Đọc/ghi JSON (orient records, JSONL, object đơn) |
+| `tokenvector_p100.tkv` | Missing-data dạng frame, `groupby_rolling`/`resample`, thao tác index positional, phụ trợ CSV/JSON |
+| `tokenvector_sql.tkv` | SQL SELECT engine (`sql_query`/`sql_query2`/`sql_count`): WHERE/GROUP BY/HAVING/ORDER BY/LIMIT/OFFSET/DISTINCT, JOIN INNER/LEFT/RIGHT, IN/LIKE, 10 hàm tổng hợp |
+| `tokenvector_excel.tkv` | Đọc/ghi SpreadsheetML 2003 (`excel_write/read_string/file`) — Excel mở trực tiếp |
+| `tokenvector_parquet.tkv` | Ledger trung thực: chốt API, fail-fast cho tới khi compiler có binary write |
+| `tokenvector_io.tkv` | Engine CSV (quote, suy dtype, đọc chunk streaming, encoding, `parse_dates`, `csv_read_par` song song), JSON/NDJSON, writer CSV/JSON |
+| `tokenvector_numerics.tkv` | `NumericsInterop` — cầu nối `Series`/`DataFrame` ⇄ `Mat` (mô hình NDArray/Tensor) với view f64 **zero-copy** và cờ `requires_grad` |
+| `tokenvector_arrow.tkv` | `ArrowIpcEngine` (round-trip dòng ARROW1 giữ nguyên mask null) + `OutOfCoreDataFrame` (persist / open / read batch) |
 
 ---
 
 ## ✨ Điểm nổi bật
 
-* **Hiện thực thuần TokenVector** — không còn mã C# nào; toàn bộ engine nằm trong 6 module `.tkv` (~116 KB mã nguồn).
-* **API DataFrame thân thuộc** — Series/DataFrame với schema, mask null theo cột, group-by đa tổng hợp, 5 kiểu join, AsOf time-series join, pivot/melt.
-* **I/O chắc chắn** — CSV có quoted field & tự suy luận kiểu, đọc NDJSON và JSON array, round-trip writer, hỗ trợ cả file lẫn chuỗi.
+* **Hiện thực thuần TokenVector** — không còn mã C# nào; toàn bộ engine nằm trong 18 module `.tkv` (~440 KB mã nguồn).
+* **API DataFrame thân thuộc** — Series/DataFrame với schema, mask null theo cột, group-by đầy đủ, join 4 kiểu + AsOf + merge-on-index, pivot/melt/stack, window/ewm khớp pandas từng chữ số.
+* **SQL trên DataFrame** — `sql_query(df, "SELECT cat, SUM(v) AS s FROM df GROUP BY cat HAVING s > 0 ORDER BY s DESC LIMIT 5")` đã đối chiếu từng con số với pandas thật.
+* **I/O chắc chắn** — CSV có quote & tự suy luận kiểu (serial, chunk-streaming và song song 8 luồng), đọc NDJSON/JSON, round-trip Excel SpreadsheetML, round-trip writer, hỗ trợ cả file lẫn chuỗi.
 * **Trao đổi kiểu Arrow** — định dạng dòng khung `ARROW1` giữ được mask null (validity bitmap) qua tuần tự hóa.
 * **Cầu nối Numerics** — chuyển cột số sang `Mat` 1D/2D (buffer f64 phẳng + shape + `requires_grad`); cột f64 không null được bọc **zero-copy** (thay đổi qua Mat nhìn thấy ngay trong Series).
-* **Tương tác .NET** — biên dịch ra DLL CIL thuần; gọi được từ mọi ngôn ngữ .NET qua reflection hoặc tham chiếu trực tiếp class `TKVApp`.
+* **Đa luồng thật** — ngôn ngữ TKV spawn worker 8 luồng thật (parse CSV 8T, sweep output 8T thắng NumPy ~2.3×); engine giữ đơn luồng ở chỗ cần đơn định.
+* **Tương tác .NET** — biên dịch ra DLL CIL thuần (~300 KB); gọi được từ mọi ngôn ngữ .NET qua reflection hoặc tham chiếu trực tiếp class `TKVApp`.
 
 ---
 
 ## 🧪 Kiểm chứng & đảm bảo chất lượng
 
-Bộ test C# gốc (51 `[Fact]`) đã được ánh xạ đầy đủ thành các chương trình check tkv bản ngữ. Trạng thái regression — toàn bộ xanh:
+21 suite check bản ngữ, toàn bộ xanh trên `tkvc` chuẩn:
 
 ```text
-base_check   (DataTypes/Schema/Mask/Column/StringColumn)   SUCCESS
-comp_check   (VectorMath/Filter/Agg/Window)                SUCCESS
-core_check   (Series/DataFrame/ChunkedArray)               SUCCESS
-rel_check    (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
-io_check     (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
-num_check    (NumericsInterop: 4 check)                    ALL PASS
-arr_check    (ArrowIpc/OutOfCore: 2 check)                 ALL PASS
-feat_check   (v1.0.2: ffill/bfill, string maps, dedup,
-              value_counts, between, is_in, null prop)     SUCCESS
+base_check    (DataTypes/Schema/Mask/Column/StringColumn)   SUCCESS
+comp_check    (VectorMath/Filter/Agg/Window)                SUCCESS
+core_check    (Series/DataFrame/ChunkedArray)               SUCCESS
+rel_check     (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
+io_check      (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
+num_check    (NumericsInterop)                              ALL PASS
+arr_check    (ArrowIpc/OutOfCore)                           ALL PASS
+feat_check   (ffill/bfill, string maps, dedup, …)           SUCCESS
+vec_check    (vec math edge cases)                          FAILS= 0
+strings_check (Series.str + regex, 10 nhóm)                 10/10 PASS
+stat_check   (aggregates)                                   FAILS= 0
+stats_check  (corr/cov/skew/kurt, 7 nhóm)                   7/7 PASS
+dt_check     (datetime, 11 checks)                          11/11 PASS
+csv2_check   (CSV flags/chunks/parallel, gồm t9)            ALL PASS
+pd_check     (parse_dates/encoding, 15 checks)              FAILS= 0
+p2_check     (acceptance parity pandas, 154 checks)         154/154 PASS
+p100_check   (missing-data/index/merge, 74 checks)          74/74 PASS
+v15_check    (rounding/groupby-complete/pivot/JSON)         ALL OK
+sql_check    (SQL engine, 43 checks)                        FAILS= 0
+excel_check  (SpreadsheetML round-trip, 33 checks)          FAILS= 0
+apply_check  (apply/transform/filter fns, 9 checks)         9/9 PASS
 ```
 
 ---
@@ -64,7 +84,7 @@ feat_check   (v1.0.2: ffill/bfill, string maps, dedup,
 ## 🚀 Bắt đầu nhanh (ngôn ngữ TokenVector)
 
 ```tokenvector
-__tkv_import__ = ["tokenvector_data", "tokenvector_relational"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_relational", "tokenvector_sql"]
 
 def run() -> "i32":
     # 1. Tao DataFrame
@@ -81,12 +101,12 @@ def run() -> "i32":
         make_agg("salary", AGG_MAX, "max_salary"),
     ])
 
-    # 3. Cac kieu join
-    joined = join_frames(df, bonuses, "user_id", "user_id", JOIN_INNER)
+    # 3. SQL tren cung DataFrame
+    top = sql_query(df, "SELECT dept, AVG(salary) AS m FROM df GROUP BY dept ORDER BY m DESC LIMIT 2")
 
-    # 4. CSV I/O
-    df2 = csv_read_string(csv_text, ",", 1, "")
-    out = csv_write_string(df2, ",", 1, "")
+    # 4. Excel round-trip (SpreadsheetML, Excel mo truc tiep)
+    excel_write_file(df, "dept.xml", "Dept")
+    back = excel_read_file("dept.xml")
     return 0
 ```
 
@@ -110,22 +130,29 @@ Mọi hàm của engine là static method của class `TKVApp` (các record như
 
 ## 🔧 Build từ mã nguồn
 
-Yêu cầu: trình biên dịch TokenVector (`tkvc.exe`) và `ilasm.exe` của .NET Framework.
+Yêu cầu: trình biên dịch TokenVector (`tkvc.exe`) và `ilasm.exe` của .NET Framework (+ `csc.exe` cho smoke test).
 
 ```bash
-# 1. Gop 6 module thanh 1 file nguon thu vien
-tkvc.exe build --entry run tokenvector_data_all.tkv   # tao .exe + tokenvector_data_all.il
+# 1. Refresh file merged sau khi sua tvsrc/*.tkv
+python tvsrc/_patch_merged.py        # refresh section tokenvector_io
+python tvsrc/_patch_merged3.py       # splice module moi (idempotent)
 
-# 2. Chuyen IL: doi ten module/assembly thanh TokenVector.Data, bo .entrypoint
+# 2. Bien dich file merged ra IL (dang .exe giu file .il canh ben)
+tkvc.exe build --entry run tvsrc/tokenvector_data_all.tkv
 
-# 3. Hop bien thanh DLL
-ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
+# 3. Chuyen IL sang dang library roi hop bien thanh DLL
+python tvsrc/_mk_dll.py              # -> TokenVector.Data.il -> TokenVector.Data.dll (ilasm)
 
-# 4. Dong goi
-nuget.exe pack TokenVector.Data.nuspec
+# 4. Kiem chung: smoke test reflection C# (54 symbol) + goi ham that
+csc.exe /nologo /out:smoke.exe tvsrc/smoke.cs && smoke.exe   # -> SMOKE OK
+
+# 5. Dong goi (khong can nuget.exe — zip dung layout)
+python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.8-dev.nupkg
 ```
 
-Artifact dựng sẵn: `tvsrc/TokenVector.Data.dll` và `packages/TokenVector.Data.1.0.3.nupkg`.
+Artifact dựng sẵn: `tvsrc/TokenVector.Data.dll` (~300 KB) và `packages/TokenVector.Data.1.0.8-dev.nupkg`.
+
+Chi tiết xem `FUNCTION_PARITY.md` (so sánh tính năng pandas/Polars), `BENCHMARKS.md` (số đo cùng máy) và `SESSION_HANDOFF.md` (nhật ký build/verify).
 
 ---
 

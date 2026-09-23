@@ -2,6 +2,26 @@
 
 [ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
+## Version 1.0.8-dev (2026-09-23) - SQL engine + Excel SpreadsheetML + Parquet ledger (tvsrc v2.1)
+
+**Internal tvsrc library version v2.1** (compiler tkvc unchanged; DIST tkvc builds all green).
+
+### New modules
+* **tokenvector_sql.tkv**: SELECT engine on DataFrame (pandasql-style) - sql_query / sql_query2 (JOIN second table) / sql_count. WHERE (arithmetic, comparisons, AND/OR/NOT, IN numeric+str, LIKE), GROUP BY + 10 aggregates (SUM/AVG/MIN/MAX/COUNT/COUNT(*)/STD/FIRST/LAST/MEDIAN/NUNIQUE), HAVING, ORDER BY (numeric+str, ASC/DESC), LIMIT/OFFSET, DISTINCT, INNER/LEFT/RIGHT JOIN ... ON (same-name + qualified keys), 1-row global agg on empty set. Verified number-for-number against real pandas.
+* **tokenvector_excel.tkv**: SpreadsheetML 2003 read/write (pure XML text, Excel opens directly) - excel_write/read_string/file. Null-mask, dtype inference (i64/f64/bool/str), XML escaping, well-formed output.
+* **tokenvector_parquet.tkv**: honest ledger - API reserved (parquet_write/read_file/string + parquet_blocked_reason) but fail-fast: real Parquet needs compiler binary write + bitwise R5 (both missing).
+
+### Verification
+* sql_check 43/43, excel_check 33/33 (incl. parquet ledger), 21/21 suites green on DIST tkvc.
+* Merged (all+lib) idempotent splice; DLL rebuilt + smoke 54/54 symbols + functional C# calls (SMOKEFN OK).
+* v2.2 addendum (same 1.0.8-dev package): CSV library speedup - slice-based `_split_csv_line`, parallel `csv_read_par`/`csv_read_file_par` (8 workers, ~1.1-1.8x), `csv2_check` t9. DLL 306688 bytes, nupkg repacked.
+
+### Remaining (honest ledger)
+* Real Parquet/xlsx (ZIP+DEFLATE+binary) - blocked-by-compiler (binary write + bitwise R5).
+* MultiIndex / labeled-index alignment - intentional architecture exclusion.
+
+---
+
 ## ⚡ Version 1.0.6-dev (2026-09-23) - pandas-100 closure (tvsrc v1.9)
 
 **Internal tvsrc library version v1.9** (compiler tkvc unchanged).

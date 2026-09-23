@@ -8,6 +8,95 @@ verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b20
 
 ---
 
+## 0g. PHIÊN 2026-09-24 — v2.2 CSV nhanh tầng thư viện (XONG ✅, ~1.1–1.8x)
+
+Yêu cầu: "làm luôn" tăng tốc CSV ở tầng thư viện (sau so sánh đối thủ:
+TKV 1127ms vs pandas 209ms vs polars 6.8ms @500k).
+
+- **Slice-rewrite `_split_csv_line`** (tokenvector_io.tkv): find C-speed +
+  cắt lát field, chỉ field có quote mới unescape; dòng lỗi → fallback
+  `_split_csv_line_slow` (code cũ, đảm bảo 1-1). Probe equivalence 20/20.
+- **Trích `_csv_grid_to_df`** (pure code motion từ `csv_read_ex`) dùng chung
+  serial + parallel. Đã vá `_patch_merged.py` (anchor io-header cũ gãy sau
+  splice banner v2.1) rồi refresh merged (mỗi def đúng 1 bản).
+- **`csv_read_par` / `csv_read_file_par`**: parse dòng+field song song 8
+  worker (`thread_spawn/join`, worker top-level + global có kiểu, ngưỡng
+  240KB). Phát hiện compiler: global ở module import mà hàm không khai báo
+  `global` → `KeyError` first-pass (thêm `global g_cp*` thì xanh).
+- **`_csv_infer_col`**: suy dtype stride trực tiếp, bỏ copy `_csv_grid_subcol`.
+- Số đo (best-of-3, DIST): quoteless 500k serial 1150 / par **1055** ms
+  (~1.1x); quoted 15k serial 101 / par **56** ms (single run, ~1.8x, SAME 1-1).
+  `csv2_check` t9 (15000 dòng ~254KB > ngưỡng → chạy thread thật) đối chiếu serial.
+- Regression: csv2/io/pd/p100 xanh; DLL rebuild (306688 bytes) + smoke 54/54
+  + smokefn OK; `csv_read_par` có mặt trong DLL (reflection); nupkg 1.0.8-dev
+  repack (`_pack108.py`); BENCHMARKS.md + FUNCTION_PARITY §2.2 cập nhật.
+- **Trần tầng thư viện (trung thực)**: sau khi trừ IO (read 80ms + split
+  50ms), phần còn lại (~900/1055ms) nằm ở infer/build theo cột (strip +
+  convert từng ô, serial) — không song song được vì worker không nhận param
+  (BUG-4/BUG-5) — worker chỉ trả 1 list, không trả cột typed. Muốn tiếp phải
+  có bulk-convert primitives hoặc worker có param ở compiler (ghi ledger).
+
+---
+
+## 0f. PHIÊN 2026-09-23 (tiếp) — v2.1 SQL/Excel/Parquet-ledger (XONG ✅)
+
+Yêu cầu: bổ sung 3 gap "khả thi ở tầng thư viện" (SQL ✅ thật, Excel ✅ cầu
+nối thật, Parquet ❌ trung thực). Kết quả:
+
+- **SQL engine** (`tvsrc/tokenvector_sql.tkv`, v2.0 → sửa thành build xanh):
+  `sql_query` / `sql_query2` (JOIN df2) / `sql_count`. WHERE/GROUP BY/HAVING/
+  ORDER BY/LIMIT/OFFSET/DISTINCT, INNER/LEFT/RIGHT JOIN, IN (số+str) + LIKE
+  trong biểu thức phức tạp, 10 agg, global-agg trên tập rỗng trả 1 dòng.
+  **Đối chiếu pandas thật same-session: khớp 100%** (cả `33.333333333333336`).
+- **Excel** (`tokenvector_excel.tkv`): SpreadsheetML 2003 thuần text —
+  `excel_write/read_string/file`; Excel mở trực tiếp; giữ null-mask, suy
+  dtype, escape XML; well-formed (verify parser XML chuẩn).
+- **Parquet** (`tokenvector_parquet.tkv`): API chốt + fail-fast raise
+  ValueError kèm lý do (cần binary write + bitwise R5 ở compiler) — không tạo
+  file hỏng nửa vời. `parquet_blocked_reason()` đọc được không cần exception.
+- Suite mới `sql_check` **43/43**, `excel_check` **33/33** (gồm parquet
+  ledger). Regression **21/21 suite xanh trên DIST tkvc** (dist build lỗi `_sq`
+  ban đầu là do bug module, đã sửa — dist hiện build tốt, không cần worktree).
+- Merged splice idempotent (`tvsrc/_patch_merged3.py`, đã verify chạy lại =
+  skip hết, mỗi def đúng 1 bản). DLL rebuild (298KB) + smoke **54/54**
+  (`smoke.cs` thêm khối v21Fns 10/10) + **`smokefn.cs` gọi thật từ C#**
+  (sql GROUP BY + excel round-trip + parquet reason → SMOKEFN OK).
+- FUNCTION_PARITY §2.2 (3 dòng excel/parquet/sql) + §3j v2.1.
+
+**Bài học compiler mới (ghi cho phiên compiler sau — đều là bug first-pass/
+codegen, đã workaround ở tầng thư viện):**
+1. **Scalar từ dict `.get()` tái dùng làm biến loop `for` → IL hỏng**
+   (BadImageFormatException lúc JIT). Khoanh vùng bằng bisection + diff IL
+   (R2 vs S1). Workaround: tên biến loop/scalar riêng (`gid`, `tl`, `kk`).
+2. **`list[Series].append()` trên list trả về từ helper treo runtime**
+   (không exception — treo cứng). Literal `[]` + append thì xanh (mẫu
+   `take_df`). Nghi codegen `Add` trên `List<class>` từ call-result.
+3. **IN trong biểu thức phức tạp**: cột số/str phải peek `in` → placeholder
+   + handler `pop` stale value (kẻo pollute stack); LIKE làm eager tại cột.
+   Fast-path LIKE ở tầng term chỉ khi term KHỚP TRỌN `col LIKE 'pat'`.
+4. **`range(a,b,c)` 3 đối số chưa kiểm chứng** — viết lại `while` cho chắc.
+5. **List dùng chung str+i32** (`_sx_read_key`) → guard retype bắn — mã hoá
+   int thành str rồi `int()` lại.
+6. **`.dtype`/`.name` trên kết quả gọi hàm bị cấm** (mục U đã biết) — gặp lại
+   ở suite excel_check, fix bằng biến trung gian.
+7. **Toolchain**: worktree `D:\TokenVector._head_wt` vẫn giữ (không đụng);
+   toàn bộ v2.1 build bằng DIST tkvc sau khi sửa module.
+
+Probe tạm phiên này đã xoá hết trước khi đóng phiên: `_sq`, `_sq2`,
+`_bs_sql`, `_sqlsplit`, `_probe_dict/dictv/grp/split/oh/ord/osplit/app/app2`
+(+ exe/il), `_stage`, `_stub_stage`, `_sub`, `_sub2`, `_sub3`, `_ostage`,
+`_ostage2`, `_ostage3`, `_ildiff`, `_ildiff2`, `_ildiff3`, `_analy`, `_chk`,
+`_bisect_sql`, `_sx_patch`, `_dist_sql`, `_sq_verify` (+ exe/il). Giữ lại
+`sql_check`, `excel_check`, `_patch_merged3.py`, `smokefn.cs`. (Các file
+`_b7`, `_bisect2/3/4`, `_bp`, `_nz`, `_one`, `_pg`, `_ph`, `_piece*`, `_pp`,
+`_probe_exec/min/tok`, `_rec`, `_tok`, `probe/` là debris của phiên khác —
+không đụng tới.)
+nupkg `TokenVector.Data.1.0.8-dev.nupkg` đã pack (zip thủ công theo layout
+1.0.7 vì không có nuget.exe — script `tvsrc/_pack108.py`; repack lần cuối ở
+phiên v2.2 với DLL 306688 bytes, verified match; nuspec 1.0.8-dev).
+
+---
+
 ## 0e. PHIÊN 2026-09-23 (tiếp nữa) — v1.10 kernel nhanh + regression compiler tkvc mới (XONG ✅)
 
 - **Kernel v1.10** (trên toolchain worktree sạch): groupby_rolling mảng phẳng

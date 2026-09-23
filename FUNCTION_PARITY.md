@@ -11,7 +11,7 @@
 | Nhóm chức năng | pandas | TKV hiện tại | Chênh lệch chính |
 | :--- | :---: | :--- | :--- |
 | Cấu trúc cột + null mask | ✅ | ✅ | Sắp ngang — TKV thiếu `Nullable<T>`/object, nhưng có Arrow-style bitmask |
-| I/O (CSV/JSON) | ✅ | 🟡 | CSV v1.6.x + dtype hẹp v1.8, chunks streaming, parse_dates, encoding. JSON: đọc + ghi orient=records + JSONL (v1.7). Thiếu: Excel/Parquet thực (blocked-by-compiler), orient khác |
+| I/O (CSV/JSON/Excel) | ✅ | 🟡 | CSV v1.6.x + dtype hẹp v1.8, chunks streaming, parse_dates, encoding, song song v2.2 (`csv_read_par`). JSON: đọc + ghi orient=records + JSONL (v1.7). Excel: đọc/ghi SpreadsheetML 2003 (v2.1). Thiếu: Parquet/xlsx thực (blocked-by-compiler), orient JSON khác |
 | Vec math + so sánh | ✅ | 🟡 | ~40 op (arith/compare/scalar + rounding v1.5, isin, interpolate/where/mask v1.4) nhưng **không chaining/method API** |
 | Filter / boolean | ✅ | ✅ | Đủ (and/or/evaluate/take) |
 | GroupBy / agg | ✅ | 🟡 | v1.5–v1.9: + `groupby_size/transform/filter/apply/head/tail/nth`, prod/sem/mad/mode, iterating groups, `groupby_rolling`, `groupby_resample` |
@@ -57,13 +57,13 @@
 
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
-| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null); **`csv_read_chunks` / `csv_read_chunks_file` v1.6.1** (chunksize=n → list[DataFrame], chia theo dòng data, header chỉ ở chunk đầu, skiprows/dtype/na_values nhất quán qua chunk); **v1.6.3**: `parse_dates=[tên cột]` trên `csv_read_ex`/`csv_read_chunks`/`csv_read_chunks_file` (str ISO → i64 epoch ms qua `series_dt_parse`, giữ tên cột, cột lạ bỏ qua an toàn); `csv_read_chunks_file_enc` thêm `encoding` ("utf-8"/"latin-1") + `parse_dates` — latin-1 đọc cả file qua `_read_all_enc`, còn lại stream thật; BOM EF BB BF tự strip ở tầng open của runtime | 🟡 ~70% flag của pandas; còn thiếu quoting control, date_format/dayfirst, compression. `csv_read_chunks_file` **stream thật** qua primitive `f.readline()` của compiler (StreamReader, chỉ giữ chunksize+1 dòng trong RAM); bản string `csv_read_chunks` vẫn nạp cả chuỗi |
+| `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null); **`csv_read_chunks` / `csv_read_chunks_file` v1.6.1** (chunksize=n → list[DataFrame], chia theo dòng data, header chỉ ở chunk đầu, skiprows/dtype/na_values nhất quán qua chunk); **v1.6.3**: `parse_dates=[tên cột]` trên `csv_read_ex`/`csv_read_chunks`/`csv_read_chunks_file` (str ISO → i64 epoch ms qua `series_dt_parse`, giữ tên cột, cột lạ bỏ qua an toàn); `csv_read_chunks_file_enc` thêm `encoding` ("utf-8"/"latin-1") + `parse_dates` — latin-1 đọc cả file qua `_read_all_enc`, còn lại stream thật; BOM EF BB BF tự strip ở tầng open của runtime | 🟡 ~70% flag của pandas; còn thiếu quoting control, date_format/dayfirst, compression. `csv_read_chunks_file` **stream thật** qua primitive `f.readline()` của compiler (StreamReader, chỉ giữ chunksize+1 dòng trong RAM); bản string `csv_read_chunks` vẫn nạp cả chuỗi; **v2.2**: `_split_csv_line` viết lại kiểu slice (find C-speed + cắt lát, fallback per-char cho dòng lỗi — equivalence 20/20), `csv_read_par`/`csv_read_file_par` parse dòng+field song song 8 worker (ngưỡng 240KB, `csv2_check` t9 đối chiếu serial 1-1) |
 | `to_csv` | `csv_write_string` / `csv_write_file` | ✅ cơ bản |
 | `read_json` (orient, lines, dtype…) | `json_array_read_string`, `ndjson_read_string/file` + `json_array_write_string/file` (orient=records, v1.5) | 🟡 thiếu orient khác / write lines |
-| `read_excel` | ❌ | — |
-| `read_parquet` / `to_parquet` | ❌ (ARROW1 tự chế, không phải Parquet) | Không trao đổi được với hệ sinh thái |
+| `read_excel` | ✅ (v2.1, SpreadsheetML) | `excel_write/read_string/file` (SpreadsheetML 2003 XML thuan — Excel mo truc tiep; String/Number/Boolean/null-mask/dtype-infer round-trip). Gioi han: .xlsx that (ZIP+DEFLATE) blocked-by-compiler nhu Parquet |
+| `read_parquet` / `to_parquet` | ❌ (ledger trung thuc, v2.1) | `tokenvector_parquet.tkv`: API da chot (`parquet_write/read_file/string` + `parquet_blocked_reason`) nhung fail-fast raise ValueError — Thrift binary + page bytes 0-255 vs `open("w")` ep UTF-8. Can binary write + bitwise R5 o compiler. Thay the: csv/json/ARROW1/excel |
 | `read_feather` | ❌ (cùng ARROW1) | — |
-| `read_sql` / `to_sql` | ❌ | — |
+| `read_sql` / `to_sql` | ✅ (v2.1, engine tren DataFrame) | `tokenvector_sql.tkv`: `sql_query`/`sql_query2` (JOIN df2) — SELECT/WHERE/GROUP BY/HAVING/ORDER BY/LIMIT/OFFSET/DISTINCT, INNER/LEFT/RIGHT JOIN ... ON, IN/LIKE, SUM/AVG/MIN/MAX/COUNT/COUNT(*)/STD/FIRST/LAST/MEDIAN/NUNIQUE; khop pandas tung con so |
 | `read_hdf` | ❌ | — |
 | Out-of-core | — | TKV có `ooc_persist/open/read_batch` — pandas **không có sẵn** (điểm cộng) |
 
@@ -228,8 +228,10 @@ head/tail + df.query đã đóng (v1.7, 2026-09-23).** Gap còn lại:
 3. Dtype nền tảng đã có dạng tag hẹp trên storage chuẩn (v1.8).
 
 
-**Không nên làm (đánh đổi không đáng):** MultiIndex (chỉ pandas dùng tốt),
-Parquet thật (cần spec lớn — giữ ARROW1 nội bộ, thêm Parquet sau).
+**Không nên làm (đánh đổi không đáng):** MultiIndex (chỉ pandas dùng tốt).
+Parquet thật vẫn chờ compiler (binary write + bitwise R5) — v2.1 đã chốt API
++ fail-fast ledger (`tokenvector_parquet.tkv`); giữ ARROW1 nội bộ cho trao
+đổi nội bộ.
 Regex không còn là điểm yếu: v1.2 dùng builtin `re_*` của compiler (bọc
 System.Text.RegularExpressions .NET) — full syntax, chạy C speed, không phải
 tự viết engine.
@@ -377,6 +379,33 @@ riêng từng nhánh (`vb`, `vi`) — cùng bản chất với bài học `vals_
 | `to_json(orient=values/split/index/columns)` | `json_write_values/split/index` + đọc lại `json_read_object`/`json_read_string` | ✅ (records có từ v1.7) |
 
 Suite: `p100_check` 73/73.
+
+## 3j. v2.1 — 2026-09-23: SQL engine + Excel SpreadsheetML + Parquet ledger
+
+Module mới `tokenvector_sql.tkv` (~1680 dong), `tokenvector_excel.tkv`,
+`tokenvector_parquet.tkv`; suite `sql_check` **43/43**, `excel_check` **33/33**
+(bao gom parquet ledger); regression **21/21 suite xanh tren DIST tkvc**;
+merged (all+lib) splice idempotent; DLL rebuild + smoke **54/54 symbol** +
+`smokefn` goi that `sql_query`/`excel_write/read_string` tu C# (SMOKEFN OK).
+
+| Nhom | Noi dung | Ghi chu |
+| :--- | :--- | :--- |
+| SQL | `sql_query(df, sql)` + `sql_query2(df, df2, sql)` (JOIN bang phu) + `sql_count` — nhu pandasql | WHERE (+-*/% ngoac, = != <> < <= > >=, AND/OR/NOT, IN so+str, LIKE `%_` ke ca trong bieu thuc phuc tap), GROUP BY + 10 agg, HAVING, ORDER BY (so + str, ASC/DESC), LIMIT/OFFSET, DISTINCT, INNER/LEFT/RIGHT JOIN ... ON (khoa trung ten + `a.k`), global-agg tren tap rong tra 1 dong (semantics SQL) |
+| Excel | `excel_write/read_string/file` (SpreadsheetML 2003) | XML thuan qua `write_file`/`read_file` — Excel mo truc tiep; giu null-mask, suy dtype i64/f64/bool/str, escape XML; well-formed (verify bang parser XML chuan). Doc Table dau tien, dong dau = header; ghi 1 sheet |
+| Parquet | `parquet_blocked_reason` + 4 stub fail-fast | Trung thuc: chua lam duoc (can binary write + bitwise R5); raise ValueError ke ly do + huong thay the |
+
+Doi chieu pandas that (same-session): groupby sum/count/mean/min/max/median/
+nunique, WHERE/IN/OR/LIKE/`<>/%, HAVING+ORDER+LIMIT, JOIN (inner/left/dotted) —
+khop 100% (ke ca `33.333333333333336`).
+
+Bai hoc compiler moi (ghi SESSION_HANDOFF 0f, quan trong):
+1. Bien scalar tu dict `.get()` tai dung lam bien loop `for` -> IL hong
+   (BadImageFormat) — dat ten rieng (`gid`, `tl`, `kk`).
+2. `list[Series].append()` tren list tu helper (`make_series_list()`) TREO
+   runtime — dung literal `[]` (mau `take_df`).
+3. `range(a,b,c)` 3 doi so chua kiem chung — viet lai `while`.
+4. List dung chung str+i32 (`_sx_read_key`) -> ma hoa int thanh str.
+5. `.dtype`/`.name` tren ket qua goi ham bi cam (muc U) — gan bien trung gian.
 
 ## 4. Cách kiểm chứng lại
 

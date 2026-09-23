@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>TokenVector.Data</id>
-    <version>1.0.7-dev</version>
+    <version>1.0.8-dev</version>
     <title>TokenVector.Data - High-Performance Columnar DataFrame &amp; Tabular Engine (TokenVector Language)</title>
     <authors>TokenVector Project Team</authors>
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
-    <releaseNotes>1.0.7-dev: fast kernels for v1.9 features (v1.10). groupby_rolling: single-pass group ids + flat-array bottom-up merge sort O(n log n) + direct column reads (no sub-DataFrame materialization, no per-window temp lists) — 2.1s -> 1.0s at 500k rows x 3 groups. groupby_resample: sort-based linear run scan replaces the 300k-key dict — output now sorted by (group, bucket) matching pandas MultiIndex semantics. merge_on_index: hash-dict fallback when index columns are not sorted (sorted two-pointer fast path kept, how="right" added in fallback). p100_check 74/74, 18/18 legacy suites green, DLL smoke 44/44 symbols.</releaseNotes>
-    <description>High-performance columnar DataFrame and tabular data processing library, natively implemented in the TokenVector language (tkv) and compiled to a .NET CIL DLL: schema, columns, series, vector math, filter, group-by, joins (incl. AsOf), pivot/melt, CSV/JSON IO, Arrow IPC stream and out-of-core batches, zero-copy Mat bridge for numerics.</description>
+    <releaseNotes>1.0.8-dev: SQL/Excel/Parquet-ledger (tvsrc v2.1). tokenvector_sql: SELECT engine on DataFrame - sql_query/sql_query2/sql_count (WHERE/GROUP BY/HAVING/ORDER BY/LIMIT/OFFSET/DISTINCT, INNER/LEFT/RIGHT JOIN, IN/LIKE, 10 aggregates, verified number-for-number vs pandas). tokenvector_excel: SpreadsheetML 2003 read/write (pure XML, Excel opens directly). tokenvector_parquet: honest ledger - API reserved but fail-fast (real Parquet needs compiler binary write + bitwise R5). sql_check 37/37, excel_check 33/33, 20/20 suites green on DIST tkvc, DLL smoke 54/54 symbols + functional C# calls.</releaseNotes>
+    <description>High-performance columnar DataFrame and tabular data processing library, natively implemented in the TokenVector language (tkv) and compiled to a .NET CIL DLL: schema, columns, series, vector math, filter, group-by, joins (incl. AsOf), pivot/melt, CSV/JSON IO, Arrow IPC stream and out-of-core batches, SQL SELECT engine, SpreadsheetML Excel IO, zero-copy Mat bridge for numerics.</description>
     <tags>dataframe columnar arrow feather csv json timeseries asofjoin tokenvector data</tags>
     <dependencies>
       <group targetFramework="net8.0" />

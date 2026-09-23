@@ -3821,9 +3821,24 @@ def win_rolling_var(c: "Col", window: "i32", min_periods: "i32", ddof: "i32") ->
 
 Q = "\""
 
+# Chunk globals cho csv_read_par (worker top-level khong param -> cau hinh
+# qua global co kieu, mau g_nth): 8 manh text + so cot + delimiter.
+g_cp0: "str" = ""
+g_cp1: "str" = ""
+g_cp2: "str" = ""
+g_cp3: "str" = ""
+g_cp4: "str" = ""
+g_cp5: "str" = ""
+g_cp6: "str" = ""
+g_cp7: "str" = ""
+g_cpn: "i32" = 0
+g_cpd: "str" = ","
+
 
 # ------------------------------ CSV parsing -----------------------------------
-def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+def _split_csv_line_slow(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+    # Goc per-char (giu lam fallback cho dong LOI: quote giua field,
+    # thieu quote dong...). Quy uoc toggle/double-quote giong het ban cu.
     fields = []
     cur = ""
     in_quotes = 0
@@ -3851,6 +3866,67 @@ def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
             cur = cur + ch
         i = i + 1
     fields.append(cur)
+    return fields
+
+
+def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+    # Slice-based (nhanh): find C-speed + cat lat field, khong noi tung ky tu.
+    # Chi nhan CSV CHUAN (quote o dau field, doubled "" trong field, dong/delim
+    # sau quote dong); gap quote lac (giua field), thieu quote dong, rac sau
+    # quote dong -> tra ve _split_csv_line_slow (hanh vi cu, dam bao 1-1).
+    if len(delimiter) != 1 or len(quote) != 1:
+        return _split_csv_line_slow(line, delimiter, quote)
+    qq = quote + quote
+    fields = []
+    n = len(line)
+    pos = 0
+    need = 1
+    while need == 1 or pos < n:
+        need = 0
+        if pos >= n:
+            fields.append("")
+            break
+        if line[pos] == quote:
+            q = line.find(quote, pos + 1)
+            if q < 0:
+                return _split_csv_line_slow(line, delimiter, quote)
+            bad = 0
+            while bad == 0:
+                if q + 1 < n and line[q + 1] == quote:
+                    q2 = line.find(quote, q + 2)
+                    if q2 < 0:
+                        return _split_csv_line_slow(line, delimiter, quote)
+                    q = q2
+                else:
+                    bad = 1
+            inner = line[pos + 1:q]
+            if inner.find(qq) >= 0:
+                inner = inner.replace(qq, quote)
+            pos = q + 1
+            if pos >= n:
+                fields.append(inner)
+                break
+            if line[pos] == delimiter:
+                pos = pos + 1
+                fields.append(inner)
+                if pos >= n:
+                    fields.append("")
+                    break
+            else:
+                return _split_csv_line_slow(line, delimiter, quote)
+        else:
+            dd = line.find(delimiter, pos)
+            dq = line.find(quote, pos)
+            if dq >= 0 and (dd < 0 or dq < dd):
+                return _split_csv_line_slow(line, delimiter, quote)
+            if dd < 0:
+                fields.append(line[pos:n])
+                break
+            fields.append(line[pos:dd])
+            pos = dd + 1
+            if pos >= n:
+                fields.append("")
+                break
     return fields
 
 
@@ -4009,6 +4085,37 @@ def csv_infer_dtypes(rows: "list[str]", data_start: "i32", n_cols: "i32", null_v
     return dtypes
 
 
+def _csv_infer_col(grid: "list[str]", col: "i32", n_cols: "i32", total_data: "i32", null_value: "str") -> "i32":
+    # Nhu _infer_dtypes_grid nhung doc stride truc tiep tren grid (khong copy
+    # subcol): tiet kiem total_data append + alloc moi cot (csv_read_ex/par).
+    is_int = 1
+    is_float = 1
+    is_bool = 1
+    tested = 0
+    for r in range(total_data):
+        val = grid[r * n_cols + col].strip()
+        if val == "" or val == null_value:
+            continue
+        tested = tested + 1
+        if is_int == 1 and _is_int(val) == 0:
+            is_int = 0
+            if _is_float(val) == 0:
+                is_float = 0
+            if _is_bool(val) == 0:
+                is_bool = 0
+        elif is_int == 1:
+            is_bool = 0
+    if tested == 0:
+        return DT_STR
+    if is_bool == 1:
+        return DT_BOOL
+    if is_int == 1:
+        return DT_I64
+    if is_float == 1:
+        return DT_F64
+    return DT_STR
+
+
 def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null_value: "str") -> "list[i32]":
     dtypes = []
     for c in range(n_cols):
@@ -4053,6 +4160,135 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
 # - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
 # - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
 # Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
+def _csv_grid_to_df(column_names: "list[str]", grid: "list[str]", total_data: "i32",
+                        null_value: "str", na_values: "list[str]", n_na: "i32",
+                        dtypes_spec: "list[str]", n_spec: "i32", parse_dates: "list[str]") -> "DataFrame":
+    # Chung cho csv_read_ex (serial) va csv_read_par (song song):
+    # grid phang (total_data x n_cols) -> DataFrame (infer/build + parse_dates).
+    n_cols = len(column_names)
+    if total_data == 0:
+        result_cols = []
+        for c in range(n_cols):
+            result_cols.append(make_series_str(column_names[c], []))
+        return make_df(result_cols)
+    result_cols = []
+    for c in range(n_cols):
+        col_name = column_names[c]
+        # resolve dtype: spec roi roi -> infer
+        dt = 0 - 1
+        if c < n_spec:
+            spec = dtypes_spec[c]
+            if spec == "i64":
+                dt = DT_I64
+            elif spec == "f64":
+                dt = DT_F64
+            elif spec == "str":
+                dt = DT_STR
+            else:
+                # v1.8: dtype hep qua dt_parse_spec (i32/u8/f32/datetime64...)
+                dt = _csv_narrow_spec(spec)
+        if dt == 0 - 1:
+            dt = _csv_infer_col(grid, c, n_cols, total_data, null_value)
+        if dt >= 1 and dt <= 13 and dt != DT_I64 and dt != DT_F64 and dt != DT_BOOL and dt != DT_STR:
+            # v1.8: dtype hep - doc nhu i64/f64 roi dat lai tag
+            is_f = 0
+            if dt == DT_F32:
+                is_f = 1
+            if is_f == 1:
+                fnv = []
+                vm = make_mask(total_data, 1)
+                for i in range(total_data):
+                    raw = grid[i * n_cols + c].strip()
+                    if _csv_is_null(raw, null_value, na_values, n_na):
+                        fnv.append(0.0)
+                        vm.set(i, 0)
+                    else:
+                        fnv.append(float(raw))
+                ns = make_series_f64_with_mask(col_name, fnv, vm)
+                ns.dtype = dt
+                result_cols.append(ns)
+            else:
+                inv = []
+                vm = make_mask(total_data, 1)
+                for i in range(total_data):
+                    raw = grid[i * n_cols + c].strip()
+                    if _csv_is_null(raw, null_value, na_values, n_na):
+                        inv.append(0)
+                        vm.set(i, 0)
+                    elif dt == DT_DT64:
+                        inv.append(dt_parse(raw))
+                    else:
+                        inv.append(int(raw))
+                ns2 = make_series_i64_with_mask(col_name, inv, vm)
+                ns2.dtype = dt
+                result_cols.append(ns2)
+            continue
+        if dt == DT_I64:
+            ivals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    ivals.append(0)
+                    vm.set(i, 0)
+                else:
+                    ivals.append(int(raw))
+            result_cols.append(make_series(col_name, make_col_i64_with_mask(ivals, vm)))
+        elif dt == DT_F64:
+            fvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip()
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    fvals.append(0.0)
+                    vm.set(i, 0)
+                else:
+                    fvals.append(float(raw))
+            result_cols.append(make_series(col_name, make_col_f64_with_mask(fvals, vm)))
+        elif dt == DT_BOOL:
+            bvals = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                raw = grid[i * n_cols + c].strip().lower()
+                if _csv_is_null(raw, null_value, na_values, n_na):
+                    bvals.append(0)
+                    vm.set(i, 0)
+                elif raw == "true":
+                    bvals.append(1)
+                elif raw == "false":
+                    bvals.append(0)
+                else:
+                    bvals.append(0)
+                    vm.set(i, 0)
+            result_cols.append(make_series(col_name, make_col_bool_with_mask(bvals, vm)))
+        else:
+            strs = []
+            vm = make_mask(total_data, 1)
+            for i in range(total_data):
+                val = grid[i * n_cols + c]
+                if _csv_is_null(val.strip(), null_value, na_values, n_na):
+                    strs.append("")
+                    vm.set(i, 0)
+                else:
+                    strs.append(val)
+            result_cols.append(make_series_str_with_mask(col_name, strs, vm))
+    # parse_dates: doi cot str/other -> i64 epoch ms qua dt_parse (pandas to_datetime)
+    n_pd = 0
+    if parse_dates != None:
+        n_pd = len(parse_dates)
+    if n_pd > 0:
+        for pi in range(n_pd):
+            pname = parse_dates[pi]
+            for c in range(n_cols):
+                if column_names[c] == pname:
+                    # goi qua bien trung gian: compiler khong chap nhan method
+                    # call tren ket qua ham truc tiep (rename tren Series)
+                    ts_col = series_dt_parse(result_cols[c])
+                    result_cols[c] = ts_col.rename(pname)
+                    break
+    return make_df(result_cols)
+
+
 def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
     if csv_text == "":
         return empty_df()
@@ -4139,86 +4375,31 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
         for c in range(n_cols):
             result_cols.append(make_series_str(column_names[c], []))
         return make_df(result_cols)
-    result_cols = []
-    for c in range(n_cols):
-        col_name = column_names[c]
-        # resolve dtype: spec roi roi -> infer
-        dt = 0 - 1
-        if c < n_spec:
-            spec = dtypes_spec[c]
-            if spec == "i64":
-                dt = DT_I64
-            elif spec == "f64":
-                dt = DT_F64
-            elif spec == "str":
-                dt = DT_STR
-        if dt == 0 - 1:
-            sub = _csv_grid_subcol(grid, c, n_cols, total_data)
-            dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
-        if dt == DT_I64:
-            ivals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    ivals.append(0)
-                    vm.set(i, 0)
-                else:
-                    ivals.append(int(raw))
-            result_cols.append(make_series(col_name, make_col_i64_with_mask(ivals, vm)))
-        elif dt == DT_F64:
-            fvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    fvals.append(0.0)
-                    vm.set(i, 0)
-                else:
-                    fvals.append(float(raw))
-            result_cols.append(make_series(col_name, make_col_f64_with_mask(fvals, vm)))
-        elif dt == DT_BOOL:
-            bvals = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                raw = grid[i * n_cols + c].strip().lower()
-                if _csv_is_null(raw, null_value, na_values, n_na):
-                    bvals.append(0)
-                    vm.set(i, 0)
-                elif raw == "true":
-                    bvals.append(1)
-                elif raw == "false":
-                    bvals.append(0)
-                else:
-                    bvals.append(0)
-                    vm.set(i, 0)
-            result_cols.append(make_series(col_name, make_col_bool_with_mask(bvals, vm)))
-        else:
-            strs = []
-            vm = make_mask(total_data, 1)
-            for i in range(total_data):
-                val = grid[i * n_cols + c]
-                if _csv_is_null(val.strip(), null_value, na_values, n_na):
-                    strs.append("")
-                    vm.set(i, 0)
-                else:
-                    strs.append(val)
-            result_cols.append(make_series_str_with_mask(col_name, strs, vm))
-    # parse_dates: doi cot str/other -> i64 epoch ms qua dt_parse (pandas to_datetime)
-    n_pd = 0
-    if parse_dates != None:
-        n_pd = len(parse_dates)
-    if n_pd > 0:
-        for pi in range(n_pd):
-            pname = parse_dates[pi]
-            for c in range(n_cols):
-                if column_names[c] == pname:
-                    # goi qua bien trung gian: compiler khong chap nhan method
-                    # call tren ket qua ham truc tiep (rename tren Series)
-                    ts_col = series_dt_parse(result_cols[c])
-                    result_cols[c] = ts_col.rename(pname)
-                    break
-    return make_df(result_cols)
+    return _csv_grid_to_df(column_names, grid, total_data, null_value, na_values, n_na, dtypes_spec, n_spec, parse_dates)
+
+
+
+def _csv_narrow_spec(spec: "str") -> "i32":
+    # v1.8: dtype hep cho dtypes_spec cua CSV - tra ve DT_*, khong.hep -> -1
+    if spec == "i32" or spec == "int32":
+        return DT_I32
+    if spec == "i16" or spec == "int16":
+        return DT_I16
+    if spec == "i8" or spec == "int8":
+        return DT_I8
+    if spec == "u8" or spec == "uint8":
+        return DT_U8
+    if spec == "u16" or spec == "uint16":
+        return DT_U16
+    if spec == "u32" or spec == "uint32":
+        return DT_U32
+    if spec == "u64" or spec == "uint64":
+        return DT_U64
+    if spec == "f32" or spec == "float32":
+        return DT_F32
+    if spec == "datetime64" or spec == "dt64":
+        return DT_DT64
+    return 0 - 1
 
 
 def _csv_grid_subcol(grid: "list[str]", c: "i32", n_cols: "i32", total_data: "i32") -> "list[str]":
@@ -4250,6 +4431,240 @@ def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_v
 
 def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
     return csv_read_file_ex(file_path, delimiter, has_header, null_value, [], [], [], 0)
+
+
+# ------------------------ parallel read (da luong) ---------------------------
+# csv_read_par: nhu csv_read_ex nhung parse dong+field song song 8 worker
+# (thread_spawn/join, worker top-level qua global). Main giu: skiprows, tach
+# header, tinh 8 offset tai dau dong, ghep grid, infer/build tap trung
+# (_csv_grid_to_df — khong nhan ban logic cot).
+# Nguong: data_text < 240000 char -> serial (spawn overhead khong dang).
+# Gioi han (giong serial): quote xuong dong trong field khong ho tro (split
+# theo \n), file doc 1 lan qua read_file (handle khong truyen vao ham duoc).
+def _csv_head_names(headline: "str", delimiter: "str", has_header: "i32", names: "list[str]") -> "list[str]":
+    column_names = []
+    use_names = 0
+    if names != None:
+        if len(names) > 0:
+            use_names = 1
+    if use_names == 1:
+        for ni in range(len(names)):
+            column_names.append(names[ni])
+        return column_names
+    hl = headline
+    if len(hl) > 0 and hl[len(hl) - 1] == "\r":
+        hl = hl[0:len(hl) - 1]
+    if has_header == 1:
+        hfields = _split_csv_line(hl, delimiter, "\"")
+        for hf in range(len(hfields)):
+            column_names.append(hfields[hf])
+    else:
+        ffields = _split_csv_line(hl, delimiter, "\"")
+        for fi in range(len(ffields)):
+            column_names.append("column_" + str(fi))
+    return column_names
+
+
+def _csv_line_start(text: "str", guess: "i32") -> "i32":
+    p = text.find("\n", guess)
+    if p < 0:
+        return len(text)
+    return p + 1
+
+
+def _csv_chunk_text(data_text: "str", a: "i32", b: "i32", last: "i32") -> "str":
+    if last == 1:
+        if a >= len(data_text):
+            return ""
+        return data_text[a:len(data_text)]
+    e = b - 1
+    if e <= a:
+        return ""
+    return data_text[a:e]
+
+
+def _csv_chunk_cells(text: "str", drop_trailing: "i32") -> "list[str]":
+    global g_cpn
+    global g_cpd
+    out = []
+    if text == "":
+        return out
+    clines = text.split("\n")
+    nl = len(clines)
+    if drop_trailing == 1 and nl > 0 and clines[nl - 1] == "":
+        clines.pop()
+        nl = nl - 1
+    ncols = g_cpn
+    delim = g_cpd
+    for li in range(nl):
+        line = clines[li]
+        ln = len(line)
+        if ln > 0 and line[ln - 1] == "\r":
+            line = line[0:ln - 1]
+        if line.find("\"") == 0 - 1:
+            flds = line.split(delim)
+        else:
+            flds = _split_csv_line(line, delim, "\"")
+        nf = len(flds)
+        for cc in range(ncols):
+            if cc < nf:
+                out.append(flds[cc])
+            else:
+                out.append("")
+    return out
+
+
+def _cp_w0() -> "list[str]":
+    global g_cp0
+    return _csv_chunk_cells(g_cp0, 0)
+
+
+def _cp_w1() -> "list[str]":
+    global g_cp1
+    return _csv_chunk_cells(g_cp1, 0)
+
+
+def _cp_w2() -> "list[str]":
+    global g_cp2
+    return _csv_chunk_cells(g_cp2, 0)
+
+
+def _cp_w3() -> "list[str]":
+    global g_cp3
+    return _csv_chunk_cells(g_cp3, 0)
+
+
+def _cp_w4() -> "list[str]":
+    global g_cp4
+    return _csv_chunk_cells(g_cp4, 0)
+
+
+def _cp_w5() -> "list[str]":
+    global g_cp5
+    return _csv_chunk_cells(g_cp5, 0)
+
+
+def _cp_w6() -> "list[str]":
+    global g_cp6
+    return _csv_chunk_cells(g_cp6, 0)
+
+
+def _cp_w7() -> "list[str]":
+    global g_cp7
+    return _csv_chunk_cells(g_cp7, 1)
+
+
+def csv_read_par(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
+    if csv_text == "":
+        return empty_df()
+    body = csv_text
+    if skiprows > 0:
+        p = 0
+        sr = 0
+        while sr < skiprows:
+            q = body.find("\n", p)
+            if q < 0:
+                return empty_df()
+            p = q + 1
+            sr = sr + 1
+        body = body[p:len(body)]
+    headline = ""
+    data_text = ""
+    if has_header == 1:
+        he = body.find("\n")
+        if he < 0:
+            headline = body
+            data_text = ""
+        else:
+            headline = body[0:he]
+            data_text = body[he + 1:len(body)]
+    else:
+        he = body.find("\n")
+        if he < 0:
+            headline = body
+        else:
+            headline = body[0:he]
+        data_text = body
+    column_names = _csv_head_names(headline, delimiter, has_header, names)
+    n_cols = len(column_names)
+    if data_text == "" or len(data_text) < 240000:
+        return csv_read_ex(csv_text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, parse_dates)
+    total = len(data_text)
+    o0 = 0
+    o1 = _csv_line_start(data_text, int(total / 8))
+    o2 = _csv_line_start(data_text, int(total * 2 / 8))
+    o3 = _csv_line_start(data_text, int(total * 3 / 8))
+    o4 = _csv_line_start(data_text, int(total * 4 / 8))
+    o5 = _csv_line_start(data_text, int(total * 5 / 8))
+    o6 = _csv_line_start(data_text, int(total * 6 / 8))
+    o7 = _csv_line_start(data_text, int(total * 7 / 8))
+    global g_cp0
+    global g_cp1
+    global g_cp2
+    global g_cp3
+    global g_cp4
+    global g_cp5
+    global g_cp6
+    global g_cp7
+    global g_cpn
+    global g_cpd
+    g_cpn = n_cols
+    g_cpd = delimiter
+    g_cp0 = _csv_chunk_text(data_text, o0, o1, 0)
+    g_cp1 = _csv_chunk_text(data_text, o1, o2, 0)
+    g_cp2 = _csv_chunk_text(data_text, o2, o3, 0)
+    g_cp3 = _csv_chunk_text(data_text, o3, o4, 0)
+    g_cp4 = _csv_chunk_text(data_text, o4, o5, 0)
+    g_cp5 = _csv_chunk_text(data_text, o5, o6, 0)
+    g_cp6 = _csv_chunk_text(data_text, o6, o7, 0)
+    g_cp7 = _csv_chunk_text(data_text, o7, 0, 1)
+    h0 = thread_spawn(_cp_w0)
+    h1 = thread_spawn(_cp_w1)
+    h2 = thread_spawn(_cp_w2)
+    h3 = thread_spawn(_cp_w3)
+    h4 = thread_spawn(_cp_w4)
+    h5 = thread_spawn(_cp_w5)
+    h6 = thread_spawn(_cp_w6)
+    h7 = thread_spawn(_cp_w7)
+    r0 = thread_join(h0)
+    r1 = thread_join(h1)
+    r2 = thread_join(h2)
+    r3 = thread_join(h3)
+    r4 = thread_join(h4)
+    r5 = thread_join(h5)
+    r6 = thread_join(h6)
+    r7 = thread_join(h7)
+    grid = []
+    for xi in range(len(r0)):
+        grid.append(r0[xi])
+    for xi in range(len(r1)):
+        grid.append(r1[xi])
+    for xi in range(len(r2)):
+        grid.append(r2[xi])
+    for xi in range(len(r3)):
+        grid.append(r3[xi])
+    for xi in range(len(r4)):
+        grid.append(r4[xi])
+    for xi in range(len(r5)):
+        grid.append(r5[xi])
+    for xi in range(len(r6)):
+        grid.append(r6[xi])
+    for xi in range(len(r7)):
+        grid.append(r7[xi])
+    total_data = int(len(grid) / n_cols)
+    n_spec = 0
+    if dtypes_spec != None:
+        n_spec = len(dtypes_spec)
+    n_na = 0
+    if na_values != None:
+        n_na = len(na_values)
+    return _csv_grid_to_df(column_names, grid, total_data, null_value, na_values, n_na, dtypes_spec, n_spec, parse_dates)
+
+
+def csv_read_file_par(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    return csv_read_par(read_file(file_path), delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, parse_dates)
 
 
 # ------------------------ chunked read (pandas chunksize) --------------------
@@ -11147,6 +11562,2094 @@ def _rk_merge_sort_order(vals: "list[f64]", keys: "list[i64]", order: "list[i32]
         oi2 = src[i2]
         order[i2] = oi2
     return 0
+
+
+# ==================== tokenvector_sql ====================
+
+# -*- coding: utf-8 -*-
+
+# =============================================================================
+# tokenvector_sql.tkv (v2.0) - Mini SQL engine chay tren DataFrame
+#   sql_query(df, "SELECT ... FROM df WHERE ... GROUP BY ... HAVING ...
+#              ORDER BY ... LIMIT n OFFSET m [DISTINCT]")
+#   sql_query2(df, df2, sql) - co JOIN df2 ON a.k = b.k2 (INNER/LEFT/RIGHT)
+# WHERE: +-*/%, ngoac, = != <> < <= > >=, AND/OR/NOT, IN (...), LIKE '%_'
+# GROUP BY + SUM/AVG/MIN/MAX/COUNT/COUNT(*)/STD/FIRST/LAST/MEDIAN/NUNIQUE
+# Planner: WHERE tach theo AND; term 'col = lit' / LIKE day thang (quet 1 lan
+# + hash khi co the); con lai eval shunting-yard per row.
+# Ghi chu ky thuat (an toan IL voi tkvc hien tai): khong method-call tren
+# subscript, khong len(bieu thuc phuc), khong global, khong while True.
+# =============================================================================
+
+# ------------------------------ Tokenizer -------------------------------------
+
+class _QTok2:
+    tok: "str"
+    kind: "str"
+    nxt: "i32"
+    st: "i32"
+
+
+def _sx_is_digit(c: "str") -> "i32":
+    return c >= "0" and c <= "9"
+
+
+def _sx_is_idc(c: "str") -> "i32":
+    if c >= "a" and c <= "z":
+        return 1
+    if c >= "A" and c <= "Z":
+        return 1
+    if c == "_":
+        return 1
+    if _sx_is_digit(c) == 1:
+        return 1
+    return 0
+
+
+def _sx_tok(text: "str", pos: "i32") -> "_QTok2":
+    r = _QTok2("", "end", len(text), pos)
+    n = len(text)
+    i = pos
+    while i < n:
+        c = text[i]
+        if c == " " or c == "\t" or c == "\n" or c == "\r":
+            i = i + 1
+        else:
+            break
+    r.st = i
+    if i >= n:
+        r.nxt = n
+        return r
+    c = text[i]
+    if c == "'":
+        j = i + 1
+        acc = ""
+        while j < n:
+            ch = text[j]
+            if ch == "'":
+                if j + 1 < n and text[j + 1] == "'":
+                    acc = acc + "'"
+                    j = j + 2
+                else:
+                    break
+            else:
+                acc = acc + ch
+                j = j + 1
+        r.tok = acc
+        r.kind = "str"
+        r.nxt = j + 1
+        return r
+    if _sx_is_digit(c) == 1 or (c == "." and i + 1 < n and _sx_is_digit(text[i + 1]) == 1):
+        j = i
+        dot = 0
+        acc = ""
+        while j < n:
+            ch = text[j]
+            if _sx_is_digit(ch) == 1:
+                acc = acc + ch
+                j = j + 1
+            elif ch == "." and dot == 0:
+                dot = 1
+                acc = acc + ch
+                j = j + 1
+            else:
+                break
+        r.tok = acc
+        r.kind = "num"
+        r.nxt = j
+        return r
+    if _sx_is_idc(c) == 1:
+        j = i
+        acc = ""
+        while j < n:
+            ch = text[j]
+            if _sx_is_idc(ch) == 1:
+                acc = acc + ch
+                j = j + 1
+            else:
+                break
+        r.tok = acc
+        r.kind = "id"
+        r.nxt = j
+        return r
+    two = ""
+    if i + 1 < n:
+        two = text[i] + text[i + 1]
+    if two == "<=" or two == ">=" or two == "!=" or two == "<>":
+        r.tok = two
+        r.kind = "op"
+        r.nxt = i + 2
+        return r
+    if c == "=" or c == "<" or c == ">" or c == "+" or c == "-" or c == "*" or c == "/" or c == "%" or c == "(" or c == ")" or c == "," or c == ".":
+        r.tok = c
+        r.kind = "op"
+        r.nxt = i + 1
+        return r
+    r.tok = c
+    r.kind = "bad"
+    r.nxt = i + 1
+    return r
+
+
+def _sx_prec(op: "str") -> "i32":
+    if op == "or":
+        return 1
+    if op == "and":
+        return 2
+    if op == "not":
+        return 3
+    if op == "=" or op == "!=" or op == "<" or op == "<=" or op == ">" or op == ">=":
+        return 4
+    if op == "+" or op == "-":
+        return 5
+    if op == "*" or op == "/" or op == "%":
+        return 6
+    return 0
+
+
+def make_str_list() -> "list[str]":
+    out = []
+    return out
+
+
+def make_f64_list() -> "list[f64]":
+    out = []
+    return out
+
+
+def make_series_list() -> "list[Series]":
+    out = []
+    return out
+
+
+def _sx_low(t: "str") -> "str":
+    return t.lower()
+
+
+def _sx_kw(sql: "str", i: "i32") -> "str":
+    # keyword don gian tai vi tri i (hoac "" neu khong phai id)
+    tk = _sx_tok(sql, i)
+    if tk.kind == "id":
+        return _sx_low(tk.tok)
+    return ""
+
+
+# ------------------------- WHERE: split theo AND ------------------------------
+
+def _sx_split_and(text: "str") -> "list[str]":
+    parts = []
+    depth = 0
+    st = 0
+    i = 0
+    n = len(text)
+    while i < n:
+        tk = _sx_tok(text, i)
+        if tk.kind == "end":
+            break
+        if tk.nxt <= i:
+            break
+        i = tk.nxt
+        if tk.kind == "op":
+            if tk.tok == "(":
+                depth = depth + 1
+            elif tk.tok == ")":
+                depth = depth - 1
+        elif tk.kind == "id":
+            if depth == 0 and _sx_low(tk.tok) == "and":
+                parts.append(text[st:tk.st])
+                st = tk.nxt
+    if st < n:
+        parts.append(text[st:n])
+    return parts
+
+
+def _sx_term_has_like(term: "str") -> "i32":
+    i = 0
+    n = len(term)
+    while i < n:
+        tk = _sx_tok(term, i)
+        if tk.kind == "end":
+            break
+        if tk.nxt <= i:
+            break
+        i = tk.nxt
+        if tk.kind == "id" and _sx_low(tk.tok) == "like":
+            return 1
+    return 0
+
+
+# ----------------------- LIKE -> regex (%, _) ---------------------------------
+
+def _sx_like_regex(pat: "str") -> "str":
+    out = "^"
+    i = 0
+    n = len(pat)
+    while i < n:
+        c = pat[i]
+        if c == "%":
+            out = out + ".*"
+        elif c == "_":
+            out = out + "."
+        elif c == "." or c == "*" or c == "+" or c == "?" or c == "(" or c == ")" or c == "[" or c == "]" or c == "^" or c == "$" or c == "\\" or c == "|":
+            out = out + "\\" + c
+        else:
+            out = out + c
+        i = i + 1
+    return out + "$"
+
+
+def _sx_like_match(pat: "str", v: "str") -> "i32":
+    return re_test(_sx_like_regex(pat), v)
+
+
+# --------------------- Generic eval (shunting-yard) ---------------------------
+# Tra ve f64. Cot str chi dung trong so sanh =/!= 'literal' (xu ly truc tiep).
+# IN (v1, v2, ...) ho tro cot num (f64) va cot str.
+
+def _sx_col_f64(df: "DataFrame", name: "str", row: "i32") -> "f64":
+    c = df.col_by_name(name)
+    if c.is_null(row) == 1:
+        return 0.0
+    return c.get_f64(row)
+
+
+def _sx_apply_op(vals: "list[f64]", ops: "list[str]", op: "str") -> "f64":
+    if op == "not":
+        v = vals[len(vals) - 1]
+        vals.pop()
+        if v == 0.0:
+            vals.append(1.0)
+        else:
+            vals.append(0.0)
+        return 0.0
+    b = vals[len(vals) - 1]
+    vals.pop()
+    a = vals[len(vals) - 1]
+    vals.pop()
+    r = 0.0
+    if op == "=":
+        if a == b:
+            r = 1.0
+    elif op == "!=":
+        if a != b:
+            r = 1.0
+    elif op == "<":
+        if a < b:
+            r = 1.0
+    elif op == "<=":
+        if a <= b:
+            r = 1.0
+    elif op == ">":
+        if a > b:
+            r = 1.0
+    elif op == ">=":
+        if a >= b:
+            r = 1.0
+    elif op == "+":
+        r = a + b
+    elif op == "-":
+        r = a - b
+    elif op == "*":
+        r = a * b
+    elif op == "/":
+        if b != 0.0:
+            r = a / b
+    elif op == "%":
+        if b != 0.0:
+            r = a % b
+    elif op == "and":
+        if a != 0.0 and b != 0.0:
+            r = 1.0
+    elif op == "or":
+        if a != 0.0 or b != 0.0:
+            r = 1.0
+    vals.append(r)
+    return r
+
+
+def _sx_prev_id(text: "str", before_st: "i32") -> "str":
+    best = ""
+    i = 0
+    while i < before_st:
+        tk = _sx_tok(text, i)
+        if tk.kind == "end":
+            break
+        if tk.nxt <= i:
+            break
+        if tk.nxt <= before_st and tk.kind == "id":
+            best = tk.tok
+        i = tk.nxt
+    return best
+
+
+def _sx_eval(df: "DataFrame", row: "i32", text: "str") -> "f64":
+    vals = []
+    ops = []
+    i = 0
+    n = len(text)
+    expect_operand = 1
+    guard = 0
+    while i <= n:
+        guard = guard + 1
+        if guard > 100000:
+            break
+        tk = _sx_tok(text, i)
+        kind = tk.kind
+        tok = tk.tok
+        i = tk.nxt
+        if kind == "end":
+            break
+        if kind == "num":
+            vals.append(float(tok))
+            expect_operand = 0
+        elif kind == "str":
+            vals.append(0.0)
+            expect_operand = 0
+        elif kind == "id":
+            low = tok.lower()
+            if low == "and" or low == "or" or low == "not":
+                if expect_operand == 1 and low == "not":
+                    ops.append("not")
+                    continue
+                while len(ops) > 0:
+                    top = ops[len(ops) - 1]
+                    if top == "(":
+                        break
+                    if _sx_prec(top) < _sx_prec(low):
+                        break
+                    _sx_apply_op(vals, ops, top)
+                    ops.pop()
+                ops.append(low)
+                expect_operand = 1
+                continue
+            if low == "in":
+                tk2 = _sx_tok(text, i)
+                if tk2.kind == "op" and tk2.tok == "(":
+                    coln = _sx_prev_id(text, tk.st)
+                    if df.has_col(coln) == 0:
+                        raise ValueError("sql_eval: unknown column '" + coln + "' in IN")
+                    colq = df.col_by_name(coln)
+                    is_str_col = 0
+                    if colq.dtype == DT_STR:
+                        is_str_col = 1
+                    j = tk2.nxt
+                    found = 0
+                    g2 = 0
+                    while g2 < 1000:
+                        g2 = g2 + 1
+                        tk3 = _sx_tok(text, j)
+                        if tk3.kind == "end":
+                            break
+                        j = tk3.nxt
+                        if tk3.kind == "op" and tk3.tok == ")":
+                            break
+                        if tk3.kind == "op" and tk3.tok == ",":
+                            continue
+                        if is_str_col == 1:
+                            if tk3.kind == "str" and tk3.tok == colq.get_string(row):
+                                found = 1
+                        else:
+                            if tk3.kind == "num" and float(tk3.tok) == _sx_col_f64(df, coln, row):
+                                found = 1
+                    i = j
+                    if len(vals) > 0:
+                        vals.pop()
+                    if found == 1:
+                        vals.append(1.0)
+                    else:
+                        vals.append(0.0)
+                    expect_operand = 0
+                    continue
+                continue
+            if df.has_col(tok) == 0:
+                raise ValueError("sql_eval: unknown identifier '" + tok + "'")
+            colq2 = df.col_by_name(tok)
+            if colq2.dtype == DT_STR:
+                tk2 = _sx_tok(text, i)
+                if tk2.kind == "id" and _sx_low(tk2.tok) == "in":
+                    vals.append(0.0)
+                    expect_operand = 0
+                    continue
+                if tk2.kind == "id" and _sx_low(tk2.tok) == "like":
+                    tk3 = _sx_tok(text, tk2.nxt)
+                    if tk3.kind != "str":
+                        raise ValueError("sql_eval: LIKE needs 'pattern' after column '" + tok + "'")
+                    lk = 0.0
+                    if _sx_like_match(tk3.tok, colq2.get_string(row)) == 1:
+                        lk = 1.0
+                    vals.append(lk)
+                    i = tk3.nxt
+                    expect_operand = 0
+                    continue
+                tk3 = _sx_tok(text, tk2.nxt)
+                if tk2.kind == "op" and (tk2.tok == "=" or tk2.tok == "!=") and tk3.kind == "str":
+                    sv = colq2.get_string(row)
+                    r2 = 0.0
+                    if tk2.tok == "=" and sv == tk3.tok:
+                        r2 = 1.0
+                    if tk2.tok == "!=" and sv != tk3.tok:
+                        r2 = 1.0
+                    vals.append(r2)
+                    i = tk3.nxt
+                    expect_operand = 0
+                    continue
+                raise ValueError("sql_eval: str column '" + tok + "' only supports = / != 'literal'")
+            tk2n = _sx_tok(text, i)
+            if tk2n.kind == "id" and _sx_low(tk2n.tok) == "in":
+                vals.append(0.0)
+                expect_operand = 0
+                continue
+            vals.append(_sx_col_f64(df, tok, row))
+            expect_operand = 0
+        elif kind == "op":
+            if tok == "(":
+                ops.append("(")
+                expect_operand = 1
+                continue
+            if tok == ")":
+                while len(ops) > 0:
+                    top = ops[len(ops) - 1]
+                    if top == "(":
+                        break
+                    _sx_apply_op(vals, ops, top)
+                    ops.pop()
+                if len(ops) > 0:
+                    ops.pop()
+                expect_operand = 0
+                continue
+            if tok == "-" and expect_operand == 1:
+                tk2 = _sx_tok(text, i)
+                if tk2.kind == "num":
+                    neg = float(tk2.tok)
+                    neg = 0.0 - neg
+                    vals.append(neg)
+                    i = tk2.nxt
+                    expect_operand = 0
+                    continue
+            while len(ops) > 0:
+                top = ops[len(ops) - 1]
+                if top == "(":
+                    break
+                if _sx_prec(top) < _sx_prec(tok):
+                    break
+                _sx_apply_op(vals, ops, top)
+                ops.pop()
+            ops.append(tok)
+            expect_operand = 1
+    while len(ops) > 0:
+        top = ops[len(ops) - 1]
+        if top == "(":
+            ops.pop()
+            continue
+        _sx_apply_op(vals, ops, top)
+        ops.pop()
+    if len(vals) == 0:
+        return 0.0
+    return vals[len(vals) - 1]
+
+
+# --------------------------- WHERE: planner -----------------------------------
+# Term don 'col = lit' (str) -> hash dict pushdown; con lai quet + eval.
+
+def _sx_sarg_str(col: "Series", lit: "str", want_eq: "i32") -> "list[i32]":
+    hits = []
+    if want_eq == 1:
+        seen = {}
+        n = col.length()
+        for i in range(n):
+            if col.is_null(i) == 1:
+                continue
+            v = col.get_string(i)
+            if v == lit:
+                hits.append(i)
+        return hits
+    n2 = col.length()
+    for i in range(n2):
+        if col.is_null(i) == 1:
+            hits.append(i)
+        else:
+            v = col.get_string(i)
+            if v != lit:
+                hits.append(i)
+    return hits
+
+
+def _sx_pred_generic(df: "DataFrame", rows: "list[i32]", term: "str") -> "list[i32]":
+    keep = []
+    for k in range(len(rows)):
+        r = rows[k]
+        if _sx_eval(df, r, term) != 0.0:
+            keep.append(r)
+    return keep
+
+
+def _sx_pred_apply(df: "DataFrame", rows: "list[i32]", term: "str") -> "list[i32]":
+    if rows == None:
+        all_rows = []
+        for i in range(df.row_count()):
+            all_rows.append(i)
+        rows = all_rows
+    if len(rows) == 0:
+        return rows
+    # LIKE term?
+    if _sx_term_has_like(term) == 1:
+        tk = _sx_tok(term, 0)
+        if tk.kind != "id":
+            return _sx_pred_generic(df, rows, term)
+        coln = tk.tok
+        tk2 = _sx_tok(term, tk.nxt)
+        pat = ""
+        pend = 0
+        if tk2.kind == "id" and _sx_low(tk2.tok) == "like":
+            tk3 = _sx_tok(term, tk2.nxt)
+            if tk3.kind == "str":
+                pat = tk3.tok
+                pend = tk3.nxt
+        if df.has_col(coln) == 0 or pat == "":
+            return _sx_pred_generic(df, rows, term)
+        tk4 = _sx_tok(term, pend)
+        if tk4.kind != "end":
+            return _sx_pred_generic(df, rows, term)
+        colq = df.col_by_name(coln)
+        keep = []
+        for k in range(len(rows)):
+            r = rows[k]
+            if colq.is_null(r) == 0 and _sx_like_match(pat, colq.get_string(r)) == 1:
+                keep.append(r)
+        return keep
+    # term don: id op lit ?
+    tk = _sx_tok(term, 0)
+    if tk.kind != "id":
+        return _sx_pred_generic(df, rows, term)
+    tk2 = _sx_tok(term, tk.nxt)
+    if tk2.kind != "op":
+        return _sx_pred_generic(df, rows, term)
+    op = tk2.tok
+    if op != "=" and op != "!=":
+        return _sx_pred_generic(df, rows, term)
+    tk3 = _sx_tok(term, tk2.nxt)
+    if tk3.kind != "str" and tk3.kind != "num":
+        return _sx_pred_generic(df, rows, term)
+    tk4 = _sx_tok(term, tk3.nxt)
+    if tk4.kind != "end":
+        return _sx_pred_generic(df, rows, term)
+    coln = tk.tok
+    if df.has_col(coln) == 0:
+        return _sx_pred_generic(df, rows, term)
+    colq = df.col_by_name(coln)
+    keep = []
+    if tk3.kind == "str":
+        lit = tk3.tok
+        want_eq = 0
+        if op == "=":
+            want_eq = 1
+        if colq.dtype != DT_STR:
+            return _sx_pred_generic(df, rows, term)
+        if len(rows) == colq.length():
+            return _sx_sarg_str(colq, lit, want_eq)
+        for k in range(len(rows)):
+            r = rows[k]
+            svp = colq.get_string(r)
+            if want_eq == 1 and colq.is_null(r) == 0 and svp == lit:
+                keep.append(r)
+            if want_eq == 0 and (colq.is_null(r) == 1 or svp != lit):
+                keep.append(r)
+        return keep
+    # numeric literal
+    litf = float(tk3.tok)
+    for k in range(len(rows)):
+        r = rows[k]
+        v = colq.get_f64(r)
+        if op == "=" and colq.is_null(r) == 0 and v == litf:
+            keep.append(r)
+        if op == "!=" and (colq.is_null(r) == 1 or v != litf):
+            keep.append(r)
+    return keep
+
+
+def _sx_where_rows(df: "DataFrame", where: "str") -> "list[i32]":
+    if where == "":
+        rows = []
+        for i in range(df.row_count()):
+            rows.append(i)
+        return rows
+    terms = _sx_split_and(where)
+    rows = None
+    for t in range(len(terms)):
+        rows = _sx_pred_apply(df, rows, terms[t])
+        if len(rows) == 0:
+            return rows
+    return rows
+
+
+# ------------------------------- Sort helpers ---------------------------------
+
+def _sx_num_order(vals: "list[f64]") -> "list[i32]":
+    n = len(vals)
+    order = []
+    buf = []
+    for i in range(n):
+        order.append(i)
+        buf.append(0)
+    width = 1
+    while width < n:
+        lo = 0
+        while lo < n:
+            mid = lo + width
+            hi = mid + width
+            if mid > n:
+                mid = n
+            if hi > n:
+                hi = n
+            _sx_merge_num(vals, order, buf, lo, mid, hi)
+            for k in range(lo, hi):
+                order[k] = buf[k]
+            lo = hi
+        width = width * 2
+    return order
+
+
+def _sx_merge_num(vals: "list[f64]", order: "list[i32]", buf: "list[i32]", lo: "i32", mid: "i32", hi: "i32") -> "i32":
+    a = lo
+    b = mid
+    p = lo
+    while a < mid and b < hi:
+        va = vals[order[a]]
+        vb = vals[order[b]]
+        if va <= vb:
+            buf[p] = order[a]
+            a = a + 1
+        else:
+            buf[p] = order[b]
+            b = b + 1
+        p = p + 1
+    while a < mid:
+        buf[p] = order[a]
+        a = a + 1
+        p = p + 1
+    while b < hi:
+        buf[p] = order[b]
+        b = b + 1
+        p = p + 1
+    return 0
+
+
+def _sx_str_order(vals: "list[str]") -> "list[i32]":
+    n = len(vals)
+    order = []
+    buf = []
+    for i in range(n):
+        order.append(i)
+        buf.append(0)
+    width = 1
+    while width < n:
+        lo = 0
+        while lo < n:
+            mid = lo + width
+            hi = mid + width
+            if mid > n:
+                mid = n
+            if hi > n:
+                hi = n
+            _sx_merge_str(vals, order, buf, lo, mid, hi)
+            for k in range(lo, hi):
+                order[k] = buf[k]
+            lo = hi
+        width = width * 2
+    return order
+
+
+def _sx_merge_str(vals: "list[str]", order: "list[i32]", buf: "list[i32]", lo: "i32", mid: "i32", hi: "i32") -> "i32":
+    a = lo
+    b = mid
+    p = lo
+    while a < mid and b < hi:
+        va = vals[order[a]]
+        vb = vals[order[b]]
+        if va <= vb:
+            buf[p] = order[a]
+            a = a + 1
+        else:
+            buf[p] = order[b]
+            b = b + 1
+        p = p + 1
+    while a < mid:
+        buf[p] = order[a]
+        a = a + 1
+        p = p + 1
+    while b < hi:
+        buf[p] = order[b]
+        b = b + 1
+        p = p + 1
+    return 0
+
+
+# ------------------------------- Aggregates -----------------------------------
+
+def _sx_agg_kind(func: "str") -> "i32":
+    f = func.lower()
+    if f == "sum":
+        return 1
+    if f == "avg" or f == "mean":
+        return 2
+    if f == "min":
+        return 3
+    if f == "max":
+        return 4
+    if f == "count":
+        return 5
+    if f == "std":
+        return 6
+    if f == "first":
+        return 7
+    if f == "last":
+        return 8
+    if f == "median":
+        return 9
+    if f == "nunique" or f == "count_distinct":
+        return 10
+    return 0
+
+
+def _sx_agg_suffix(func: "str") -> "str":
+    k = _sx_agg_kind(func)
+    if k == 1:
+        return "sum"
+    if k == 2:
+        return "mean"
+    if k == 3:
+        return "min"
+    if k == 4:
+        return "max"
+    if k == 5:
+        return "count"
+    if k == 6:
+        return "std"
+    if k == 7:
+        return "first"
+    if k == 8:
+        return "last"
+    if k == 9:
+        return "median"
+    if k == 10:
+        return "nunique"
+    return ""
+
+
+def _sx_agg_val(df: "DataFrame", coln: "str", rows: "list[i32]", func: "str") -> "f64":
+    colq = df.col_by_name(coln)
+    k = _sx_agg_kind(func)
+    if k == 5:
+        c = 0
+        for t in range(len(rows)):
+            if colq.is_null(rows[t]) == 0:
+                c = c + 1
+        return float(c)
+    if k == 10:
+        seen = {}
+        c2 = 0
+        for t in range(len(rows)):
+            r = rows[t]
+            if colq.is_null(r) == 1:
+                continue
+            svn = colq.get_string(r)
+            g = seen.get(svn, 0 - 1)
+            if g < 0:
+                seen[svn] = 1
+                c2 = c2 + 1
+        return float(c2)
+    if k == 7:
+        for t in range(len(rows)):
+            if colq.is_null(rows[t]) == 0:
+                return colq.get_f64(rows[t])
+        return 0.0
+    if k == 8:
+        tl = len(rows) - 1
+        while tl >= 0:
+            if colq.is_null(rows[tl]) == 0:
+                return colq.get_f64(rows[tl])
+            tl = tl - 1
+        return 0.0
+    mn = 0.0
+    mx = 0.0
+    sm = 0.0
+    c3 = 0
+    for t in range(len(rows)):
+        r = rows[t]
+        if colq.is_null(r) == 1:
+            continue
+        v = colq.get_f64(r)
+        if c3 == 0:
+            mn = v
+            mx = v
+        else:
+            if v < mn:
+                mn = v
+            if v > mx:
+                mx = v
+        sm = sm + v
+        c3 = c3 + 1
+    if k == 3:
+        return mn
+    if k == 4:
+        return mx
+    if k == 1:
+        return sm
+    if k == 2:
+        if c3 == 0:
+            return 0.0
+        return sm / float(c3)
+    if k == 9:
+        if c3 == 0:
+            return 0.0
+        vs = []
+        for t in range(len(rows)):
+            r = rows[t]
+            if colq.is_null(r) == 0:
+                vs.append(colq.get_f64(r))
+        order = _sx_num_order(vs)
+        half = len(vs) / 2
+        mid = int(half)
+        if len(vs) % 2 == 1:
+            om = order[mid]
+            return vs[om]
+        om1 = order[mid - 1]
+        om2 = order[mid]
+        a = vs[om1]
+        b = vs[om2]
+        return (a + b) / 2.0
+    if k == 6:
+        if c3 < 2:
+            return 0.0
+        mean = sm / float(c3)
+        acc = 0.0
+        for t in range(len(rows)):
+            r = rows[t]
+            if colq.is_null(r) == 1:
+                continue
+            d = colq.get_f64(r) - mean
+            acc = acc + d * d
+        return acc / float(c3 - 1)
+    raise ValueError("sql: unsupported aggregate " + func)
+
+
+# ------------------------------- Parser ---------------------------------------
+
+class _Sel:
+    items: "list[str]"
+    item_func: "list[str]"
+    item_arg: "list[str]"
+    aliases: "list[str]"
+    n_items: "i32"
+    star: "i32"
+    distinct: "i32"
+    table: "str"
+    join_tables: "list[str]"
+    join_types: "list[str]"
+    join_lkeys: "list[str]"
+    join_rkeys: "list[str]"
+    where: "str"
+    group: "list[str]"
+    having: "str"
+    order: "list[str]"
+    order_desc: "list[i32]"
+    limit: "i32"
+    offset: "i32"
+    has_limit: "i32"
+    err: "str"
+
+
+def _sx_is_stop_kw(low: "str") -> "i32":
+    if low == "from" or low == "where" or low == "group" or low == "order" or low == "having" or low == "limit" or low == "offset":
+        return 1
+    if low == "join" or low == "inner" or low == "left" or low == "right" or low == "on":
+        return 1
+    return 0
+
+
+def _sx_parse(sql: "str") -> "_Sel":
+    p = _Sel(0, 0, 0, "", "", "", 0, 0, 0, "")
+    p.items = []
+    p.item_func = []
+    p.item_arg = []
+    p.aliases = []
+    p.join_tables = []
+    p.join_types = []
+    p.join_lkeys = []
+    p.join_rkeys = []
+    p.group = []
+    p.order = []
+    p.order_desc = []
+    i = 0
+    n = len(sql)
+    tk = _sx_tok(sql, i)
+    if tk.kind != "id" or _sx_low(tk.tok) != "select":
+        raise ValueError("sql: expected SELECT")
+    i = tk.nxt
+    tk = _sx_tok(sql, i)
+    if tk.kind == "id" and _sx_low(tk.tok) == "distinct":
+        p.distinct = 1
+        i = tk.nxt
+    # select items
+    g = 0
+    while g < 10000:
+        g = g + 1
+        tk = _sx_tok(sql, i)
+        if tk.kind == "end":
+            raise ValueError("sql: unexpected end (missing FROM)")
+        i = tk.nxt
+        if tk.kind == "op" and tk.tok == "*":
+            p.star = 1
+            p.items.append("*")
+            p.item_func.append("")
+            p.item_arg.append("")
+            p.aliases.append("")
+            p.n_items = p.n_items + 1
+        elif tk.kind == "id":
+            fname = ""
+            arg = ""
+            tk2 = _sx_tok(sql, i)
+            if tk2.kind == "op" and tk2.tok == "(":
+                fname = tk.tok.upper()
+                tk3 = _sx_tok(sql, tk2.nxt)
+                if tk3.kind == "op" and tk3.tok == "*":
+                    arg = "*"
+                    tk4 = _sx_tok(sql, tk3.nxt)
+                    if tk4.kind != "op" or tk4.tok != ")":
+                        raise ValueError("sql: expected ) after COUNT(*")
+                    i = tk4.nxt
+                else:
+                    if tk3.kind != "id":
+                        raise ValueError("sql: bad aggregate argument in " + fname)
+                    arg = tk3.tok
+                    tk4 = _sx_tok(sql, tk3.nxt)
+                    if tk4.kind != "op" or tk4.tok != ")":
+                        raise ValueError("sql: expected ) after " + fname + " arg")
+                    i = tk4.nxt
+            p.items.append(tk.tok)
+            p.item_func.append(fname)
+            p.item_arg.append(arg)
+            p.aliases.append("")
+            p.n_items = p.n_items + 1
+            tk5 = _sx_tok(sql, i)
+            if tk5.kind == "id":
+                low5 = _sx_low(tk5.tok)
+                if low5 == "as":
+                    tk6 = _sx_tok(sql, tk5.nxt)
+                    if tk6.kind != "id":
+                        raise ValueError("sql: expected alias after AS")
+                    p.aliases[p.n_items - 1] = tk6.tok
+                    i = tk6.nxt
+                elif _sx_is_stop_kw(low5) == 0:
+                    p.aliases[p.n_items - 1] = tk5.tok
+                    i = tk5.nxt
+        elif tk.kind == "num" or tk.kind == "str":
+            p.items.append(tk.tok)
+            p.item_func.append("LIT")
+            p.item_arg.append(tk.kind)
+            p.aliases.append("")
+            p.n_items = p.n_items + 1
+            tk5 = _sx_tok(sql, i)
+            if tk5.kind == "id" and _sx_low(tk5.tok) == "as":
+                tk6 = _sx_tok(sql, tk5.nxt)
+                if tk6.kind == "id":
+                    last_idx2 = p.n_items - 1
+                    p.aliases[last_idx2] = tk6.tok
+                    i = tk6.nxt
+        else:
+            raise ValueError("sql: bad select item")
+        tkc = _sx_tok(sql, i)
+        if tkc.kind == "op" and tkc.tok == ",":
+            i = tkc.nxt
+            continue
+        break
+    # FROM
+    tk = _sx_tok(sql, i)
+    if tk.kind == "id" and _sx_low(tk.tok) == "from":
+        i = tk.nxt
+        tk = _sx_tok(sql, i)
+        if tk.kind != "id":
+            raise ValueError("sql: expected table name after FROM")
+        p.table = tk.tok
+        i = tk.nxt
+    # joins
+    g = 0
+    while g < 100:
+        g = g + 1
+        tk = _sx_tok(sql, i)
+        if tk.kind != "id":
+            break
+        low = _sx_low(tk.tok)
+        if low != "join" and low != "inner" and low != "left" and low != "right":
+            break
+        jtype = "inner"
+        if low == "left":
+            jtype = "left"
+        elif low == "right":
+            jtype = "right"
+        i = tk.nxt
+        tk = _sx_tok(sql, i)
+        if tk.kind == "id" and _sx_low(tk.tok) == "join":
+            i = tk.nxt
+            tk = _sx_tok(sql, i)
+        if tk.kind != "id":
+            raise ValueError("sql: expected table after JOIN")
+        tname = tk.tok
+        i = tk.nxt
+        tk = _sx_tok(sql, i)
+        if tk.kind != "id" or _sx_low(tk.tok) != "on":
+            raise ValueError("sql: expected ON in join")
+        i = tk.nxt
+        lk = _sx_read_key(sql, i)
+        i = int(lk[1])
+        tk = _sx_tok(sql, i)
+        if tk.kind != "op" or tk.tok != "=":
+            raise ValueError("sql: expected = in ON")
+        i = tk.nxt
+        rk = _sx_read_key(sql, i)
+        i = int(rk[1])
+        p.join_tables.append(tname)
+        p.join_types.append(jtype)
+        p.join_lkeys.append(lk[0])
+        p.join_rkeys.append(rk[0])
+    # WHERE / GROUP BY / HAVING / ORDER BY
+    i = _sx_capture(sql, i, p, "where")
+    i = _sx_capture(sql, i, p, "group")
+    i = _sx_capture(sql, i, p, "having")
+    i = _sx_capture(sql, i, p, "order")
+    # LIMIT / OFFSET
+    tk = _sx_tok(sql, i)
+    if tk.kind == "id" and _sx_low(tk.tok) == "limit":
+        tk2 = _sx_tok(sql, tk.nxt)
+        if tk2.kind != "num":
+            raise ValueError("sql: expected number after LIMIT")
+        p.limit = int(float(tk2.tok))
+        p.has_limit = 1
+        i = tk2.nxt
+        tk = _sx_tok(sql, i)
+    if tk.kind == "id" and _sx_low(tk.tok) == "offset":
+        tk2 = _sx_tok(sql, tk.nxt)
+        if tk2.kind == "num":
+            p.offset = int(float(tk2.tok))
+    return p
+
+
+def _sx_read_key(sql: "str", i: "i32") -> "list[str]":
+    tk = _sx_tok(sql, i)
+    if tk.kind != "id":
+        raise ValueError("sql: expected column in ON")
+    name = tk.tok
+    j = tk.nxt
+    tk2 = _sx_tok(sql, j)
+    if tk2.kind == "op" and tk2.tok == ".":
+        tk3 = _sx_tok(sql, tk2.nxt)
+        if tk3.kind == "id":
+            name = tk3.tok
+            j = tk3.nxt
+    out = []
+    out.append(name)
+    out.append(str(j))
+    return out
+
+
+def _sx_kw_at(sql: "str", i: "i32") -> "str":
+    tk = _sx_tok(sql, i)
+    if tk.kind == "id":
+        low = _sx_low(tk.tok)
+        if _sx_is_stop_kw(low) == 1:
+            return low
+    return ""
+
+
+def _sx_capture(sql: "str", i: "i32", p: "_Sel", which: "str") -> "i32":
+    tk = _sx_tok(sql, i)
+    if tk.kind != "id" or _sx_low(tk.tok) != which:
+        return i
+    i = tk.nxt
+    if which == "group" or which == "order":
+        tk = _sx_tok(sql, i)
+        if tk.kind != "id" or _sx_low(tk.tok) != "by":
+            raise ValueError("sql: expected BY after " + which)
+        i = tk.nxt
+    st = i
+    en = len(sql)
+    g = 0
+    while g < 100000:
+        g = g + 1
+        tk = _sx_tok(sql, i)
+        if tk.kind == "end":
+            break
+        if tk.nxt <= i:
+            break
+        kw = _sx_kw_at(sql, i)
+        if kw != "":
+            en = tk.st
+            break
+        i = tk.nxt
+    body = sql[st:en]
+    if which == "where":
+        p.where = body.strip()
+    elif which == "having":
+        p.having = body.strip()
+    elif which == "group":
+        p.group = _sx_split_commas(body)
+    elif which == "order":
+        _sx_parse_order(body, p)
+    return en
+
+
+def _sx_split_commas(body: "str") -> "list[str]":
+    parts = []
+    st = 0
+    i = 0
+    n = len(body)
+    while i < n:
+        tk = _sx_tok(body, i)
+        if tk.kind == "end":
+            break
+        if tk.nxt <= i:
+            break
+        i = tk.nxt
+        if tk.kind == "op" and tk.tok == ",":
+            seg = body[st:tk.st]
+            parts.append(seg.strip())
+            st = tk.nxt
+    if st < n:
+        tail = body[st:n]
+        parts.append(tail.strip())
+    return parts
+
+
+def _sx_parse_order(body: "str", p: "_Sel") -> "i32":
+    parts = _sx_split_commas(body)
+    for t in range(len(parts)):
+        term = parts[t]
+        tk = _sx_tok(term, 0)
+        if tk.kind != "id":
+            raise ValueError("sql: bad ORDER term '" + term + "'")
+        name = tk.tok
+        j = tk.nxt
+        tk2 = _sx_tok(term, j)
+        desc = 0
+        if tk2.kind == "id":
+            low = _sx_low(tk2.tok)
+            if low == "desc":
+                desc = 1
+            elif low == "asc":
+                desc = 0
+        p.order.append(name)
+        p.order_desc.append(desc)
+    return 0
+
+
+# ------------------------------- Join -----------------------------------------
+
+def _sx_rowkey(df: "DataFrame", cols: "list[str]", i: "i32") -> "str":
+    c0 = df.col_by_name(cols[0])
+    key = c0.get_string(i)
+    for k in range(1, len(cols)):
+        ck = df.col_by_name(cols[k])
+        key = key + "\x01" + ck.get_string(i)
+    return key
+
+
+def _sx_join(left: "DataFrame", right: "DataFrame", lkey: "str", rkey: "str", jtype: "str") -> "DataFrame":
+    nl = left.row_count()
+    nr = right.row_count()
+    rcol = right.col_by_name(rkey)
+    lcol = left.col_by_name(lkey)
+    # flat multi-map: key -> linked list index (rhead/rnext)
+    rrows = []
+    rhead = {}
+    rnext = []
+    for j in range(nr):
+        if rcol.is_null(j) == 1:
+            continue
+        kv = rcol.get_string(j)
+        g = rhead.get(kv, 0 - 1)
+        rnext.append(0 - 1)
+        idx = len(rrows)
+        rrows.append(j)
+        if g < 0:
+            rhead[kv] = idx
+        else:
+            rnext[g] = idx
+    lrows = []
+    lhead = {}
+    lnext = []
+    if jtype == "right":
+        for i in range(nl):
+            if lcol.is_null(i) == 1:
+                continue
+            kv = lcol.get_string(i)
+            g = lhead.get(kv, 0 - 1)
+            lnext.append(0 - 1)
+            idx = len(lrows)
+            lrows.append(i)
+            if g < 0:
+                lhead[kv] = idx
+            else:
+                lnext[g] = idx
+    # cap (li, rj); -1 = null
+    pairs_l = []
+    pairs_r = []
+    if jtype == "right":
+        for j in range(nr):
+            if rcol.is_null(j) == 1:
+                pairs_l.append(0 - 1)
+                pairs_r.append(j)
+                continue
+            kv = rcol.get_string(j)
+            g = lhead.get(kv, 0 - 1)
+            if g < 0:
+                pairs_l.append(0 - 1)
+                pairs_r.append(j)
+            else:
+                while g >= 0:
+                    li = lrows[g]
+                    pairs_l.append(li)
+                    pairs_r.append(j)
+                    g = lnext[g]
+    else:
+        for i in range(nl):
+            matched = 0
+            if lcol.is_null(i) == 0:
+                kv = lcol.get_string(i)
+                g = rhead.get(kv, 0 - 1)
+                while g >= 0:
+                    pairs_l.append(i)
+                    rj = rrows[g]
+                    pairs_r.append(rj)
+                    g = rnext[g]
+                    matched = 1
+            if matched == 0 and jtype == "left":
+                pairs_l.append(i)
+                pairs_r.append(0 - 1)
+    m = len(pairs_l)
+    out_cols = []
+    lnames = left.column_names()
+    rnames = right.column_names()
+    for c in range(len(lnames)):
+        nm = lnames[c]
+        col = left.col_at(c)
+        out_cols.append(_p_take_with_null(col, pairs_l, m))
+    for c in range(len(rnames)):
+        nm = rnames[c]
+        col = right.col_at(c)
+        if nm == rkey:
+            kvals = _sx_key_fill(left, lkey, right, rkey, pairs_l, pairs_r, m)
+            out_cols.append(kvals)
+            continue
+        picked = _p_take_with_null(col, pairs_r, m)
+        newn = nm
+        if left.has_col(nm) == 1:
+            newn = nm + "_y"
+        picked.name = newn
+        out_cols.append(picked)
+    return make_df(out_cols)
+
+
+def _sx_key_fill(left: "DataFrame", lkey: "str", right: "DataFrame", rkey: "str",
+                 pairs_l: "list[i32]", pairs_r: "list[i32]", m: "i32") -> "Series":
+    rc = right.col_by_name(rkey)
+    lc = left.col_by_name(lkey)
+    if rc.dtype == DT_STR:
+        vals_s = []
+        vm = make_mask(m, 0)
+        for i in range(m):
+            li = pairs_l[i]
+            if li >= 0:
+                vals_s.append(lc.get_string(li))
+                vm.set(i, lc.valid.get(li))
+            else:
+                vals_s.append(rc.get_string(pairs_r[i]))
+                vm.set(i, rc.valid.get(pairs_r[i]))
+        return make_series_str_with_mask(lkey, vals_s, vm)
+    if rc.dtype == DT_I64:
+        vals_i = []
+        vm = make_mask(m, 0)
+        for i in range(m):
+            li = pairs_l[i]
+            if li >= 0:
+                vals_i.append(lc.get_i64(li))
+                vm.set(i, lc.valid.get(li))
+            else:
+                vals_i.append(rc.get_i64(pairs_r[i]))
+                vm.set(i, rc.valid.get(pairs_r[i]))
+        return make_series_i64_with_mask(lkey, vals_i, vm)
+    vals_f = []
+    vm = make_mask(m, 0)
+    for i in range(m):
+        li = pairs_l[i]
+        if li >= 0:
+            vals_f.append(lc.get_f64(li))
+            vm.set(i, lc.valid.get(li))
+        else:
+            vals_f.append(rc.get_f64(pairs_r[i]))
+            vm.set(i, rc.valid.get(pairs_r[i]))
+    return make_series_f64_with_mask(lkey, vals_f, vm)
+
+
+# ---------------------------- Select items ------------------------------------
+
+def _sx_out_name(p: "_Sel", k: "i32") -> "str":
+    if p.aliases[k] != "":
+        return p.aliases[k]
+    it = p.items[k]
+    fn = p.item_func[k]
+    if fn == "LIT":
+        return "lit" + str(k)
+    if fn != "":
+        return p.item_arg[k].lower() + "_" + _sx_agg_suffix(fn)
+    return it
+
+
+def _sx_has_agg(p: "_Sel") -> "i32":
+    for k in range(p.n_items):
+        f = p.item_func[k]
+        if f != "" and f != "LIT":
+            return 1
+    return 0
+
+
+# ------------------------------- Executor -------------------------------------
+
+def _sx_take_df(df: "DataFrame", rows: "list[i32]") -> "DataFrame":
+    out_cols = []
+    for c in range(df.column_count()):
+        col = df.col_at(c)
+        out_cols.append(_p_take_with_null(col, rows, len(rows)))
+    return make_df(out_cols)
+
+
+def _sx_exec_plain(cur: "DataFrame", p: "_Sel", rows: "list[i32]") -> "DataFrame":
+    if p.star == 1:
+        return _sx_take_df(cur, rows)
+    m = len(rows)
+    out_cols = []
+    for k in range(p.n_items):
+        nm = _sx_out_name(p, k)
+        it = p.items[k]
+        fn = p.item_func[k]
+        if fn == "LIT":
+            if p.item_arg[k] == "str":
+                vs = []
+                vm = make_mask(m, 1)
+                for r in range(m):
+                    vs.append(it)
+                out_cols.append(make_series_str_with_mask(nm, vs, vm))
+            else:
+                vv = []
+                vm2 = make_mask(m, 1)
+                for r in range(m):
+                    vv.append(float(it))
+                out_cols.append(make_series_f64_with_mask(nm, vv, vm2))
+            continue
+        if cur.has_col(it) == 0:
+            raise ValueError("sql: unknown column '" + it + "'")
+        col = cur.col_by_name(it)
+        out_cols.append(_p_take_with_null(col, rows, m))
+    return make_df(out_cols)
+
+
+def _sx_exec_grouped(cur: "DataFrame", p: "_Sel", rows: "list[i32]") -> "DataFrame":
+    gcols = p.group
+    nrows = len(rows)
+    gmap = {}
+    row_group = []
+    gcount = 0
+    for t in range(nrows):
+        r = rows[t]
+        if len(gcols) > 0:
+            kv = _sx_rowkey(cur, gcols, r)
+        else:
+            kv = "*"
+        gid = gmap.get(kv, 0 - 1)
+        if gid < 0:
+            gmap[kv] = gcount
+            row_group.append(gcount)
+            gcount = gcount + 1
+        else:
+            row_group.append(gid)
+    ng_out = gcount
+    if ng_out == 0 and len(gcols) == 0:
+        ng_out = 1
+    # flat: start/size cua moi nhom + linked list row (ghead/gtail/gnext theo t)
+    gstart = []
+    gsize = []
+    ghead = []
+    gtail = []
+    gnext = []
+    for g in range(ng_out):
+        gstart.append(0 - 1)
+        gsize.append(0)
+        ghead.append(0 - 1)
+        gtail.append(0 - 1)
+    for t in range(nrows):
+        gid = row_group[t]
+        sz = gsize[gid]
+        gsize[gid] = sz + 1
+        gnext.append(0 - 1)
+        if ghead[gid] < 0:
+            ghead[gid] = t
+        else:
+            prevt = gtail[gid]
+            gnext[prevt] = t
+        gtail[gid] = t
+    for t in range(nrows):
+        gid = row_group[t]
+        if gstart[gid] < 0:
+            gstart[gid] = t
+    # cot key: gia tri tu row dau nhom
+    out_cols = []
+    for k in range(len(gcols)):
+        kc = cur.col_by_name(gcols[k])
+        dt = kc.dtype
+        if dt == DT_STR:
+            vals_s = []
+            for g in range(ng_out):
+                r0 = gstart[g]
+                rr = rows[r0]
+                vals_s.append(kc.get_string(rr))
+            out_cols.append(make_series_str(gcols[k], vals_s))
+        elif dt == DT_I64:
+            vals_i = []
+            for g in range(ng_out):
+                r0 = gstart[g]
+                rr = rows[r0]
+                vals_i.append(kc.get_i64(rr))
+            out_cols.append(make_series_i64(gcols[k], vals_i))
+        else:
+            vals_f = []
+            for g in range(ng_out):
+                r0 = gstart[g]
+                rr = rows[r0]
+                vals_f.append(kc.get_f64(rr))
+            out_cols.append(make_series_f64(gcols[k], vals_f))
+    for k in range(p.n_items):
+        fn = p.item_func[k]
+        nm = _sx_out_name(p, k)
+        if fn == "LIT":
+            vv = []
+            for g in range(ng_out):
+                if p.item_arg[k] == "str":
+                    vv.append(0.0)
+                else:
+                    vv.append(float(p.items[k]))
+            vm = make_mask(ng_out, 1)
+            out_cols.append(make_series_f64_with_mask(nm, vv, vm))
+            continue
+        if fn == "":
+            it = p.items[k]
+            found = 0
+            for g2 in range(len(gcols)):
+                gl = gcols[g2]
+                if gl.lower() == it.lower():
+                    found = 1
+            if found == 0:
+                raise ValueError("sql: column '" + it + "' must appear in GROUP BY or aggregate")
+            continue
+        arg = p.item_arg[k]
+        if arg == "*":
+            cnts = []
+            for g in range(ng_out):
+                cnts.append(float(gsize[g]))
+            out_cols.append(make_series_i64(nm, _sx_f2i(cnts)))
+            continue
+        if cur.has_col(arg) == 0:
+            raise ValueError("sql: unknown column '" + arg + "'")
+        vals2 = []
+        for g in range(ng_out):
+            grow = make_idx([])
+            t2 = ghead[g]
+            guard = 0
+            while t2 >= 0 and guard < 10000000:
+                guard = guard + 1
+                grow.append(rows[t2])
+                t2 = gnext[t2]
+            vals2.append(_sx_agg_val(cur, arg, grow, fn))
+        suffix = _sx_agg_suffix(fn)
+        if suffix == "count" or suffix == "nunique":
+            out_cols.append(make_series_i64(nm, _sx_f2i(vals2)))
+        else:
+            out_cols.append(make_series_f64(nm, vals2))
+    out = make_df(out_cols)
+    if p.having != "":
+        keep = []
+        nh = out.row_count()
+        for g in range(nh):
+            if _sx_eval(out, g, p.having) != 0.0:
+                keep.append(g)
+        out = _sx_take_df(out, keep)
+    return out
+
+
+def _sx_f2i(vals: "list[f64]") -> "list[i64]":
+    out = []
+    for i in range(len(vals)):
+        out.append(int(vals[i]))
+    return out
+
+
+def _sx_distinct(df: "DataFrame") -> "DataFrame":
+    n = df.row_count()
+    names = df.column_names()
+    seen = {}
+    pick = make_idx([])
+    for i in range(n):
+        kv = _sx_rowkey(df, names, i)
+        g = seen.get(kv, 0 - 1)
+        if g < 0:
+            seen[kv] = 1
+            pick.append(i)
+    return _sx_take_df(df, pick)
+
+
+def _sx_order(df: "DataFrame", p: "_Sel") -> "DataFrame":
+    names = df.column_names()
+    out_names = make_str_list()
+    for c in range(len(names)):
+        nmc = names[c]
+        out_names.append(nmc)
+    nk = len(p.order)
+    rank_cols = []
+    for k in range(nk):
+        nm = p.order[k]
+        if df.has_col(nm) == 0:
+            raise ValueError("sql: unknown column in ORDER BY '" + nm + "'")
+        col = df.col_by_name(nm)
+        desc = p.order_desc[k]
+        n = col.length()
+        if col.dtype == DT_STR:
+            vals = make_str_list()
+            for i in range(n):
+                if col.is_null(i) == 1:
+                    vals.append("!~N~!")
+                else:
+                    vals.append(col.get_string(i))
+            order = _sx_str_order(vals)
+            rank = {}
+            for t in range(n):
+                ot = order[t]
+                v = vals[ot]
+                if v == "!~N~!":
+                    continue
+                base = n - 1
+                rem = base - t
+                if desc == 1:
+                    rank[v] = float(rem)
+                else:
+                    rank[v] = float(t)
+            rk = make_f64_list()
+            for i in range(n):
+                if col.is_null(i) == 1:
+                    rk.append(float(n))
+                else:
+                    si = col.get_string(i)
+                    rk.append(rank.get(si, 0.0))
+            oname = "_sql_o" + str(k)
+            rank_cols.append(make_series_f64(oname, rk))
+        else:
+            rk = make_f64_list()
+            for i in range(n):
+                if col.is_null(i) == 1:
+                    rk.append(1000000000000.0)
+                else:
+                    vn = col.get_f64(i)
+                    if desc == 1:
+                        nv = 0.0 - vn
+                        rk.append(nv)
+                    else:
+                        rk.append(vn)
+            oname2 = "_sql_o" + str(k)
+            rank_cols.append(make_series_f64(oname2, rk))
+    all_cols = []
+    for c in range(df.column_count()):
+        all_cols.append(df.col_at(c))
+    for k in range(nk):
+        rc_k = rank_cols[k]
+        all_cols.append(rc_k)
+    ext = make_df(all_cols)
+    kk = nk - 1
+    while kk >= 0:
+        okey = "_sql_o" + str(kk)
+        ext = ext.sort_by(okey, 1)
+        kk = kk - 1
+    n2 = ext.row_count()
+    pick = make_idx([])
+    for r in range(n2):
+        pick.append(r)
+    out_cols = []
+    for c in range(len(out_names)):
+        onc = out_names[c]
+        col = ext.col_by_name(onc)
+        out_cols.append(_p_take_with_null(col, pick, n2))
+    return make_df(out_cols)
+
+
+def sql_query(df: "DataFrame", sql: "str") -> "DataFrame":
+    p = _sx_parse(sql)
+    rows = _sx_where_rows(df, p.where)
+    if _sx_has_agg(p) == 1 or len(p.group) > 0:
+        out = _sx_exec_grouped(df, p, rows)
+    else:
+        out = _sx_exec_plain(df, p, rows)
+    if p.distinct == 1:
+        out = _sx_distinct(out)
+    if len(p.order) > 0:
+        out = _sx_order(out, p)
+    n = out.row_count()
+    st = p.offset
+    en = n
+    if p.has_limit == 1:
+        en = st + p.limit
+        if en > n:
+            en = n
+    if st > 0 or en < n:
+        pick = make_idx([])
+        for r in range(st, en):
+            pick.append(r)
+        out = _sx_take_df(out, pick)
+    return out
+
+
+def sql_query2(df: "DataFrame", df2: "DataFrame", sql: "str") -> "DataFrame":
+    # nhu sql_query, ho tro JOIN df2 ON a.k = b.k2 (1 bang phu)
+    p = _sx_parse(sql)
+    cur = df
+    for j in range(len(p.join_tables)):
+        cur = _sx_join(cur, df2, p.join_lkeys[j], p.join_rkeys[j], p.join_types[j])
+    rows = _sx_where_rows(cur, p.where)
+    if _sx_has_agg(p) == 1 or len(p.group) > 0:
+        out = _sx_exec_grouped(cur, p, rows)
+    else:
+        out = _sx_exec_plain(cur, p, rows)
+    if p.distinct == 1:
+        out = _sx_distinct(out)
+    if len(p.order) > 0:
+        out = _sx_order(out, p)
+    n = out.row_count()
+    st = p.offset
+    en = n
+    if p.has_limit == 1:
+        en = st + p.limit
+        if en > n:
+            en = n
+    if st > 0 or en < n:
+        pick = make_idx([])
+        for r in range(st, en):
+            pick.append(r)
+        out = _sx_take_df(out, pick)
+    return out
+
+
+def sql_count(df: "DataFrame", sql: "str") -> "i32":
+    return sql_query(df, sql).row_count()
+
+
+# ==================== tokenvector_excel ====================
+
+# -*- coding: utf-8 -*-
+
+# =============================================================================
+# tokenvector_excel.tkv (v2.1) - Excel SpreadsheetML 2003 (XML thuan, text)
+#   Excel mo truc tiep file .xml nay (Worksheet -> Table -> Row -> Cell ->
+#   Data ss:Type). 2 chieu: ghi DataFrame -> XML, doc XML -> DataFrame.
+#   - excel_write_string(df, sheet) / excel_write_file(df, path, sheet)
+#   - excel_read_string(xml) / excel_read_file(path) (doc Table DAU TIEN,
+#     dong dau = header; o rong -> null; suy dtype i64/f64/bool/str)
+#   Gioi han (ghi ro): .xlsx that (ZIP+DEFLATE+binary) can binary write o
+#   compiler (blocked, xem tokenvector_parquet ledger); chi 1 sheet khi ghi;
+#   khi doc chi lay Table dau tien; nhieu sheet/style cong thuc bi bo qua.
+#   Ghi chu ky thuat: ham ngan (tranh __strtmp), bien loop ten rieng, moi
+#   nhanh dtype dung ten bien rieng (bai hoc v1.8/SQL-fix).
+# =============================================================================
+
+def _xl_escape(s: "str") -> "str":
+    out = ""
+    n = len(s)
+    for i in range(n):
+        ch = s[i]
+        if ch == "&":
+            out = out + "&amp;"
+        elif ch == "<":
+            out = out + "&lt;"
+        elif ch == ">":
+            out = out + "&gt;"
+        elif ch == "\"":
+            out = out + "&quot;"
+        elif ch == "'":
+            out = out + "&apos;"
+        else:
+            out = out + ch
+    return out
+
+
+def _xl_unescape(s: "str") -> "str":
+    # thu tu: thay thuc the dai truoc, &amp; CUOI CUNG (tranh giai ma kep)
+    r = s.replace("&lt;", "<")
+    r = r.replace("&gt;", ">")
+    r = r.replace("&quot;", "\"")
+    r = r.replace("&apos;", "'")
+    r = r.replace("&amp;", "&")
+    return r
+
+
+def _xl_num_cell(v: "str") -> "str":
+    return "<Cell><Data ss:Type=\"Number\">" + v + "</Data></Cell>"
+
+
+def _xl_str_cell(v: "str") -> "str":
+    return "<Cell><Data ss:Type=\"String\">" + _xl_escape(v) + "</Data></Cell>"
+
+
+def _xl_bool_cell(b: "i32") -> "str":
+    if b == 1:
+        return "<Cell><Data ss:Type=\"Boolean\">1</Data></Cell>"
+    return "<Cell><Data ss:Type=\"Boolean\">0</Data></Cell>"
+
+
+def _xl_header() -> "str":
+    return "<?xml version=\"1.0\"?>\n<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">\n"
+
+
+def _xl_sheet_open(sheet: "str") -> "str":
+    return "<Worksheet ss:Name=\"" + _xl_escape(sheet) + "\"><Table>\n"
+
+
+def _xl_sheet_close() -> "str":
+    return "</Table></Worksheet></Workbook>\n"
+
+
+def excel_write_string(df: "DataFrame", sheet: "str") -> "str":
+    nc = df.column_count()
+    nr = df.row_count()
+    names = df_column_names(df)
+    out = _xl_header()
+    out = out + _xl_sheet_open(sheet)
+    out = out + "<Row>"
+    for c in range(nc):
+        out = out + _xl_str_cell(names[c])
+    out = out + "</Row>\n"
+    for r in range(nr):
+        out = out + "<Row>"
+        for c in range(nc):
+            col = df.col_at(c)
+            if col.is_null(r) == 1:
+                out = out + "<Cell/>"
+                continue
+            dt = col.dtype
+            if dt == DT_STR:
+                out = out + _xl_str_cell(col.get_string(r))
+            elif dt == DT_BOOL:
+                out = out + _xl_bool_cell(col.get_bool(r))
+            elif dt == DT_I64:
+                out = out + _xl_num_cell(str(col.get_i64(r)))
+            elif dt == DT_F64:
+                out = out + _xl_num_cell(str(col.get_f64(r)))
+            elif dt_is_numeric(dt) == 1:
+                out = out + _xl_num_cell(str(col.get_f64(r)))
+            else:
+                out = out + _xl_str_cell(col.get_string(r))
+        out = out + "</Row>\n"
+    out = out + _xl_sheet_close()
+    return out
+
+
+def excel_write_file(df: "DataFrame", file_path: "str", sheet: "str") -> "i32":
+    write_file(file_path, excel_write_string(df, sheet))
+    return 0
+
+
+def _xl_is_intcell(s: "str") -> "i32":
+    t = s.strip()
+    n = len(t)
+    if n == 0:
+        return 0
+    st = 0
+    if t[0] == "-" or t[0] == "+":
+        st = 1
+    if st >= n:
+        return 0
+    for i in range(st, n):
+        ch = t[i]
+        if ch < "0" or ch > "9":
+            return 0
+    return 1
+
+
+def _xl_cell_type(cell_open: "str") -> "str":
+    # trich ss:Index tu the mo <Cell ...> ("" neu khong co) -> tra "idx|..."
+    p = cell_open.find("ss:Index=\"")
+    if p < 0:
+        return ""
+    q = p + 11
+    tail = cell_open[q:len(cell_open)]
+    e = tail.find("\"")
+    if e < 0:
+        return ""
+    return tail[0:e]
+
+
+def _xl_data_of(cell_inner: "str") -> "str":
+    # tra "type|value" ("|" neu Cell rong / khong co Data)
+    dd = cell_inner.find("<Data")
+    if dd < 0:
+        return "|"
+    de = cell_inner.find(">", dd)
+    if de < 0:
+        return "|"
+    dtag = cell_inner[dd:de]
+    tp = ""
+    pp = dtag.find("ss:Type=\"")
+    if pp >= 0:
+        qq = pp + 9
+        rest = dtag[qq:len(dtag)]
+        ee = rest.find("\"")
+        if ee >= 0:
+            tp = rest[0:ee]
+    dc = cell_inner.find("</Data>", de)
+    if dc < 0:
+        return tp + "|"
+    val = cell_inner[de + 1:dc]
+    return tp + "|" + _xl_unescape(val)
+
+
+def _xl_split_type(pair: "str") -> "str":
+    p = pair.find("|")
+    if p < 0:
+        return pair
+    return pair[0:p]
+
+
+def _xl_split_val(pair: "str") -> "str":
+    p = pair.find("|")
+    if p < 0:
+        return ""
+    return pair[p + 1:len(pair)]
+
+
+def excel_read_string(xml: "str") -> "DataFrame":
+    ts = xml.find("<Table")
+    if ts < 0:
+        return empty_df()
+    te = xml.find("</Table>", ts)
+    if te < 0:
+        return empty_df()
+    body = xml[ts:te]
+    grid = []
+    typs = []
+    n_cols = 0
+    pos = 0
+    more = 1
+    while more == 1:
+        rs = body.find("<Row", pos)
+        if rs < 0:
+            more = 0
+            continue
+        re_ = body.find("</Row>", rs)
+        if re_ < 0:
+            more = 0
+            continue
+        rowxml = body[rs:re_]
+        # trich cells trong row
+        cells = []
+        ctyps = []
+        cp = 0
+        cmore = 1
+        while cmore == 1:
+            cs = rowxml.find("<Cell", cp)
+            if cs < 0:
+                cmore = 0
+                continue
+            ge = rowxml.find(">", cs)
+            if ge < 0:
+                cmore = 0
+                continue
+            otag = rowxml[cs:ge]
+            selfclose = 0
+            if otag[len(otag) - 1] == "/":
+                selfclose = 1
+            if selfclose == 1:
+                idxs = _xl_cell_type(otag)
+                if idxs != "":
+                    want = int(idxs)
+                    while len(cells) + 1 < want:
+                        cells.append("")
+                        ctyps.append("")
+                cells.append("")
+                ctyps.append("")
+                cp = ge + 1
+                continue
+            ce = rowxml.find("</Cell>", ge)
+            if ce < 0:
+                cmore = 0
+                continue
+            inner = rowxml[ge + 1:ce]
+            idxs2 = _xl_cell_type(otag)
+            if idxs2 != "":
+                want2 = int(idxs2)
+                while len(cells) + 1 < want2:
+                    cells.append("")
+                    ctyps.append("")
+            pair = _xl_data_of(inner)
+            cells.append(_xl_split_val(pair))
+            ctyps.append(_xl_split_type(pair))
+            cp = ce + 7
+        if n_cols == 0:
+            n_cols = len(cells)
+        for k in range(len(cells)):
+            grid.append(cells[k])
+            typs.append(ctyps[k])
+        for k in range(len(cells), n_cols):
+            grid.append("")
+            typs.append("")
+        pos = re_ + 6
+    if n_cols == 0:
+        return empty_df()
+    n_rows_all = len(grid) / n_cols
+    n_all = int(n_rows_all)
+    if n_all < 1:
+        return empty_df()
+    # dong dau = header
+    names = []
+    for c in range(n_cols):
+        names.append(grid[c])
+    n_data = n_all - 1
+    if n_data <= 0:
+        rcols = []
+        for c in range(n_cols):
+            rcols.append(make_series_str(names[c], []))
+        return make_df(rcols)
+    # suy dtype moi cot
+    rcols = []
+    for c in range(n_cols):
+        is_bool = 1
+        is_num = 1
+        is_int = 1
+        seen = 0
+        for r in range(n_data):
+            vv = grid[(r + 1) * n_cols + c]
+            tt = typs[(r + 1) * n_cols + c]
+            if vv == "" and tt == "":
+                continue
+            seen = seen + 1
+            if tt == "Boolean":
+                is_num = 0
+                is_int = 0
+            elif tt == "Number":
+                is_bool = 0
+                if _xl_is_intcell(vv) == 0:
+                    is_int = 0
+            else:
+                is_bool = 0
+                is_num = 0
+                is_int = 0
+        cnm = names[c]
+        if seen == 0:
+            rcols.append(make_series_str(cnm, []))
+            continue
+        if is_bool == 1:
+            bvals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    bvals.append(0)
+                    vm.set(r, 0)
+                elif vv == "1" or vv.lower() == "true":
+                    bvals.append(1)
+                else:
+                    bvals.append(0)
+            rcols.append(make_series(cnm, make_col_bool_with_mask(bvals, vm)))
+        elif is_num == 1 and is_int == 1:
+            ivals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    ivals.append(0)
+                    vm.set(r, 0)
+                else:
+                    ivals.append(int(vv))
+            rcols.append(make_series(cnm, make_col_i64_with_mask(ivals, vm)))
+        elif is_num == 1:
+            fvals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    fvals.append(0.0)
+                    vm.set(r, 0)
+                else:
+                    fvals.append(float(vv))
+            rcols.append(make_series(cnm, make_col_f64_with_mask(fvals, vm)))
+        else:
+            svals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    svals.append("")
+                    vm.set(r, 0)
+                else:
+                    svals.append(vv)
+            rcols.append(make_series_str_with_mask(cnm, svals, vm))
+    return make_df(rcols)
+
+
+def excel_read_file(file_path: "str") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    return excel_read_string(read_file(file_path))
+
+
+# ==================== tokenvector_parquet ====================
+
+# -*- coding: utf-8 -*-
+
+# =============================================================================
+# tokenvector_parquet.tkv (v2.1) - LEDGER TRUNG THUC: Parquet that CHUA lam duoc
+#   o tang thu vien .tkv. Moi API doc/ghi deu raise ValueError giai thich ro
+#   (fail-fast, khong tao file hong nua voi).
+#
+#   Tai sao blocked-by-compiler (da ghi ledger SESSION_HANDOFF):
+#   1. Parquet = Thrift binary compact + page du lieu nen f64/int chua MOI
+#      byte 0-255; open(path,"w")/write_file e UTF-8 -> byte >= 0x80 bi
+#      bien dang -> file hong khong doc lai duoc.
+#   2. Can binary write o compiler (byte buffer + open(path,"wb")) + bitwise
+#      ops (R5) cho varint/bit-packing + CRC. Ca 3 deu chua co.
+#   3. .xlsx that (ZIP+DEFLATE) bi chan boi cung ly do (xem tokenvector_excel:
+#      cau noi that hien tai la SpreadsheetML 2003 XML thuan).
+#
+#   Loi di thay the DUNG NGAY DUOC: csv_write_file / json_array_write_file /
+#   arrow_write_file (ARROW1 noi bo) / excel_write_file (SpreadsheetML, Excel
+#   mo truc tiep). Khi compiler co binary write, implement that theo dung
+#   API duoi day (chu ky da chot, khong doi).
+# =============================================================================
+
+def parquet_blocked_reason() -> "str":
+    return "parquet blocked-by-compiler: needs binary write (open wb) + bitwise ops (R5); use csv/arrow/excel instead"
+
+
+def parquet_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_read_file(file_path: "str") -> "DataFrame":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_write_string(df: "DataFrame") -> "str":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_read_string(data: "str") -> "DataFrame":
+    raise ValueError(parquet_blocked_reason())
 
 
 def run() -> "i32":

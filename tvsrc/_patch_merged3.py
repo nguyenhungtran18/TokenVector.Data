@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Splice idempotent: them tokenvector_p100 vao 2 file merged
-(tokenvector_data_all.tkv va _libbuild.tkv). Cac module v1.7/v1.8 (pandas,
-read_json, dtype) DA CO trong merged tu commit 5a59f96 - khong dong vao.
+"""Splice idempotent v2.1: them tokenvector_sql + tokenvector_excel +
+tokenvector_parquet vao 2 file merged (tokenvector_data_all.tkv, _libbuild.tkv).
 
-- all: module don le noi bang header '# -*- coding: utf-8 -*-' -> chen truoc
-  header io (marker '# tokenvector_io.tkv'); banner rieng de idempotent.
-- lib: marker '# ==================== tokenvector_p100 ===================='
-  chen truoc 'def run' cuoi cung.
+Quy uoc nhu _patch_merged2.py:
+- all: chen khoi (banner + body, bo __tkv_import__) truoc header io
+  (marker '# tokenvector_io.tkv'). Idempotent theo needle `def <fn>(` dau tien.
+- lib: chen khoi (marker '# ==== NAME ====' + body, bo __tkv_import__)
+  truoc 'def run' CUOI file. Idempotent theo marker.
 """
 import io
 import os
@@ -29,13 +29,6 @@ def strip_blanks(lines):
     return out
 
 
-def find_marker(lines, prefix):
-    for idx, l in enumerate(lines):
-        if l.startswith(prefix):
-            return idx
-    return None
-
-
 def contains(lines, needle):
     for l in lines:
         if needle in l:
@@ -43,37 +36,56 @@ def contains(lines, needle):
     return False
 
 
-BANNER = '# Module pandas 100% closure (v1.9)'
-SRC = 'tvsrc/tokenvector_p100.tkv'
+MODS = [
+    ('tvsrc/tokenvector_sql.tkv', 'tokenvector_sql', 'def sql_query('),
+    ('tvsrc/tokenvector_excel.tkv', 'tokenvector_excel', 'def excel_write_string('),
+    ('tvsrc/tokenvector_parquet.tkv', 'tokenvector_parquet', 'def parquet_blocked_reason('),
+]
 
 # ---------------------------------------------------------------- all
 p_all = 'tvsrc/tokenvector_data_all.tkv'
 all_lines = read(p_all)
-if contains(all_lines, BANNER):
-    print('skip (da co trong all)')
-else:
-    i = find_marker(all_lines, '# tokenvector_io.tkv')
+changed_all = False
+for path, name, needle in MODS:
+    if contains(all_lines, needle):
+        print('skip (da co trong all):', name)
+        continue
+    i = None
+    for idx, l in enumerate(all_lines):
+        if l.startswith('# tokenvector_io.tkv'):
+            i = idx
+            break
     assert i is not None, 'io header not found in all'
-    body = strip_blanks(read(SRC))
+    body = strip_blanks(read(path))
     body = [l for l in body if not l.startswith('__tkv_import__')]
-    block = [BANNER, '# -*- coding: utf-8 -*-', '\n'] + body + ['\n', '\n']
+    banner = '# ==================== %s ====================\n' % name
+    block = [banner, '\n'] + body + ['\n', '\n']
     pre = []
     k = i - 1
     while k >= 0 and all_lines[k].strip() == '':
         pre.append('\n')
         k -= 1
     all_lines = all_lines[:k + 1] + block + pre + all_lines[i:]
+    changed_all = True
+    print('spliced vao all:', name)
+if changed_all:
     write(p_all, all_lines)
-    print('spliced vao all')
 
 # ---------------------------------------------------------------- lib
 p_lib = 'tvsrc/_libbuild.tkv'
 lib_lines = read(p_lib)
-marker_full = '# ==================== tokenvector_p100 ====================\n'
-if find_marker(lib_lines, marker_full) is not None:
-    print('skip (da co trong lib)')
-else:
-    body = strip_blanks(read(SRC))
+changed_lib = False
+for path, name, needle in MODS:
+    marker_full = '# ==================== %s ====================\n' % name
+    found = False
+    for l in lib_lines:
+        if l.startswith(marker_full.strip()):
+            found = True
+            break
+    if found:
+        print('skip (da co trong lib):', name)
+        continue
+    body = strip_blanks(read(path))
     body = [l for l in body if not l.startswith('__tkv_import__')]
     block = ['', marker_full, '\n'] + body + ['\n', '\n']
     k = None
@@ -82,7 +94,9 @@ else:
             k = idx
     assert k is not None, 'def run not found in lib'
     lib_lines = lib_lines[:k] + block + lib_lines[k:]
+    changed_lib = True
+    print('spliced vao lib:', name)
+if changed_lib:
     write(p_lib, lib_lines)
-    print('spliced vao lib')
 
-print('p100 splice ok (idempotent)')
+print('merged3 splice ok (idempotent)')
