@@ -1,4 +1,4 @@
-# TokenVector.Data Architecture Summary (v1.0.8-dev / library v2.2)
+# TokenVector.Data Architecture Summary (v1.0.9 / library v2.2)
 
 `TokenVector.Data` is a columnar DataFrame and tabular data library **natively
 implemented in the TokenVector language** (`tvsrc/*.tkv`, 18 modules) and

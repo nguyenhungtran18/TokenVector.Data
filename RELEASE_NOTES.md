@@ -2,6 +2,17 @@
 
 [ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
+## Version 1.0.9 (2026-09-24) - First stable of the pure-tkv line
+
+Graduates the 1.0.4-1.0.8-dev series: SQL SELECT engine on DataFrames
+(pandas-verified, `sql_check` 43/43), Excel SpreadsheetML IO (`excel_check`
+33/33), Parquet honest ledger, parallel CSV (~1.1-1.8x). 21/21 suites green
+on DIST tkvc; DLL smoke 54/54 symbols + functional C# calls. Dead C# era
+removed (dist/src/tests/TestResults/TEST_REPORT/sln, ~3.3k lines); READMEs
+rewritten for readers. No compiler change.
+
+---
+
 ## Version 1.0.8-dev (2026-09-23) - SQL engine + Excel SpreadsheetML + Parquet ledger (tvsrc v2.1)
 
 **Internal tvsrc library version v2.1** (compiler tkvc unchanged; DIST tkvc builds all green).

@@ -21,7 +21,7 @@ nó trực tiếp như mọi thư viện khác.
 CSV / JSON / Excel  →   DataFrame  →  lọc · gom nhóm · nối · SQL  →  kết quả
 ```
 
-Bản hiện tại: **1.0.8-dev**. Trạng thái: 21/21 suite test xanh.
+Bản hiện tại: **1.0.9**. Trạng thái: 21/21 suite test xanh.
 
 ---
 
@@ -220,7 +220,7 @@ python tvsrc/_patch_merged3.py       # splice module mới (idempotent)
 tkvc.exe build --entry run tvsrc/tokenvector_data_all.tkv   # -> .il
 python tvsrc/_mk_dll.py              # -> TokenVector.Data.dll
 csc.exe tvsrc/smoke.cs && smoke.exe  # -> SMOKE OK (54 symbol)
-python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.8-dev.nupkg
+python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.9.nupkg
 ```
 
 Hoặc khỏi build: dùng `tvsrc/TokenVector.Data.dll` (~300 KB) và nupkg trong

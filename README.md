@@ -20,7 +20,7 @@ them, join them, ask SQL questions, read/write CSV/JSON/Excel. If you use
 CSV / JSON / Excel  →   DataFrame  →  filter · group · join · SQL  →  result
 ```
 
-Current release: **1.0.8-dev**. Status: 21/21 test suites green.
+Current release: **1.0.9**. Status: 21/21 test suites green.
 
 ---
 
@@ -223,7 +223,7 @@ python tvsrc/_patch_merged3.py       # splice in new modules (idempotent)
 tkvc.exe build --entry run tvsrc/tokenvector_data_all.tkv   # -> .il
 python tvsrc/_mk_dll.py              # -> TokenVector.Data.dll
 csc.exe tvsrc/smoke.cs && smoke.exe  # -> SMOKE OK (54 symbols)
-python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.8-dev.nupkg
+python tvsrc/_pack108.py             # -> packages/TokenVector.Data.1.0.9.nupkg
 ```
 
 Or skip the build: use `tvsrc/TokenVector.Data.dll` (~300 KB) and the

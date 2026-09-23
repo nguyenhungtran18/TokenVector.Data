@@ -2,6 +2,16 @@
 
 [ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
+## ⚡ Phiên Bản 1.0.9 (24/09/2026) - Stable đầu tiên của dòng thuần-tkv
+
+Tốt nghiệp chuỗi 1.0.4–1.0.8-dev: SQL SELECT trên DataFrame (đối chiếu pandas,
+`sql_check` 43/43), Excel SpreadsheetML (`excel_check` 33/33), Parquet ledger
+trung thực, CSV song song (~1.1–1.8x). 21/21 suite xanh trên DIST tkvc; smoke
+DLL 54/54 symbol + gọi thật từ C#. Gỡ thời C# cũ (dist/src/tests/TestResults/
+TEST_REPORT/sln, ~3.3k dòng); viết lại README. Không đổi compiler.
+
+---
+
 ## ⚡ Phiên Bản 1.0.8-dev (23/09/2026) - SQL engine + Excel SpreadsheetML + Parquet ledger (tvsrc v2.1)
 
 **Thư viện tvsrc v2.1** (compiler tkvc không đổi; DIST tkvc build xanh toàn bộ).

@@ -8,6 +8,12 @@ verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b20
 
 ---
 
+## 0h. 2026-09-24 — promote 1.0.9 stable (XONG)
+
+Tot nghiep chuoi `-dev`: nuspec 1.0.9 + releaseNotes moi, entry RELEASE_NOTES (EN+VI), README (EN+VI) + llms.txt doi version, nupkg `TokenVector.Data.1.0.9.nupkg` moi (giu 1.0.8-dev lam lich su). Khong doi code.
+
+---
+
 ## 0g. PHIÊN 2026-09-24 — v2.2 CSV nhanh tầng thư viện (XONG ✅, ~1.1–1.8x)
 
 Yêu cầu: "làm luôn" tăng tốc CSV ở tầng thư viện (sau so sánh đối thủ:

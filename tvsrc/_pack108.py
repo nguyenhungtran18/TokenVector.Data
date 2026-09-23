@@ -30,7 +30,7 @@ psmdcp = ('<?xml version="1.0" encoding="utf-8"?>\r\n'
           '  <dc:creator>TokenVector Project Team</dc:creator>\r\n'
           '  <dc:description>' + desc + '</dc:description>\r\n'
           '  <dc:identifier>TokenVector.Data</dc:identifier>\r\n'
-          '  <version>1.0.8-dev</version>\r\n'
+          '  <version>1.0.9</version>\r\n'
           '  <keywords>dataframe columnar arrow feather csv json timeseries asofjoin tokenvector data</keywords>\r\n'
           '  <lastModifiedBy>NuGet, Version=7.9.0.83, Culture=neutral, PublicKeyToken=31bf3856ad364e35;'
           'Microsoft Windows NT 10.0.19045.0;.NET Framework 4.7.2</lastModifiedBy>\r\n'
@@ -52,7 +52,7 @@ w('TokenVector.Data.nuspec', nuspec)
 shutil.copyfile('tvsrc/TokenVector.Data.dll',
                 os.path.join(STAGE, 'lib', 'net8.0', 'TokenVector.Data.dll'))
 
-out = 'packages/TokenVector.Data.1.0.8-dev.nupkg'
+out = 'packages/TokenVector.Data.1.0.9.nupkg'
 if os.path.exists(out):
     os.remove(out)
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
