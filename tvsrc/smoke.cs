@@ -49,7 +49,17 @@ class Smoke
             else Console.WriteLine("MISSING19: " + fn);
         }
         Console.WriteLine("v19Fns=" + ok19 + "/" + v19Fns.Length);
-        if (okNew != newFns.Length || ok18 != v18Fns.Length || ok19 != v19Fns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
+        // v2.1: SQL engine + Excel SpreadsheetML + Parquet ledger
+        string[] v21Fns = new string[] { "sql_query", "sql_query2", "sql_count", "excel_write_string", "excel_write_file", "excel_read_string", "excel_read_file", "parquet_blocked_reason", "parquet_write_file", "parquet_read_file" };
+        int ok21 = 0;
+        foreach (var fn in v21Fns)
+        {
+            bool have = t.GetMethod(fn) != null;
+            if (have) ok21++;
+            else Console.WriteLine("MISSING21: " + fn);
+        }
+        Console.WriteLine("v21Fns=" + ok21 + "/" + v21Fns.Length);
+        if (okNew != newFns.Length || ok18 != v18Fns.Length || ok19 != v19Fns.Length || ok21 != v21Fns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
         Console.WriteLine("SMOKE OK");
         return 0;
     }

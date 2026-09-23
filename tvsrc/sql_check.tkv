@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_sql"]
+
+fails: "i32" = 0
+
+def chk(cond: "i32", label: "str") -> "i32":
+    global fails
+    if cond == 1:
+        print("PASS", label)
+    else:
+        print("FAIL", label)
+        fails = fails + 1
+    return 0
+
+
+def _mk() -> "DataFrame":
+    ids = make_series_i64("id", [1, 2, 3, 4, 5, 6])
+    cats = make_series_str("cat", ["a", "b", "a", "c", "b", "a"])
+    vals = make_series_f64("v", [10.0, 20.0, 30.0, 40.0, 50.0, 60.0])
+    return make_df([ids, cats, vals])
+
+
+def _mk2() -> "DataFrame":
+    k2 = make_series_str("cat", ["a", "b", "c"])
+    lab = make_series_str("label", ["alpha", "beta", "gamma"])
+    w2 = make_series_f64("w", [1.5, 2.5, 3.5])
+    return make_df([k2, lab, w2])
+
+
+def main() -> "i32":
+    global fails
+    df = _mk()
+    # S1: star + where numeric
+    r1 = sql_query(df, "SELECT * FROM df WHERE v > 25")
+    chk(r1.row_count() == 4, "s1 where numeric")
+    # S2: cols + where str
+    r2 = sql_query(df, "SELECT id, v FROM df WHERE cat = 'b'")
+    chk(r2.row_count() == 2, "s2 where str rows")
+    chk(r2.col_by_name("v").get_f64(0) == 20.0, "s2 where str val")
+    chk(r2.col_by_name("v").get_f64(1) == 50.0, "s2 where str val2")
+    # S3: group + sum/count/avg
+    r3 = sql_query(df, "SELECT cat, SUM(v) AS total, COUNT(*) AS n, AVG(v) AS mean FROM df GROUP BY cat")
+    chk(r3.row_count() == 3, "s3 groups")
+    ta = sql_query(r3, "SELECT total, n, mean FROM r3 WHERE cat = 'a'")
+    chk(ta.col_by_name("total").get_f64(0) == 100.0, "s3 sum a")
+    chk(ta.col_by_name("n").get_i64(0) == 3, "s3 count a")
+    chk(ta.col_by_name("mean").get_f64(0) > 33.33, "s3 mean a lo")
+    chk(ta.col_by_name("mean").get_f64(0) < 33.34, "s3 mean a hi")
+    tb = sql_query(r3, "SELECT total FROM r3 WHERE cat = 'b'")
+    chk(tb.col_by_name("total").get_f64(0) == 70.0, "s3 sum b")
+    # S4: having + order desc + limit
+    r4 = sql_query(df, "SELECT cat, SUM(v) AS total FROM df GROUP BY cat HAVING total > 60 ORDER BY total DESC LIMIT 2")
+    chk(r4.row_count() == 2, "s4 limit rows")
+    chk(r4.col_by_name("cat").get_string(0) == "a", "s4 order first")
+    chk(r4.col_by_name("total").get_f64(0) == 100.0, "s4 order val")
+    chk(r4.col_by_name("cat").get_string(1) == "b", "s4 order second")
+    # S5: in + and/or + parens (str + numeric IN)
+    r5 = sql_query(df, "SELECT id FROM df WHERE (cat IN ('a','c') AND v >= 30) OR id = 1")
+    chk(r5.row_count() == 4, "s5 in/parens/or")
+    r5b = sql_query(df, "SELECT id FROM df WHERE id IN (2,4,6)")
+    chk(r5b.row_count() == 3, "s5b numeric in")
+    # S6: like (+ like trong OR)
+    r6 = sql_query(df, "SELECT id FROM df WHERE cat LIKE 'a%'")
+    chk(r6.row_count() == 3, "s6 like")
+    r6b = sql_query(df, "SELECT id FROM df WHERE cat LIKE 'b%' OR cat LIKE 'c%'")
+    chk(r6b.row_count() == 3, "s6b like or")
+    # S7: distinct
+    r7 = sql_query(df, "SELECT DISTINCT cat FROM df")
+    chk(r7.row_count() == 3, "s7 distinct")
+    # S8: join (same-name key + dotted) + left null
+    df2 = _mk2()
+    r8 = sql_query2(df, df2, "SELECT id, cat, label, w FROM df JOIN df2 ON cat = cat WHERE w > 2")
+    chk(r8.row_count() == 3, "s8 join rows")
+    chk(r8.col_by_name("label").get_string(0) == "beta", "s8 join val")
+    r8d = sql_query2(df, df2, "SELECT id FROM df JOIN df2 ON df.cat = df2.cat")
+    chk(r8d.row_count() == 6, "s8d dotted keys")
+    r8l = sql_query2(df, df2, "SELECT id, label FROM df LEFT JOIN df2 ON cat = cat WHERE id = 6")
+    chk(r8l.row_count() == 1, "s8l left rows")
+    chk(r8l.col_by_name("label").is_null(0) == 0, "s8l left match notnull")
+    kl = make_series_str("k", ["x", "y"])
+    vl = make_series_i64("v", [1, 2])
+    dl = make_df([kl, vl])
+    kr = make_series_str("k", ["y"])
+    wr = make_series_str("w", ["Y!"])
+    dr = make_df([kr, wr])
+    rl = sql_query2(dl, dr, "SELECT k, v, w FROM dl LEFT JOIN dr ON k = k")
+    chk(rl.row_count() == 2, "s8m left keeps all")
+    rx = sql_query(rl, "SELECT w FROM rl WHERE k = 'x'")
+    chk(rx.col_by_name("w").is_null(0) == 1, "s8m left null")
+    # S9: order asc/str + offset + count(*)
+    r9 = sql_query(df, "SELECT id, v FROM df ORDER BY v ASC")
+    chk(r9.col_by_name("v").get_f64(0) == 10.0, "s9 asc first")
+    chk(r9.col_by_name("v").get_f64(5) == 60.0, "s9 asc last")
+    r9b = sql_query(df, "SELECT cat FROM df ORDER BY cat ASC LIMIT 1 OFFSET 1")
+    chk(r9b.col_by_name("cat").get_string(0) == "a", "s9b str order offset")
+    r9c = sql_query(df, "SELECT COUNT(*) AS n FROM df WHERE v > 100")
+    chk(r9c.col_by_name("n").get_i64(0) == 0, "s9c count zero")
+    r9d = sql_query(df, "SELECT cat FROM df ORDER BY cat DESC LIMIT 1")
+    chk(r9d.col_by_name("cat").get_string(0) == "c", "s9d str desc")
+    r6c = sql_query(df, "SELECT id FROM df WHERE (cat LIKE 'a%' OR cat LIKE 'b%') AND v > 15")
+    chk(r6c.row_count() == 4, "s6c like parens")
+    r5c = sql_query(df, "SELECT id FROM df WHERE id <> 2 AND id % 2 = 0")
+    chk(r5c.row_count() == 2, "s5c neq + modulo")
+    r5d = sql_query(df, "SELECT id FROM df WHERE v / 10 + id * 2 - 1 > 12")
+    chk(r5d.row_count() == 2, "s5d arith expr")
+    r5e = sql_query(df, "SELECT id FROM df WHERE NOT cat = 'a'")
+    chk(r5e.row_count() == 3, "s5e not")
+    r6d = sql_query(df, "SELECT id FROM df WHERE cat LIKE '_'")
+    chk(r6d.row_count() == 6, "s6d underscore")
+    # S10: min/max/first/last/median/nunique
+    r10 = sql_query(df, "SELECT cat, MIN(v) AS mn, MAX(v) AS mx, FIRST(v) AS fs, LAST(v) AS ls, MEDIAN(v) AS md, NUNIQUE(v) AS uq FROM df GROUP BY cat")
+    ra = sql_query(r10, "SELECT mn, mx, fs, ls, md, uq FROM r10 WHERE cat = 'a'")
+    chk(ra.col_by_name("mn").get_f64(0) == 10.0, "s10 min a")
+    chk(ra.col_by_name("mx").get_f64(0) == 60.0, "s10 max a")
+    chk(ra.col_by_name("fs").get_f64(0) == 10.0, "s10 first a")
+    chk(ra.col_by_name("ls").get_f64(0) == 60.0, "s10 last a")
+    chk(ra.col_by_name("md").get_f64(0) == 30.0, "s10 median a")
+    chk(ra.col_by_name("uq").get_i64(0) == 3, "s10 nunique a")
+    rb = sql_query(r10, "SELECT md FROM r10 WHERE cat = 'b'")
+    chk(rb.col_by_name("md").get_f64(0) == 35.0, "s10 median even b")
+    print("FAILS=", fails)
+    return 0

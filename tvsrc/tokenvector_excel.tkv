@@ -1,0 +1,358 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data"]
+
+# =============================================================================
+# tokenvector_excel.tkv (v2.1) - Excel SpreadsheetML 2003 (XML thuan, text)
+#   Excel mo truc tiep file .xml nay (Worksheet -> Table -> Row -> Cell ->
+#   Data ss:Type). 2 chieu: ghi DataFrame -> XML, doc XML -> DataFrame.
+#   - excel_write_string(df, sheet) / excel_write_file(df, path, sheet)
+#   - excel_read_string(xml) / excel_read_file(path) (doc Table DAU TIEN,
+#     dong dau = header; o rong -> null; suy dtype i64/f64/bool/str)
+#   Gioi han (ghi ro): .xlsx that (ZIP+DEFLATE+binary) can binary write o
+#   compiler (blocked, xem tokenvector_parquet ledger); chi 1 sheet khi ghi;
+#   khi doc chi lay Table dau tien; nhieu sheet/style cong thuc bi bo qua.
+#   Ghi chu ky thuat: ham ngan (tranh __strtmp), bien loop ten rieng, moi
+#   nhanh dtype dung ten bien rieng (bai hoc v1.8/SQL-fix).
+# =============================================================================
+
+def _xl_escape(s: "str") -> "str":
+    out = ""
+    n = len(s)
+    for i in range(n):
+        ch = s[i]
+        if ch == "&":
+            out = out + "&amp;"
+        elif ch == "<":
+            out = out + "&lt;"
+        elif ch == ">":
+            out = out + "&gt;"
+        elif ch == "\"":
+            out = out + "&quot;"
+        elif ch == "'":
+            out = out + "&apos;"
+        else:
+            out = out + ch
+    return out
+
+
+def _xl_unescape(s: "str") -> "str":
+    # thu tu: thay thuc the dai truoc, &amp; CUOI CUNG (tranh giai ma kep)
+    r = s.replace("&lt;", "<")
+    r = r.replace("&gt;", ">")
+    r = r.replace("&quot;", "\"")
+    r = r.replace("&apos;", "'")
+    r = r.replace("&amp;", "&")
+    return r
+
+
+def _xl_num_cell(v: "str") -> "str":
+    return "<Cell><Data ss:Type=\"Number\">" + v + "</Data></Cell>"
+
+
+def _xl_str_cell(v: "str") -> "str":
+    return "<Cell><Data ss:Type=\"String\">" + _xl_escape(v) + "</Data></Cell>"
+
+
+def _xl_bool_cell(b: "i32") -> "str":
+    if b == 1:
+        return "<Cell><Data ss:Type=\"Boolean\">1</Data></Cell>"
+    return "<Cell><Data ss:Type=\"Boolean\">0</Data></Cell>"
+
+
+def _xl_header() -> "str":
+    return "<?xml version=\"1.0\"?>\n<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">\n"
+
+
+def _xl_sheet_open(sheet: "str") -> "str":
+    return "<Worksheet ss:Name=\"" + _xl_escape(sheet) + "\"><Table>\n"
+
+
+def _xl_sheet_close() -> "str":
+    return "</Table></Worksheet></Workbook>\n"
+
+
+def excel_write_string(df: "DataFrame", sheet: "str") -> "str":
+    nc = df.column_count()
+    nr = df.row_count()
+    names = df_column_names(df)
+    out = _xl_header()
+    out = out + _xl_sheet_open(sheet)
+    out = out + "<Row>"
+    for c in range(nc):
+        out = out + _xl_str_cell(names[c])
+    out = out + "</Row>\n"
+    for r in range(nr):
+        out = out + "<Row>"
+        for c in range(nc):
+            col = df.col_at(c)
+            if col.is_null(r) == 1:
+                out = out + "<Cell/>"
+                continue
+            dt = col.dtype
+            if dt == DT_STR:
+                out = out + _xl_str_cell(col.get_string(r))
+            elif dt == DT_BOOL:
+                out = out + _xl_bool_cell(col.get_bool(r))
+            elif dt == DT_I64:
+                out = out + _xl_num_cell(str(col.get_i64(r)))
+            elif dt == DT_F64:
+                out = out + _xl_num_cell(str(col.get_f64(r)))
+            elif dt_is_numeric(dt) == 1:
+                out = out + _xl_num_cell(str(col.get_f64(r)))
+            else:
+                out = out + _xl_str_cell(col.get_string(r))
+        out = out + "</Row>\n"
+    out = out + _xl_sheet_close()
+    return out
+
+
+def excel_write_file(df: "DataFrame", file_path: "str", sheet: "str") -> "i32":
+    write_file(file_path, excel_write_string(df, sheet))
+    return 0
+
+
+def _xl_is_intcell(s: "str") -> "i32":
+    t = s.strip()
+    n = len(t)
+    if n == 0:
+        return 0
+    st = 0
+    if t[0] == "-" or t[0] == "+":
+        st = 1
+    if st >= n:
+        return 0
+    for i in range(st, n):
+        ch = t[i]
+        if ch < "0" or ch > "9":
+            return 0
+    return 1
+
+
+def _xl_cell_type(cell_open: "str") -> "str":
+    # trich ss:Index tu the mo <Cell ...> ("" neu khong co) -> tra "idx|..."
+    p = cell_open.find("ss:Index=\"")
+    if p < 0:
+        return ""
+    q = p + 11
+    tail = cell_open[q:len(cell_open)]
+    e = tail.find("\"")
+    if e < 0:
+        return ""
+    return tail[0:e]
+
+
+def _xl_data_of(cell_inner: "str") -> "str":
+    # tra "type|value" ("|" neu Cell rong / khong co Data)
+    dd = cell_inner.find("<Data")
+    if dd < 0:
+        return "|"
+    de = cell_inner.find(">", dd)
+    if de < 0:
+        return "|"
+    dtag = cell_inner[dd:de]
+    tp = ""
+    pp = dtag.find("ss:Type=\"")
+    if pp >= 0:
+        qq = pp + 9
+        rest = dtag[qq:len(dtag)]
+        ee = rest.find("\"")
+        if ee >= 0:
+            tp = rest[0:ee]
+    dc = cell_inner.find("</Data>", de)
+    if dc < 0:
+        return tp + "|"
+    val = cell_inner[de + 1:dc]
+    return tp + "|" + _xl_unescape(val)
+
+
+def _xl_split_type(pair: "str") -> "str":
+    p = pair.find("|")
+    if p < 0:
+        return pair
+    return pair[0:p]
+
+
+def _xl_split_val(pair: "str") -> "str":
+    p = pair.find("|")
+    if p < 0:
+        return ""
+    return pair[p + 1:len(pair)]
+
+
+def excel_read_string(xml: "str") -> "DataFrame":
+    ts = xml.find("<Table")
+    if ts < 0:
+        return empty_df()
+    te = xml.find("</Table>", ts)
+    if te < 0:
+        return empty_df()
+    body = xml[ts:te]
+    grid = []
+    typs = []
+    n_cols = 0
+    pos = 0
+    more = 1
+    while more == 1:
+        rs = body.find("<Row", pos)
+        if rs < 0:
+            more = 0
+            continue
+        re_ = body.find("</Row>", rs)
+        if re_ < 0:
+            more = 0
+            continue
+        rowxml = body[rs:re_]
+        # trich cells trong row
+        cells = []
+        ctyps = []
+        cp = 0
+        cmore = 1
+        while cmore == 1:
+            cs = rowxml.find("<Cell", cp)
+            if cs < 0:
+                cmore = 0
+                continue
+            ge = rowxml.find(">", cs)
+            if ge < 0:
+                cmore = 0
+                continue
+            otag = rowxml[cs:ge]
+            selfclose = 0
+            if otag[len(otag) - 1] == "/":
+                selfclose = 1
+            if selfclose == 1:
+                idxs = _xl_cell_type(otag)
+                if idxs != "":
+                    want = int(idxs)
+                    while len(cells) + 1 < want:
+                        cells.append("")
+                        ctyps.append("")
+                cells.append("")
+                ctyps.append("")
+                cp = ge + 1
+                continue
+            ce = rowxml.find("</Cell>", ge)
+            if ce < 0:
+                cmore = 0
+                continue
+            inner = rowxml[ge + 1:ce]
+            idxs2 = _xl_cell_type(otag)
+            if idxs2 != "":
+                want2 = int(idxs2)
+                while len(cells) + 1 < want2:
+                    cells.append("")
+                    ctyps.append("")
+            pair = _xl_data_of(inner)
+            cells.append(_xl_split_val(pair))
+            ctyps.append(_xl_split_type(pair))
+            cp = ce + 7
+        if n_cols == 0:
+            n_cols = len(cells)
+        for k in range(len(cells)):
+            grid.append(cells[k])
+            typs.append(ctyps[k])
+        for k in range(len(cells), n_cols):
+            grid.append("")
+            typs.append("")
+        pos = re_ + 6
+    if n_cols == 0:
+        return empty_df()
+    n_rows_all = len(grid) / n_cols
+    n_all = int(n_rows_all)
+    if n_all < 1:
+        return empty_df()
+    # dong dau = header
+    names = []
+    for c in range(n_cols):
+        names.append(grid[c])
+    n_data = n_all - 1
+    if n_data <= 0:
+        rcols = []
+        for c in range(n_cols):
+            rcols.append(make_series_str(names[c], []))
+        return make_df(rcols)
+    # suy dtype moi cot
+    rcols = []
+    for c in range(n_cols):
+        is_bool = 1
+        is_num = 1
+        is_int = 1
+        seen = 0
+        for r in range(n_data):
+            vv = grid[(r + 1) * n_cols + c]
+            tt = typs[(r + 1) * n_cols + c]
+            if vv == "" and tt == "":
+                continue
+            seen = seen + 1
+            if tt == "Boolean":
+                is_num = 0
+                is_int = 0
+            elif tt == "Number":
+                is_bool = 0
+                if _xl_is_intcell(vv) == 0:
+                    is_int = 0
+            else:
+                is_bool = 0
+                is_num = 0
+                is_int = 0
+        cnm = names[c]
+        if seen == 0:
+            rcols.append(make_series_str(cnm, []))
+            continue
+        if is_bool == 1:
+            bvals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    bvals.append(0)
+                    vm.set(r, 0)
+                elif vv == "1" or vv.lower() == "true":
+                    bvals.append(1)
+                else:
+                    bvals.append(0)
+            rcols.append(make_series(cnm, make_col_bool_with_mask(bvals, vm)))
+        elif is_num == 1 and is_int == 1:
+            ivals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    ivals.append(0)
+                    vm.set(r, 0)
+                else:
+                    ivals.append(int(vv))
+            rcols.append(make_series(cnm, make_col_i64_with_mask(ivals, vm)))
+        elif is_num == 1:
+            fvals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    fvals.append(0.0)
+                    vm.set(r, 0)
+                else:
+                    fvals.append(float(vv))
+            rcols.append(make_series(cnm, make_col_f64_with_mask(fvals, vm)))
+        else:
+            svals = []
+            vm = make_mask(n_data, 1)
+            for r in range(n_data):
+                vv = grid[(r + 1) * n_cols + c]
+                tt = typs[(r + 1) * n_cols + c]
+                if vv == "" and tt == "":
+                    svals.append("")
+                    vm.set(r, 0)
+                else:
+                    svals.append(vv)
+            rcols.append(make_series_str_with_mask(cnm, svals, vm))
+    return make_df(rcols)
+
+
+def excel_read_file(file_path: "str") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    return excel_read_string(read_file(file_path))

@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+__tkv_import__ = ["tokenvector_data"]
+
+# =============================================================================
+# tokenvector_parquet.tkv (v2.1) - LEDGER TRUNG THUC: Parquet that CHUA lam duoc
+#   o tang thu vien .tkv. Moi API doc/ghi deu raise ValueError giai thich ro
+#   (fail-fast, khong tao file hong nua voi).
+#
+#   Tai sao blocked-by-compiler (da ghi ledger SESSION_HANDOFF):
+#   1. Parquet = Thrift binary compact + page du lieu nen f64/int chua MOI
+#      byte 0-255; open(path,"w")/write_file e UTF-8 -> byte >= 0x80 bi
+#      bien dang -> file hong khong doc lai duoc.
+#   2. Can binary write o compiler (byte buffer + open(path,"wb")) + bitwise
+#      ops (R5) cho varint/bit-packing + CRC. Ca 3 deu chua co.
+#   3. .xlsx that (ZIP+DEFLATE) bi chan boi cung ly do (xem tokenvector_excel:
+#      cau noi that hien tai la SpreadsheetML 2003 XML thuan).
+#
+#   Loi di thay the DUNG NGAY DUOC: csv_write_file / json_array_write_file /
+#   arrow_write_file (ARROW1 noi bo) / excel_write_file (SpreadsheetML, Excel
+#   mo truc tiep). Khi compiler co binary write, implement that theo dung
+#   API duoi day (chu ky da chot, khong doi).
+# =============================================================================
+
+def parquet_blocked_reason() -> "str":
+    return "parquet blocked-by-compiler: needs binary write (open wb) + bitwise ops (R5); use csv/arrow/excel instead"
+
+
+def parquet_write_file(df: "DataFrame", file_path: "str") -> "i32":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_read_file(file_path: "str") -> "DataFrame":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_write_string(df: "DataFrame") -> "str":
+    raise ValueError(parquet_blocked_reason())
+
+
+def parquet_read_string(data: "str") -> "DataFrame":
+    raise ValueError(parquet_blocked_reason())
