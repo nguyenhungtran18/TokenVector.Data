@@ -349,9 +349,13 @@ class Col:
         return self.f64s[i]
 
     def get_i64(self, i: "i32") -> "i64":
-        if self.dtype == DT_F32:
-            return int(self.f64s[i])
-        return self.i64s[i]
+        if self.dtype == DT_F32 or self.dtype == DT_F64:
+            if i < len(self.f64s):
+                return int(self.f64s[i])
+            return 0
+        if i < len(self.i64s):
+            return self.i64s[i]
+        return 0
 
     def get_bool(self, i: "i32") -> "i32":
         return self.bools[i]
@@ -696,9 +700,13 @@ class Series:
         return self.f64s[i]
 
     def get_i64(self, i: "i32") -> "i64":
-        if self.dtype == DT_F32:
-            return int(self.f64s[i])
-        return self.i64s[i]
+        if self.dtype == DT_F32 or self.dtype == DT_F64:
+            if i < len(self.f64s):
+                return int(self.f64s[i])
+            return 0
+        if i < len(self.i64s):
+            return self.i64s[i]
+        return 0
 
     def get_bool(self, i: "i32") -> "i32":
         return self.bools[i]

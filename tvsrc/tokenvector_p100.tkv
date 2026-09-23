@@ -1,0 +1,872 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# TokenVector.Data - Module P100: dong not tien ich pandas con lai (v1.9)
+#   1. Missing data tren DF: df_empty, df_notna, df_fillna_rows,
+#      df_dropna_rows_any, df_ffill_cols, series_fillna/series_shift.
+#   2. GroupBy windowing: groupby_rolling (window theo hàng trong nhóm).
+#   3. groupby_resample: nhóm theo key + bucket thời gian (map do resample).
+#   4. Index emulation: df_set_index, df_reindex (lookup theo key).
+#   5. merge_on_index: merge 2 DF theo list key (positional, how).
+#   6. CSV mở rộng: csv_write_ex (date_format, quote_all).
+#   7. JSON orient values/split/index (write).
+# Không đụng core; dùng Series.take/col_at nên giữ null-mask + dtype tag.
+# =============================================================================
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_datetime", "tokenvector_relational", "tokenvector_pandas", "tokenvector_read_json"]
+
+# ============================ 1. Missing data (DF) ============================
+
+def df_empty(df: "DataFrame") -> "i32":
+    if df.row_count() == 0:
+        return 1
+    return 0
+
+
+def df_notna(df: "DataFrame") -> "DataFrame":
+    nc = df.column_count()
+    out_cols = []
+    for c in range(nc):
+        sc = df.col_at(c)
+        n = sc.length()
+        bvals = []
+        for i in range(n):
+            if sc.is_null(i) == 1:
+                bvals.append(0)
+            else:
+                bvals.append(1)
+        out_cols.append(make_series_bool(sc.name, bvals))
+    return make_df(out_cols)
+
+
+def df_fillna_rows(df: "DataFrame", fill_f: "f64", fill_i: "i64", fill_s: "str", fill_b: "i32") -> "DataFrame":
+    # pandas df.fillna(value): thay null bang gia tri (theo dtype tung cot)
+    nc = df.column_count()
+    out_cols = []
+    for c in range(nc):
+        sc = df.col_at(c)
+        n = sc.length()
+        dt = sc.dtype
+        vals_i = []
+        vals_f = []
+        vals_s = []
+        vals_b = []
+        vm = make_mask(n, 1)
+        if dt == DT_STR:
+            for i in range(n):
+                if sc.is_null(i) == 1:
+                    vals_s.append(fill_s)
+                else:
+                    vals_s.append(sc.get_string(i))
+            out_cols.append(make_series_str_with_mask(sc.name, vals_s, vm))
+        elif dt == DT_BOOL:
+            for i in range(n):
+                if sc.is_null(i) == 1:
+                    vals_b.append(fill_b)
+                else:
+                    vals_b.append(sc.get_bool(i))
+            out_cols.append(make_series_bool_with_mask(sc.name, vals_b, vm))
+        elif dt == DT_F64 or dt == DT_F32:
+            for i in range(n):
+                if sc.is_null(i) == 1:
+                    vals_f.append(fill_f)
+                else:
+                    vals_f.append(sc.get_f64(i))
+            r = make_series_f64_with_mask(sc.name, vals_f, vm)
+            r.dtype = dt
+            out_cols.append(r)
+        else:
+            # i64 + moi dtype nguyen hep
+            for i in range(n):
+                if sc.is_null(i) == 1:
+                    vals_i.append(fill_i)
+                else:
+                    vals_i.append(sc.get_i64(i))
+            r2 = make_series_i64_with_mask(sc.name, vals_i, vm)
+            r2.dtype = dt
+            out_cols.append(r2)
+    return make_df(out_cols)
+
+
+def df_dropna_rows_any(df: "DataFrame") -> "DataFrame":
+    # pandas df.dropna(): bo dong co IT NHAT 1 null (how="any")
+    nc = df.column_count()
+    pick = []
+    n = df.row_count()
+    for i in range(n):
+        has_null = 0
+        for c in range(nc):
+            if df.col_at(c).is_null(i) == 1:
+                has_null = 1
+                break
+        if has_null == 0:
+            pick.append(i)
+    rows = make_idx(pick)
+    out_cols = []
+    for c in range(nc):
+        out_cols.append(df.col_at(c).take(rows))
+    return make_df(out_cols)
+
+
+def df_ffill_cols(df: "DataFrame") -> "DataFrame":
+    # pandas df.ffill(): day gia tri hop le gan nhat phia truoc (theo cot)
+    nc = df.column_count()
+    out_cols = []
+    for c in range(nc):
+        sc = df.col_at(c)
+        out_cols.append(_p_ffill_series(sc))
+    return make_df(out_cols)
+
+
+def _p_ffill_series(s: "Series") -> "Series":
+    n = s.length()
+    last_valid = 0 - 1
+    pick = []
+    for i in range(n):
+        if s.is_null(i) == 0:
+            last_valid = i
+        if last_valid < 0:
+            pick.append(0 - 1)
+        else:
+            pick.append(last_valid)
+    rows = make_idx(pick)
+    out = s.take(rows)
+    vm = make_mask(n, 0)
+    for i in range(n):
+        if pick[i] >= 0:
+            vm.set(i, 1)
+    out.valid = vm
+    return out
+
+
+def series_fillna(s: "Series", fill_f: "f64", fill_i: "i64", fill_s: "str") -> "Series":
+    # pandas Series.fillna(value): dt nghĩa giá trị theo dtype của cột
+    dt = s.dtype
+    n = s.length()
+    if dt == DT_STR:
+        sv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                sv.append(fill_s)
+            else:
+                sv.append(s.get_string(i))
+        return make_series_str(s.name, sv)
+    if dt == DT_BOOL:
+        bv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                bv.append(fill_i)
+            else:
+                bv.append(s.get_bool(i))
+        return make_series_bool(s.name, bv)
+    if dt == DT_F64 or dt == DT_F32:
+        fv = []
+        for i in range(n):
+            if s.is_null(i) == 1:
+                fv.append(fill_f)
+            else:
+                fv.append(s.get_f64(i))
+        r = make_series_f64(s.name, fv)
+        r.dtype = dt
+        return r
+    iv = []
+    for i in range(n):
+        if s.is_null(i) == 1:
+            iv.append(fill_i)
+        else:
+            iv.append(s.get_i64(i))
+    r2 = make_series_i64(s.name, iv)
+    r2.dtype = dt
+    return r2
+
+
+def series_shift(s: "Series", periods: "i32") -> "Series":
+    # pandas Series.shift(periods): dich xuong periods; phan moi = null.
+    # Build tay theo dtype (Series.take khong nhan index -1).
+    n = s.length()
+    dt = s.dtype
+    vm = s.valid
+    if dt == DT_STR:
+        strs = []
+        nul = make_mask(n, 0)
+        for i in range(n):
+            src = i - periods
+            if src >= 0 and src < n:
+                strs.append(s.strings[src])
+                nul.set(i, vm.get(src))
+            else:
+                strs.append("")
+        return make_series_str_with_mask(s.name, strs, nul)
+    if dt == DT_BOOL:
+        bvals = []
+        nul3 = make_mask(n, 0)
+        for i in range(n):
+            src = i - periods
+            if src >= 0 and src < n:
+                bvals.append(s.bools[src])
+                nul3.set(i, vm.get(src))
+            else:
+                bvals.append(0)
+        return make_series_bool_with_mask(s.name, bvals, nul3)
+    is_i64_like = 0
+    if dt == DT_I64:
+        is_i64_like = 1
+    if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+        is_i64_like = 1
+    if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+        is_i64_like = 1
+    if dt == DT_DT64:
+        is_i64_like = 1
+    if is_i64_like == 1:
+        ivals = []
+        nul2 = make_mask(n, 0)
+        for i in range(n):
+            src = i - periods
+            if src >= 0 and src < n:
+                ivals.append(s.i64s[src])
+                nul2.set(i, vm.get(src))
+            else:
+                ivals.append(0)
+        r2 = Series(s.name, dt, nul2)
+        r2.f64s = []
+        r2.i64s = ivals
+        r2.bools = []
+        r2.strings = []
+        return r2
+    fvals = []
+    nul4 = make_mask(n, 0)
+    for i in range(n):
+        src = i - periods
+        if src >= 0 and src < n:
+            fvals.append(s.f64s[src])
+            nul4.set(i, vm.get(src))
+        else:
+            fvals.append(0.0)
+    r4 = Series(s.name, dt, nul4)
+    r4.f64s = fvals
+    r4.i64s = []
+    r4.bools = []
+    r4.strings = []
+    return r4
+
+
+# ============================ 2. groupby_rolling ==============================
+
+def groupby_rolling(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
+                    val_col: "str", window: "i32", agg: "str") -> "DataFrame":
+    # pandas df.groupby(key).rolling(window, on=ts): window theo HANG trong moi
+    # nhom (sau khi sort theo ts). agg: "mean"/"sum"/"min"/"max"/"count".
+    # Cach lam: group gom tung key (giu thu tu xuat hien), sort dong trong nhom
+    # theo ts, tinh rolling, ghep ket qua theo dung thu tu nhom.
+    keys = groupby_group_keys(df, key_cols)
+    out_names = []
+    for k in range(len(key_cols)):
+        out_names.append(key_cols[k])
+    out_names.append(ts_col)
+    out_names.append(val_col + "_r")
+    out_key = []
+    out_ts = []
+    out_v = []
+    for gi in range(len(keys)):
+        sub = groupby_group(df, key_cols, keys[gi])
+        n = sub.row_count()
+        # sort chi so dong trong nhom theo ts (selection sort, n nho)
+        order = []
+        for i in range(n):
+            order.append(i)
+        tc = sub.col_by_name(ts_col)
+        for i in range(n):
+            mi = i
+            for j in range(i + 1, n):
+                if tc.get_i64(order[j]) < tc.get_i64(order[mi]):
+                    mi = j
+            if mi != i:
+                tmp = order[i]
+                order[i] = order[mi]
+                order[mi] = tmp
+        vc = sub.col_by_name(val_col)
+        for pos in range(n):
+            # window [pos - window + 1, pos] trong thu tu da sort
+            vals = []
+            start = pos - window + 1
+            if start < 0:
+                start = 0
+            for j in range(start, pos + 1):
+                src = order[j]
+                if vc.is_null(src) == 0:
+                    vals.append(vc.get_f64(src))
+            ksrc = order[pos]
+            for k in range(len(key_cols)):
+                ksrc_col = sub.col_by_name(key_cols[k])
+                kv = ksrc_col.get_string(ksrc)
+                out_key.append(kv)
+            out_ts.append(tc.get_i64(ksrc))
+            if len(vals) == 0:
+                out_v.append(0.0)
+            elif agg == "sum":
+                sv = 0.0
+                for j in range(len(vals)):
+                    sv = sv + vals[j]
+                out_v.append(sv)
+            elif agg == "min":
+                mv = vals[0]
+                for j in range(1, len(vals)):
+                    if vals[j] < mv:
+                        mv = vals[j]
+                out_v.append(mv)
+            elif agg == "max":
+                mv2 = vals[0]
+                for j in range(1, len(vals)):
+                    if vals[j] > mv2:
+                        mv2 = vals[j]
+                out_v.append(mv2)
+            elif agg == "count":
+                out_v.append(float(len(vals)))
+            else:
+                sv2 = 0.0
+                for j in range(len(vals)):
+                    sv2 = sv2 + vals[j]
+                out_v.append(sv2 / float(len(vals)))
+    kcols = []
+    for k in range(len(key_cols)):
+        kcols.append(make_series_str(key_cols[k], out_key))
+    kcols.append(make_series_i64(ts_col, out_ts))
+    kcols.append(make_series_f64(val_col + "_r", out_v))
+    return make_df(kcols)
+
+# ============================ 3. groupby_resample =============================
+
+def _p_epoch_day0() -> "i64":
+    return 0
+
+
+def _p_bucket_start(ts: "i64", unit: "str", num: "i32") -> "i64":
+    # bucket dong trai: D/W/H la offset tu epoch (1970-01-01); M/Y theo lich
+    if unit == "D":
+        step = num * 86400000
+        return (ts // step) * step
+    if unit == "W":
+        step = num * 604800000
+        # epoch 1970-01-01 la Thu 5; pandas W chuận ve CN/Thu tuy rule - dung
+        # mốc tuần nho nhat >= epoch cho don gian
+        return (ts // step) * step
+    if unit == "H":
+        step = num * 3600000
+        return (ts // step) * step
+    if unit == "T" or unit == "min":
+        step = num * 60000
+        return (ts // step) * step
+    if unit == "S":
+        step = num * 1000
+        return (ts // step) * step
+    if unit == "M":
+        y = dt_year(ts)
+        m = dt_month(ts)
+        cm = ((m - 1) // num) * num + 1
+        return _dt_days_from_civil(y, cm, 1) * 86400000
+    if unit == "Y":
+        y = dt_year(ts)
+        cy = ((y - 1) // num) * num + 1
+        return _dt_days_from_civil(cy, 1, 1) * 86400000
+    return ts
+
+
+def groupby_resample(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
+                     val_col: "str", freq: "str", agg: "str") -> "DataFrame":
+    # pandas df.groupby(key).resample(freq)[val].agg(): moi (key, bucket) 1
+    # dong. freq giong resample: "D","W","H","T"/"min","S","M","Y" co so
+    # ("3H","15T","2M"...). agg: sum/mean/min/max/count.
+    # NOTE: thanh phan chinh duoc tach thanh cac helper nho de tranh loi
+    # __strtmp chua khai bao cua il_codegen khi 1 method co nhieu string-concat
+    # (build that bai hoac emit IL loi -> BadImageFormatException luc chay).
+    unit = freq[len(freq) - 1]
+    num = 1
+    if len(freq) > 1 and freq[0] >= "0" and freq[0] <= "9":
+        num = int(freq[0:len(freq) - 1])
+    names = []
+    bstarts = []
+    sums = []
+    cnts = []
+    mins = []
+    maxs = []
+    _p_resample_scan(df, key_cols, ts_col, val_col, unit, num, names, bstarts, sums, cnts, mins, maxs)
+    out_v = _p_resample_agg(names, sums, cnts, mins, maxs, agg)
+    return _p_resample_out(df, key_cols, ts_col, val_col, names, bstarts, out_v)
+
+
+def _p_group_key(df: "DataFrame", key_cols: "list[str]", i: "i32") -> "str":
+    # gom gia tri key cua dong i thanh 1 chuoi (phan cach bang )
+    key = df.col_by_name(key_cols[0]).get_string(i)
+    for k in range(1, len(key_cols)):
+        key = key + "" + df.col_by_name(key_cols[k]).get_string(i)
+    return key
+
+
+def _p_bucket_key(key: "str", b: "i64") -> "str":
+    # key + moc bucket (phan cach bang )
+    return key + "" + str(b)
+
+
+def _p_resample_scan(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
+                     val_col: "str", unit: "str", num: "i32", names: "list[str]",
+                     bstarts: "list[i64]", sums: "list[f64]", cnts: "list[i64]",
+                     mins: "list[f64]", maxs: "list[f64]") -> "i32":
+    # quet tung dong: tim (key, bucket); tong hop sum/count/min/max
+    kmap = {}
+    n = df.row_count()
+    vc = df.col_by_name(val_col)
+    tc = df.col_by_name(ts_col)
+    for i in range(n):
+        key = _p_group_key(df, key_cols, i)
+        b = _p_bucket_start(tc.get_i64(i), unit, num)
+        pk = _p_bucket_key(key, b)
+        g = kmap.get(pk, 0 - 1)
+        if g < 0:
+            g = len(names)
+            kmap[pk] = g
+            names.append(key)
+            bstarts.append(b)
+            sums.append(0.0)
+            cnts.append(0)
+            mins.append(0.0)
+            maxs.append(0.0)
+        if vc.is_null(i) == 1:
+            continue
+        x = vc.get_f64(i)
+        sums[g] = sums[g] + x
+        cnts[g] = cnts[g] + 1
+        if cnts[g] == 1:
+            mins[g] = x
+            maxs[g] = x
+        else:
+            if x < mins[g]:
+                mins[g] = x
+            if x > maxs[g]:
+                maxs[g] = x
+    return 0
+
+
+def _p_resample_out(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
+                    val_col: "str", names: "list[str]", bstarts: "list[i64]",
+                    out_v: "list[f64]") -> "DataFrame":
+    # dung DF ket qua: cot key + moc bucket + gia tri agg
+    nk = len(key_cols)
+    out_cols = []
+    for k in range(nk):
+        col_vals = []
+        for g in range(len(names)):
+            col_vals.append(_p_key_part(names[g], k))
+        out_cols.append(make_series_str(key_cols[k], col_vals))
+    out_cols.append(make_series_i64(ts_col, bstarts))
+    out_cols.append(make_series_f64(val_col, out_v))
+    return make_df(out_cols)
+
+
+def _p_resample_agg(names: "list[str]", sums: "list[f64]", cnts: "list[i64]",
+                    mins: "list[f64]", maxs: "list[f64]", agg: "str") -> "list[f64]":
+    # gom ket qua agg theo tung (key, bucket); dua ra list cung do dai names
+    out_v = []
+    for g in range(len(names)):
+        if agg == "sum":
+            out_v.append(sums[g])
+        elif agg == "min":
+            out_v.append(mins[g])
+        elif agg == "max":
+            out_v.append(maxs[g])
+        elif agg == "count":
+            out_v.append(float(cnts[g]))
+        else:
+            if cnts[g] == 0:
+                out_v.append(0.0)
+            else:
+                out_v.append(sums[g] / float(cnts[g]))
+    return out_v
+
+
+def _p_key_part(key: "str", k: "i32") -> "str":
+    # lay phan thu k trong key join bang 
+    part = ""
+    cur = 0
+    i = 0
+    n = len(key)
+    while i < n:
+        c = key[i]
+        if c == "":
+            if cur == k:
+                return part
+            cur = cur + 1
+            part = ""
+        else:
+            part = part + c
+        i = i + 1
+    return part
+
+
+# ============================ 4. Index emulation ==============================
+
+def df_set_index(df: "DataFrame", col: "str") -> "list[str]":
+    # pandas set_index: col tro thanh index. TKV khong co index - tra list key
+    # (thu tu dong) de dung voi reindex/lookup; DF giu nguyen.
+    sc = df.col_by_name(col)
+    n = sc.length()
+    keys = []
+    for i in range(n):
+        keys.append(sc.get_string(i))
+    return keys
+
+
+def df_reindex(df: "DataFrame", index_col: "str", new_index: "list[str]") -> "DataFrame":
+    # pandas reindex: chon dong theo list key; thieu -> null. index_col la cot
+    # duoc dung lam index (khong bi mat sau reindex).
+    n_new = len(new_index)
+    lookup = {}
+    n = df.row_count()
+    ic = df.col_by_name(index_col)
+    for i in range(n):
+        lookup[ic.get_string(i)] = i
+    pick = []
+    for j in range(n_new):
+        pos = lookup.get(new_index[j], 0 - 1)
+        pick.append(pos)
+    out_cols = []
+    names = df.column_names()
+    for c in range(len(names)):
+        if names[c] == index_col:
+            # cot index: giu dung key moi (ke ca khi khong co trong DF cu)
+            sv = []
+            for j in range(n_new):
+                sv.append(new_index[j])
+            vm = make_mask(n_new, 1)
+            ns = make_series_str_with_mask(index_col, sv, vm)
+            out_cols.append(ns)
+        else:
+            col = df.col_at(c)
+            out_cols.append(_p_take_with_null(col, pick, n_new))
+    return make_df(out_cols)
+
+
+def _p_take_with_null(col: "Series", rows: "list[i32]", m: "i32") -> "Series":
+    # take voi -1 -> null (Series.take chi nhan index physical hop le nen phai
+    # dung tay theo dtype, giong series_shift)
+    vm = col.valid
+    dt = col.dtype
+    if dt == DT_STR:
+        strs = []
+        nul = make_mask(m, 0)
+        for j in range(m):
+            r = rows[j]
+            if r >= 0:
+                strs.append(col.strings[r])
+                nul.set(j, vm.get(r))
+            else:
+                strs.append("")
+        return make_series_str_with_mask(col.name, strs, nul)
+    if dt == DT_BOOL:
+        bvals = []
+        nul3 = make_mask(m, 0)
+        for j in range(m):
+            r = rows[j]
+            if r >= 0:
+                bvals.append(col.bools[r])
+                nul3.set(j, vm.get(r))
+            else:
+                bvals.append(0)
+        return make_series_bool_with_mask(col.name, bvals, nul3)
+    is_i64_like = 0
+    if dt == DT_I64:
+        is_i64_like = 1
+    if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+        is_i64_like = 1
+    if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+        is_i64_like = 1
+    if dt == DT_DT64:
+        is_i64_like = 1
+    if is_i64_like == 1:
+        ivals = []
+        nul2 = make_mask(m, 0)
+        for j in range(m):
+            r = rows[j]
+            if r >= 0:
+                ivals.append(col.i64s[r])
+                nul2.set(j, vm.get(r))
+            else:
+                ivals.append(0)
+        r2 = Series(col.name, dt, nul2)
+        r2.f64s = []
+        r2.i64s = ivals
+        r2.bools = []
+        r2.strings = []
+        return r2
+    fvals = []
+    nul4 = make_mask(m, 0)
+    for j in range(m):
+        r = rows[j]
+        if r >= 0:
+            fvals.append(col.f64s[r])
+            nul4.set(j, vm.get(r))
+        else:
+            fvals.append(0.0)
+    r4 = Series(col.name, dt, nul4)
+    r4.f64s = fvals
+    r4.i64s = []
+    r4.bools = []
+    r4.strings = []
+    return r4
+
+# ============================ 5. merge_on_index ===============================
+
+def merge_on_index(left: "DataFrame", right: "DataFrame", index_col: "str",
+                   how: "str") -> "DataFrame":
+    # pandas join(on index): merge 2 DF da sort theo index_col (position-based
+    # vi TKV khong co index). how = "inner"/"outer"/"left".
+    ln = left.row_count()
+    rn = right.row_count()
+    lc = left.col_by_name(index_col)
+    rc = right.col_by_name(index_col)
+    li = 0
+    ri = 0
+    pick_l = []
+    pick_r = []
+    # chi them dong khi index giong nhau o ca 2 ben (inner), hoac khi 1 ben co
+    # (outer/left); dieu kien while chu dong theo tung ben
+    while li < ln and ri < rn:
+        lv = lc.get_string(li)
+        rv = rc.get_string(ri)
+        if lv == rv:
+            pick_l.append(li)
+            pick_r.append(ri)
+            li = li + 1
+            ri = ri + 1
+        elif lv < rv:
+            if how != "inner":
+                pick_l.append(li)
+                pick_r.append(0 - 1)
+            li = li + 1
+        else:
+            if how == "outer":
+                pick_l.append(0 - 1)
+                pick_r.append(ri)
+            ri = ri + 1
+    if how != "inner":
+        while li < ln:
+            pick_l.append(li)
+            pick_r.append(0 - 1)
+            li = li + 1
+        while ri < rn:
+            pick_l.append(0 - 1)
+            pick_r.append(ri)
+            ri = ri + 1
+    total = len(pick_l)
+    out_cols = []
+    lnames = left.column_names()
+    for c in range(len(lnames)):
+        out_cols.append(_p_merge_take(left.col_at(c), pick_l, total))
+    rnames = right.column_names()
+    for c in range(len(rnames)):
+        nm = rnames[c]
+        if nm == index_col:
+            continue
+        out_cols.append(_p_merge_take(right.col_at(c), pick_r, total))
+    return make_df(out_cols)
+
+
+def _p_merge_take(col: "Series", pick: "list[i32]", total: "i32") -> "Series":
+    # -1 -> null (Series.take khong nhan index am; dung helper tay)
+    return _p_take_with_null(col, pick, total)
+
+# ============================ 6. CSV mo rong ==================================
+
+def csv_write_ex(df: "DataFrame", delimiter: "str", has_header: "i32",
+                 date_format: "str", quote_all: "i32") -> "str":
+    # csv_write nang cap: date_format "%Y-%m-%d %H:%M:%S" ap dung cot
+    # datetime64/i64-like epoch-ms khi format != ""; quote_all=1 -> boc tat ca
+    # cot trong ngoac kep.
+    names = df.column_names()
+    n = df.row_count()
+    nc = len(names)
+    lines = []
+    if has_header == 1:
+        hdr = ""
+        for c in range(nc):
+            if c > 0:
+                hdr = hdr + delimiter
+            if quote_all == 1:
+                hdr = hdr + "\"" + names[c] + "\""
+            else:
+                hdr = hdr + names[c]
+        lines.append(hdr)
+    for r in range(n):
+        ln = ""
+        for c in range(nc):
+            if c > 0:
+                ln = ln + delimiter
+            col = df.col_at(c)
+            if col.is_null(r) == 1:
+                continue
+            dt = col.dtype
+            if date_format != "" and dt == DT_DT64:
+                v = col.get_i64(r)
+                s = _p_fmt_dt(v, date_format)
+            else:
+                s = col.get_string(r)
+            need_quote = 0
+            if quote_all == 1:
+                need_quote = 1
+            elif s.find(delimiter) >= 0 or s.find("\"") >= 0 or s.find("\n") >= 0:
+                need_quote = 1
+            if need_quote == 1:
+                s2 = s.replace("\"", "\"\"")
+                ln = ln + "\"" + s2 + "\""
+            else:
+                ln = ln + s
+        lines.append(ln)
+    out = ""
+    for i in range(len(lines)):
+        if i > 0:
+            out = out + "\n"
+        out = out + lines[i]
+    return out + "\n"
+
+
+def _p_fmt_dt(ts: "i64", fmt: "str") -> "str":
+    # ho tro %Y %m %d %H %M %S; token khac giu nguyen
+    y = dt_year(ts)
+    mo = dt_month(ts)
+    d = dt_day(ts)
+    h = dt_hour(ts)
+    mi = dt_minute(ts)
+    se = dt_second(ts)
+    out = ""
+    i = 0
+    n = len(fmt)
+    while i < n:
+        c = fmt[i]
+        if c == "%" and i + 1 < n:
+            c2 = fmt[i + 1]
+            if c2 == "Y":
+                out = out + _p_pad4(y)
+            elif c2 == "m":
+                out = out + _p_pad2(mo)
+            elif c2 == "d":
+                out = out + _p_pad2(d)
+            elif c2 == "H":
+                out = out + _p_pad2(h)
+            elif c2 == "M":
+                out = out + _p_pad2(mi)
+            elif c2 == "S":
+                out = out + _p_pad2(se)
+            elif c2 == "%":
+                out = out + "%"
+            else:
+                out = out + "%" + c2
+            i = i + 2
+        else:
+            out = out + c
+            i = i + 1
+    return out
+
+
+def _p_pad2(v: "i32") -> "str":
+    if v < 10:
+        return "0" + str(v)
+    return str(v)
+
+
+def _p_pad4(v: "i32") -> "str":
+    s = str(v)
+    while len(s) < 4:
+        s = "0" + s
+    return s
+
+# ============================ 7. JSON orient khac =============================
+
+def json_write_values(df: "DataFrame") -> "str":
+    # orient="values": [[r0c0,r0c1],[r1c0,r1c1]]
+    n = df.row_count()
+    nc = df.column_count()
+    out = "["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + "["
+        for c in range(nc):
+            if c > 0:
+                out = out + ","
+            col = df.col_at(c)
+            out = out + _p_json_cell(col, r)
+        out = out + "]"
+    return out + "]"
+
+
+def json_write_split(df: "DataFrame") -> "str":
+    # orient="split": {"columns":[...],"index":[...],"data":[[...],...]}
+    names = df.column_names()
+    n = df.row_count()
+    nc = len(names)
+    out = "{\"columns\":["
+    for c in range(nc):
+        if c > 0:
+            out = out + ","
+        out = out + _jw_quote(names[c])
+    out = out + "],\"index\":["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + str(r)
+    out = out + "],\"data\":["
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        out = out + "["
+        for c in range(nc):
+            if c > 0:
+                out = out + ","
+            out = out + _p_json_cell(df.col_at(c), r)
+        out = out + "]"
+    out = out + "]}"
+    return out
+
+
+def json_write_index(df: "DataFrame", index_col: "str") -> "str":
+    # orient="index": {"rowkey": {col: val, ...}, ...}
+    names = df.column_names()
+    n = df.row_count()
+    nc = len(names)
+    ic = df.col_by_name(index_col)
+    out = "{"
+    for r in range(n):
+        if r > 0:
+            out = out + ","
+        rk = ic.get_string(r)
+        kq = _jw_quote(rk)
+        out = out + kq + ":{"
+        first = 1
+        for c in range(nc):
+            cn = names[c]
+            if cn == index_col:
+                continue
+            if first == 0:
+                out = out + ","
+            first = 0
+            nmj = _jw_quote(cn)
+            col = df.col_at(c)
+            cellj = _p_json_cell(col, r)
+            out = out + nmj
+            out = out + ":"
+            out = out + cellj
+        out = out + "}"
+    return out + "}"
+
+
+
+def _p_json_cell(col: "Series", r: "i32") -> "str":
+    if col.is_null(r) == 1:
+        return "null"
+    dt = col.dtype
+    if dt == DT_STR:
+        return _jw_quote(col.get_string(r))
+    if dt == DT_BOOL:
+        if col.get_bool(r) == 1:
+            return "true"
+        return "false"
+    if dt == DT_F64 or dt == DT_F32:
+        return str(col.get_f64(r))
+    return str(col.get_i64(r))

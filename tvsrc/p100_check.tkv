@@ -1,0 +1,225 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# p100_check - acceptance cho tokenvector_p100 (v1.9 "dong not con lai")
+# 7 nhom: missing-data, shift, groupby_rolling, resample, index-ops,
+#         CSV extras, JSON orient + astype dtype (regress nhe)
+# =============================================================================
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_datetime", "tokenvector_strings", "tokenvector_pandas", "tokenvector_read_json", "tokenvector_dtype", "tokenvector_p100"]
+
+def check(acc: "list[i64]", tag: "str", ok: "i32") -> "i32":
+    acc[1] = acc[1] + 1
+    if ok != 0:
+        acc[0] = acc[0] + 1
+    else:
+        print("FAIL: " + tag)
+    return 0
+
+
+def check_f(acc: "list[i64]", tag: "str", got: "f64", want: "f64") -> "i32":
+    d = got - want
+    if d < 0.0:
+        d = 0.0 - d
+    if d < 0.000000001:
+        return check(acc, tag, 1)
+    return check(acc, tag + " got=" + str(got) + " want=" + str(want), 0)
+
+
+def check_s(acc: "list[i64]", tag: "str", got: "str", want: "str") -> "i32":
+    if got == want:
+        return check(acc, tag, 1)
+    return check(acc, tag + " got=[" + got + "] want=[" + want + "]", 0)
+
+# --------------------------- 1. missing data ----------------------------------
+def t_missing(acc: "list[i64]") -> "i32":
+    print("-- t_missing")
+    df = make_df([make_series_str("k", ["r0", "r1", "r2"]), make_series_f64("v", [1.0, 2.0, 3.0]), make_series_i64("w", [10, 20, 30])])
+    vcol = df.col_by_name("v")
+    vvalid = vcol.valid
+    vvalid.set(1, 0)
+    check(acc, "md.empty0", df_empty(df) == 0)
+    df2 = make_df([make_series_i64("a", [])])
+    check(acc, "md.empty1", df_empty(df2))
+    nn = df_notna(df)
+    check(acc, "md.notna.v1", nn.col_by_name("v").get_bool(1) == 0)
+    check(acc, "md.notna.v0", nn.col_by_name("v").get_bool(0))
+    check(acc, "md.notna.k", nn.col_by_name("k").get_bool(2))
+    f = df_fillna_rows(df, 0 - 1.0, 0 - 1, "Z", 0)
+    check_f(acc, "md.fill.v1", f.col_by_name("v").get_f64(1), 0 - 1.0)
+    check_f(acc, "md.fill.v0", f.col_by_name("v").get_f64(0), 1.0)
+    d = df_dropna_rows_any(df)
+    check(acc, "md.dropna.rows", d.row_count() == 2)
+    check_f(acc, "md.dropna.v", d.col_by_name("v").get_f64(1), 3.0)
+    ff = df_ffill_cols(df)
+    check_f(acc, "md.ffill.v1", ff.col_by_name("v").get_f64(1), 1.0)
+    check(acc, "md.ffill.w2", ff.col_by_name("w").get_i64(2) == 30)
+    # series level
+    sv = make_series_f64("s", [1.0, 2.0, 3.0])
+    svm = sv.valid
+    svm.set(2, 0)
+    sf = series_fillna(sv, 9.9, 0, "")
+    check_f(acc, "md.sfill", sf.get_f64(2), 9.9)
+    check_f(acc, "md.sfill.keep", sf.get_f64(1), 2.0)
+    return 0
+
+# --------------------------- 2. shift ------------------------------------------
+def t_shift(acc: "list[i64]") -> "i32":
+    print("-- t_shift")
+    sv = make_series_f64("v", [1.0, 2.0, 3.0])
+    sh = series_shift(sv, 1)
+    check(acc, "sh.p1.null0", sh.is_null(0) == 1)
+    check_f(acc, "sh.p1.v2", sh.get_f64(2), 2.0)
+    sh2 = series_shift(sv, 0 - 1)
+    check_f(acc, "sh.m1.v0", sh2.get_f64(0), 2.0)
+    check(acc, "sh.m1.null2", sh2.is_null(2) == 1)
+    si = make_series_i64("n", [10, 20, 30])
+    pi = series_shift(si, 1)
+    check(acc, "sh.i64.null0", pi.is_null(0) == 1)
+    check(acc, "sh.i64.v2", pi.get_i64(2) == 20)
+    ss = make_series_str("t", ["a", "b", "c"])
+    ps = series_shift(ss, 1)
+    check(acc, "sh.str.null0", ps.is_null(0) == 1)
+    check_s(acc, "sh.str.v2", ps.get_string(2), "b")
+    sb = make_series_bool("f", [1, 0, 1])
+    pb = series_shift(sb, 1)
+    check(acc, "sh.bool.null0", pb.is_null(0) == 1)
+    check(acc, "sh.bool.v1", pb.get_bool(1))
+    check(acc, "sh.bool.v2", pb.get_bool(2) == 0)
+    return 0
+
+# --------------------------- 3. groupby_rolling --------------------------------
+def t_gbroll(acc: "list[i64]") -> "i32":
+    print("-- t_gbroll")
+    # a(1,2,3) b(10,20); window 2: a[1,1.5,2.5] b[10,15]
+    df = make_df([make_series_str("g", ["a", "a", "a", "b", "b"]), make_series_i64("t", [1, 2, 3, 4, 5]), make_series_f64("v", [1.0, 2.0, 3.0, 10.0, 20.0])])
+    r = groupby_rolling(df, ["g"], "t", "v", 2, "mean")
+    check(acc, "gbr.rows", r.row_count() == 5)
+    check_f(acc, "gbr.0", r.col_by_name("v_r").get_f64(0), 1.0)
+    check_f(acc, "gbr.1", r.col_by_name("v_r").get_f64(1), 1.5)
+    check_f(acc, "gbr.2", r.col_by_name("v_r").get_f64(2), 2.5)
+    check_f(acc, "gbr.3", r.col_by_name("v_r").get_f64(3), 10.0)
+    check_f(acc, "gbr.4", r.col_by_name("v_r").get_f64(4), 15.0)
+    rs = groupby_rolling(df, ["g"], "t", "v", 2, "sum")
+    check_f(acc, "gbrs.2", rs.col_by_name("v_r").get_f64(2), 5.0)
+    check_f(acc, "gbrs.4", rs.col_by_name("v_r").get_f64(4), 30.0)
+    return 0
+
+# --------------------------- 4. resample ---------------------------------------
+def t_resample(acc: "list[i64]") -> "i32":
+    print("-- t_resample")
+    base = dt_parse("2026-01-01 10:00:00")
+    df = make_df([make_series_str("g", ["a", "a", "b", "a"]), make_series_i64("t", [base, base + 1800000, base + 900000, base + 3600000]), make_series_f64("v", [1.0, 2.0, 5.0, 3.0])])
+    r = groupby_resample(df, ["g"], "t", "v", "H", "sum")
+    check(acc, "rs.rows", r.row_count() == 3)
+    check_s(acc, "rs.g0", r.col_by_name("g").get_string(0), "a")
+    check(acc, "rs.t0", r.col_by_name("t").get_i64(0) == base)
+    check_f(acc, "rs.v0", r.col_by_name("v").get_f64(0), 3.0)
+    check_s(acc, "rs.g1", r.col_by_name("g").get_string(1), "b")
+    check_f(acc, "rs.v1", r.col_by_name("v").get_f64(1), 5.0)
+    check(acc, "rs.t2", r.col_by_name("t").get_i64(2) == base + 3600000)
+    check_f(acc, "rs.v2", r.col_by_name("v").get_f64(2), 3.0)
+    rm = groupby_resample(df, ["g"], "t", "v", "H", "mean")
+    check_f(acc, "rsm.v0", rm.col_by_name("v").get_f64(0), 1.5)
+    rc = groupby_resample(df, ["g"], "t", "v", "H", "count")
+    check_f(acc, "rsc.v0", rc.col_by_name("v").get_f64(0), 2.0)
+    return 0
+
+# --------------------------- 5. index ops --------------------------------------
+def t_index(acc: "list[i64]") -> "i32":
+    print("-- t_index")
+    left = make_df([make_series_str("a", ["1", "2", "3"]), make_series_f64("b", [4.0, 5.0, 6.0])])
+    right = make_df([make_series_str("a", ["2", "3", "4"]), make_series_str("c", ["x", "y", "z"])])
+    keys = df_set_index(left, "a")
+    check(acc, "ix.set.n", len(keys) == 3)
+    check_s(acc, "ix.set.v", keys[2], "3")
+    # reindex: thieu key -> null
+    newidx = []
+    newidx.append("3")
+    newidx.append("9")
+    newidx.append("1")
+    r = df_reindex(left, "a", newidx)
+    check(acc, "ix.re.rows", r.row_count() == 3)
+    check_f(acc, "ix.re.b0", r.col_by_name("b").get_f64(0), 6.0)
+    check(acc, "ix.re.b1null", r.col_by_name("b").is_null(1) == 1)
+    check_f(acc, "ix.re.b2", r.col_by_name("b").get_f64(2), 4.0)
+    check_s(acc, "ix.re.a1", r.col_by_name("a").get_string(1), "9")
+    check(acc, "ix.re.a1valid", r.col_by_name("a").is_null(1) == 0)
+    # merge_on_index outer
+    mo = merge_on_index(left, right, "a", "outer")
+    check(acc, "ix.mo.rows", mo.row_count() == 4)
+    check_f(acc, "ix.mo.b0", mo.col_by_name("b").get_f64(0), 4.0)
+    check(acc, "ix.mo.b3null", mo.col_by_name("b").is_null(3) == 1)
+    check(acc, "ix.mo.c0null", mo.col_by_name("c").is_null(0) == 1)
+    check_s(acc, "ix.mo.c1", mo.col_by_name("c").get_string(1), "x")
+    # inner
+    mi = merge_on_index(left, right, "a", "inner")
+    check(acc, "ix.mi.rows", mi.row_count() == 2)
+    check_f(acc, "ix.mi.b0", mi.col_by_name("b").get_f64(0), 5.0)
+    check_s(acc, "ix.mi.c1", mi.col_by_name("c").get_string(1), "y")
+    return 0
+
+# --------------------------- 6. CSV extras -------------------------------------
+def t_csv(acc: "list[i64]") -> "i32":
+    print("-- t_csv")
+    df = make_df([make_series_str("a", ["x,y", "z"]), make_series_i64("b", [1, 2])])
+    out = csv_write_ex(df, ",", 1, "", 1)
+    want = "\"a\",\"b\"\n\"x,y\",\"1\"\n\"z\",\"2\"\n"
+    check_s(acc, "csv.quote_all", out, want)
+    # date_format tren cot datetime64
+    ts = dt_parse("2026-01-05 07:08:09")
+    df2 = make_df([make_series_i64("t", [ts]), make_series_i64("n", [5])])
+    df3 = make_df([series_astype(df2.col_by_name("t"), DT_DT64), df2.col_by_name("n")])
+    out2 = csv_write_ex(df3, ",", 1, "%Y-%m-%d %H:%M:%S", 0)
+    check_s(acc, "csv.date_format", out2, "t,n\n2026-01-05 07:08:09,5\n")
+    return 0
+
+# --------------------------- 7. JSON orient ------------------------------------
+def t_json(acc: "list[i64]") -> "i32":
+    print("-- t_json")
+    df = make_df([make_series_str("k", ["r0", "r1"]), make_series_i64("a", [1, 2]), make_series_str("b", ["x", "y"])])
+    sv = json_write_values(df)
+    check_s(acc, "json.values", sv, "[[\"r0\",1,\"x\"],[\"r1\",2,\"y\"]]")
+    sp = json_write_split(df)
+    check_s(acc, "json.split", sp, "{\"columns\":[\"k\",\"a\",\"b\"],\"index\":[0,1],\"data\":[[\"r0\",1,\"x\"],[\"r1\",2,\"y\"]]}")
+    si = json_write_index(df, "k")
+    check_s(acc, "json.index", si, "{\"r0\":{\"a\":1,\"b\":\"x\"},\"r1\":{\"a\":2,\"b\":\"y\"}}")
+    return 0
+
+# --------------------------- 8. astype (regress nhe) ---------------------------
+def t_astype(acc: "list[i64]") -> "i32":
+    print("-- t_astype")
+    s = make_series_f64("x", [300.0, 0 - 5.5, 42.9, 1.0])
+    u = series_astype(s, DT_U8)
+    check(acc, "as.u8.clamp", u.get_i64(0) == 255)
+    check(acc, "as.u8.neg", u.get_i64(1) == 0)
+    check(acc, "as.u8.trunc", u.get_i64(2) == 42)
+    i3 = series_astype(s, DT_I32)
+    check(acc, "as.i32.keep", i3.get_i64(0) == 300)
+    check(acc, "as.i32.neg", i3.get_i64(1) == 0 - 5)
+    f3 = series_astype(s, DT_F32)
+    check_f(acc, "as.f32", f3.get_f64(2), 42.9)
+    b = series_astype(s, DT_BOOL)
+    check(acc, "as.bool.t", b.get_bool(0))
+    check(acc, "as.bool.t2", b.get_bool(1))
+    si = make_series_i64("e", [1700000000000])
+    d64 = series_astype(si, DT_DT64)
+    check(acc, "as.dt64.tag", d64.dtype == DT_DT64)
+    check(acc, "as.dt64.val", d64.get_i64(0) == 1700000000000)
+    return 0
+
+# --------------------------- main ----------------------------------------------
+def main() -> "i32":
+    acc = []
+    acc.append(0)
+    acc.append(0)
+    t_missing(acc)
+    t_shift(acc)
+    t_gbroll(acc)
+    t_resample(acc)
+    t_index(acc)
+    t_csv(acc)
+    t_json(acc)
+    t_astype(acc)
+    print("PASS=" + str(acc[0]) + " / TOTAL=" + str(acc[1]))
+    if acc[0] == acc[1]:
+        print("P100OK")
+    return 0
