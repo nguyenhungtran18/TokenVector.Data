@@ -334,9 +334,46 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
                 dt = DT_F64
             elif spec == "str":
                 dt = DT_STR
+            else:
+                # v1.8: dtype hep qua dt_parse_spec (i32/u8/f32/datetime64...)
+                dt = _csv_narrow_spec(spec)
         if dt == 0 - 1:
             sub = _csv_grid_subcol(grid, c, n_cols, total_data)
             dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
+        if dt >= 1 and dt <= 13 and dt != DT_I64 and dt != DT_F64 and dt != DT_BOOL and dt != DT_STR:
+            # v1.8: dtype hep - doc nhu i64/f64 roi dat lai tag
+            is_f = 0
+            if dt == DT_F32:
+                is_f = 1
+            if is_f == 1:
+                fnv = []
+                vm = make_mask(total_data, 1)
+                for i in range(total_data):
+                    raw = grid[i * n_cols + c].strip()
+                    if _csv_is_null(raw, null_value, na_values, n_na):
+                        fnv.append(0.0)
+                        vm.set(i, 0)
+                    else:
+                        fnv.append(float(raw))
+                ns = make_series_f64_with_mask(col_name, fnv, vm)
+                ns.dtype = dt
+                result_cols.append(ns)
+            else:
+                inv = []
+                vm = make_mask(total_data, 1)
+                for i in range(total_data):
+                    raw = grid[i * n_cols + c].strip()
+                    if _csv_is_null(raw, null_value, na_values, n_na):
+                        inv.append(0)
+                        vm.set(i, 0)
+                    elif dt == DT_DT64:
+                        inv.append(dt_parse(raw))
+                    else:
+                        inv.append(int(raw))
+                ns2 = make_series_i64_with_mask(col_name, inv, vm)
+                ns2.dtype = dt
+                result_cols.append(ns2)
+            continue
         if dt == DT_I64:
             ivals = []
             vm = make_mask(total_data, 1)
@@ -401,6 +438,29 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
                     result_cols[c] = ts_col.rename(pname)
                     break
     return make_df(result_cols)
+
+
+def _csv_narrow_spec(spec: "str") -> "i32":
+    # v1.8: dtype hep cho dtypes_spec cua CSV - tra ve DT_*, khong.hep -> -1
+    if spec == "i32" or spec == "int32":
+        return DT_I32
+    if spec == "i16" or spec == "int16":
+        return DT_I16
+    if spec == "i8" or spec == "int8":
+        return DT_I8
+    if spec == "u8" or spec == "uint8":
+        return DT_U8
+    if spec == "u16" or spec == "uint16":
+        return DT_U16
+    if spec == "u32" or spec == "uint32":
+        return DT_U32
+    if spec == "u64" or spec == "uint64":
+        return DT_U64
+    if spec == "f32" or spec == "float32":
+        return DT_F32
+    if spec == "datetime64" or spec == "dt64":
+        return DT_DT64
+    return 0 - 1
 
 
 def _csv_grid_subcol(grid: "list[str]", c: "i32", n_cols: "i32", total_data: "i32") -> "list[str]":

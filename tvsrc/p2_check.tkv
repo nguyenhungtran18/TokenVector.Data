@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_datetime", "tokenvector_strings", "tokenvector_pandas", "tokenvector_read_json"]
+__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_relational", "tokenvector_datetime", "tokenvector_strings", "tokenvector_pandas", "tokenvector_read_json", "tokenvector_dtype"]
 
 # --------------------------- helpers ------------------------------------------
 def check(acc: "list[i64]", tag: "str", ok: "i32") -> "i32":
@@ -277,6 +277,98 @@ def t_json(acc: "list[i64]") -> "i32":
     return 0
 
 
+def t_dtype(acc: "list[i64]") -> "i32":
+    # ---- astype hepl ----
+    s = make_series_i64("x", [1, 2, 3])
+    s32 = series_astype(s, DT_I32)
+    check_i(acc, "dt.i32.dtype", s32.dtype, DT_I32)
+    check_i(acc, "dt.i32.len", s32.length(), 3)
+    check_i(acc, "dt.i32.v1", s32.get_i64(1), 2)
+    check_f(acc, "dt.i32.f1", s32.get_f64(1), 2.0)
+    check_s(acc, "dt.i32.s2", s32.get_string(2), "3")
+    big = make_series_f64("b", [300.0, 0 - 5.5, 42.9])
+    u8 = series_astype(big, DT_U8)
+    check_i(acc, "dt.u8.dtype", u8.dtype, DT_U8)
+    check_i(acc, "dt.u8.clamp0", u8.get_i64(0), 255)
+    check_i(acc, "dt.u8.clamp1", u8.get_i64(1), 0)
+    check_i(acc, "dt.u8.trunc2", u8.get_i64(2), 42)
+    f = make_series_f64("f", [1.5, 2.5])
+    f32 = series_astype(f, DT_F32)
+    check_i(acc, "dt.f32.dtype", f32.dtype, DT_F32)
+    check_f(acc, "dt.f32.v0", f32.get_f64(0), 1.5)
+    check_i(acc, "dt.f32.i1", f32.get_i64(1), 2)
+    d64 = series_astype(s, DT_DT64)
+    check_i(acc, "dt.dt64.dtype", d64.dtype, DT_DT64)
+    check_s(acc, "dt.dt64.s0", d64.get_string(0), "1")
+    sb = series_astype(s, DT_STR)
+    check_i(acc, "dt.str.dtype", sb.dtype, DT_STR)
+    check_s(acc, "dt.str.s1", sb.get_string(1), "2")
+    bo = series_astype(big, DT_BOOL)
+    check_i(acc, "dt.bool.b0", bo.get_bool(0), 1)
+    check_i(acc, "dt.bool.b1", bo.get_bool(1), 1)
+    check_i(acc, "dt.bool.dtype", bo.dtype, DT_BOOL)
+    # clone/slice/take giu tag
+    c = u8.clone_series()
+    check_i(acc, "dt.clone.dtype", c.dtype, DT_U8)
+    check_i(acc, "dt.clone.v2", c.get_i64(2), 42)
+    sl = s32.slice_series(1, 2)
+    check_i(acc, "dt.slice.dtype", sl.dtype, DT_I32)
+    check_i(acc, "dt.slice.len", sl.length(), 2)
+    tk = s32.take([2, 0])
+    check_i(acc, "dt.take.dtype", tk.dtype, DT_I32)
+    check_i(acc, "dt.take.v", tk.get_i64(0) * 10 + tk.get_i64(1), 31)
+    # narrow null
+    f64n = make_series_f64_with_mask("fn", [1.0, 0.0, 3.0], make_mask3(1, 0, 1))
+    i32n = series_astype(f64n, DT_I32)
+    check_i(acc, "dt.null.dtype", i32n.dtype, DT_I32)
+    check_i(acc, "dt.null.n1", i32n.is_null(1), 1)
+    check_i(acc, "dt.null.v2", i32n.get_i64(2), 3)
+    # series_to_narrow (spec string)
+    u16 = series_to_narrow(s, "u16")
+    check_i(acc, "dt.spec.dtype", u16.dtype, DT_U16)
+    check_i(acc, "dt.spec.v0", u16.get_i64(0), 1)
+    # ---- sort_index axis=1 ----
+    df = make_df([make_series_i64("z", [1, 2]), make_series_str("a", ["x", "y"]), make_series_f64("m", [1.5, 2.5])])
+    sdf = df_sort_index_cols(df)
+    nn = sdf.column_names()
+    check_i(acc, "si.n", len(nn), 3)
+    check_s(acc, "si.c0", nn[0], "a")
+    check_s(acc, "si.c1", nn[1], "m")
+    check_s(acc, "si.c2", nn[2], "z")
+    check_i(acc, "si.row", sdf.col_by_name("z").get_i64(1), 2)
+    # ---- iterating groups ----
+    g = make_df([make_series_str("k", ["b", "a", "b", "a"]), make_series_i64("v", [1, 2, 3, 4])])
+    keys = groupby_group_keys(g, ["k"])
+    check_i(acc, "gi.nkeys", len(keys), 2)
+    check_s(acc, "gi.k0", keys[0], "b")
+    check_s(acc, "gi.k1", keys[1], "a")
+    tot = 0
+    for gi in range(len(keys)):
+        sub = groupby_group(g, ["k"], keys[gi])
+        check_i(acc, "gi.rows" + str(gi), sub.row_count(), 2)
+        tot = tot + sub.col_by_name("v").get_i64(0)
+    check_i(acc, "gi.tot", tot, 3)
+    g2 = make_df([make_series_str("k1", ["x", "x", "y"]), make_series_i64("k2", [1, 1, 2]), make_series_f64("v", [1.0, 2.0, 3.0])])
+    keys2 = groupby_group_keys(g2, ["k1", "k2"])
+    check_i(acc, "gi2.nkeys", len(keys2), 2)
+    sub2 = groupby_group(g2, ["k1", "k2"], keys2[0])
+    check_i(acc, "gi2.rows", sub2.row_count(), 2)
+    check_f(acc, "gi2.v0", sub2.col_by_name("v").get_f64(0), 1.0)
+    return 0
+
+
+def make_mask3(a: "i32", b: "i32", c: "i32") -> "Mask":
+    vm = make_mask(3, 1)
+    vm.set(0, a)
+    vm.set(1, b)
+    vm.set(2, c)
+    return vm
+
+
+def t_dtype_call(acc: "list[i64]") -> "i32":
+    return t_dtype(acc)
+
+
 def main() -> "str":
     acc = [0, 0]
     print("## t_str")
@@ -297,6 +389,8 @@ def main() -> "str":
     t_query(acc)
     print("## t_json")
     t_json(acc)
+    print("## t_dtype")
+    t_dtype(acc)
     print("PASS= " + str(acc[0]) + " FAILS= " + str(acc[1] - acc[0]))
     if acc[0] == acc[1]:
         return "P2OK"

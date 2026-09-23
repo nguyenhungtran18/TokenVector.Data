@@ -314,11 +314,23 @@ class Col:
     i64s: "list[i64]"
     bools: "list[i32]"
 
+    def _is_narrow_i64(self) -> "i32":
+        dt = self.dtype
+        if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+            return 1
+        if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+            return 1
+        if dt == DT_DT64:
+            return 1
+        return 0
+
     def length(self) -> "i32":
         if self.dtype == DT_I64:
             return len(self.i64s)
         if self.dtype == DT_BOOL:
             return len(self.bools)
+        if self._is_narrow_i64() == 1:
+            return len(self.i64s)
         return len(self.f64s)
 
     def null_count(self) -> "i32":
@@ -332,9 +344,13 @@ class Col:
         return 0
 
     def get_f64(self, i: "i32") -> "f64":
+        if self._is_narrow_i64() == 1:
+            return float(self.i64s[i])
         return self.f64s[i]
 
     def get_i64(self, i: "i32") -> "i64":
+        if self.dtype == DT_F32:
+            return int(self.f64s[i])
         return self.i64s[i]
 
     def get_bool(self, i: "i32") -> "i32":
@@ -369,7 +385,7 @@ class Col:
         r.i64s = []
         r.bools = []
         for i in range(length):
-            if self.dtype == DT_I64:
+            if self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 r.i64s.append(self.i64s[offset + i])
             elif self.dtype == DT_BOOL:
                 r.bools.append(self.bools[offset + i])
@@ -386,7 +402,7 @@ class Col:
         r.bools = []
         for i in range(cnt):
             src = indices[i]
-            if self.dtype == DT_I64:
+            if self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 r.i64s.append(self.i64s[src])
             elif self.dtype == DT_BOOL:
                 r.bools.append(self.bools[src])
@@ -407,7 +423,7 @@ class Col:
         r.i64s = []
         r.bools = []
         for i in range(self.length()):
-            if self.dtype == DT_I64:
+            if self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 r.i64s.append(self.i64s[i])
             elif self.dtype == DT_BOOL:
                 r.bools.append(self.bools[i])
@@ -421,7 +437,7 @@ class Col:
         for i in range(n):
             if self.is_null(i) == 1:
                 strings.append(None)
-            elif self.dtype == DT_I64:
+            elif self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 strings.append(str(self.i64s[i]))
             elif self.dtype == DT_BOOL:
                 if self.bools[i] == 1:
@@ -639,6 +655,16 @@ class Series:
     bools: "list[i32]"
     strings: "list[str]"
 
+    def _is_narrow_i64(self) -> "i32":
+        dt = self.dtype
+        if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+            return 1
+        if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+            return 1
+        if dt == DT_DT64:
+            return 1
+        return 0
+
     def length(self) -> "i32":
         if self.dtype == DT_STR:
             return len(self.strings)
@@ -646,6 +672,8 @@ class Series:
             return len(self.i64s)
         if self.dtype == DT_BOOL:
             return len(self.bools)
+        if self._is_narrow_i64() == 1:
+            return len(self.i64s)
         return len(self.f64s)
 
     def null_count(self) -> "i32":
@@ -659,7 +687,7 @@ class Series:
         return 0
 
     def get_f64(self, i: "i32") -> "f64":
-        if self.dtype == DT_I64:
+        if self.dtype == DT_I64 or self._is_narrow_i64() == 1:
             return float(self.i64s[i])
         if self.dtype == DT_BOOL:
             if self.bools[i] == 1:
@@ -668,6 +696,8 @@ class Series:
         return self.f64s[i]
 
     def get_i64(self, i: "i32") -> "i64":
+        if self.dtype == DT_F32:
+            return int(self.f64s[i])
         return self.i64s[i]
 
     def get_bool(self, i: "i32") -> "i32":
@@ -676,7 +706,7 @@ class Series:
     def get_string(self, i: "i32") -> "str":
         if self.dtype == DT_STR:
             return self.strings[i]
-        if self.dtype == DT_I64:
+        if self.dtype == DT_I64 or self._is_narrow_i64() == 1:
             return str(self.i64s[i])
         if self.dtype == DT_BOOL:
             if self.bools[i] == 1:
@@ -710,7 +740,7 @@ class Series:
         for i in range(ln):
             if self.dtype == DT_STR:
                 r.strings.append(self.strings[offset + i])
-            elif self.dtype == DT_I64:
+            elif self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 r.i64s.append(self.i64s[offset + i])
             elif self.dtype == DT_BOOL:
                 r.bools.append(self.bools[offset + i])
@@ -744,6 +774,19 @@ class Series:
                 ivals.append(self.i64s[src_idx])
                 nul2.set(i, vm.get(src_idx))
             return make_series_i64_with_mask(self.name, ivals, nul2)
+        if self._is_narrow_i64() == 1:
+            ivals2 = []
+            nul2b = make_mask(cnt, 0)
+            for i in range(cnt):
+                src_idx = indices[i]
+                ivals2.append(self.i64s[src_idx])
+                nul2b.set(i, vm.get(src_idx))
+            r2 = Series(self.name, self.dtype, nul2b)
+            r2.f64s = []
+            r2.i64s = ivals2
+            r2.bools = []
+            r2.strings = []
+            return r2
         if self.dtype == DT_BOOL:
             bvals = []
             nul3 = make_mask(cnt, 0)
@@ -770,7 +813,7 @@ class Series:
         for i in range(self.length()):
             if self.dtype == DT_STR:
                 r.strings.append(self.strings[i])
-            elif self.dtype == DT_I64:
+            elif self.dtype == DT_I64 or self._is_narrow_i64() == 1:
                 r.i64s.append(self.i64s[i])
             elif self.dtype == DT_BOOL:
                 r.bools.append(self.bools[i])
@@ -1081,17 +1124,41 @@ def make_series_str(nm: "str", vals: "list[str]") -> "Series":
 def make_series(nm: "str", col: "Col") -> "Series":
     # Bao toan null-mask cua Col khi boc thanh Series (truoc day mask bi mat
     # -> moi cot doc tu CSV/JSON tro thanh all-valid du co null).
+    # v1.8: narrow dtype (i8/i16/i32/u8/u16/u32/u64/dt64/f32) giu nguyen tag -
+    # storage van la i64s/f64s nhung Series.dtype phai giu de get_* widen dung.
     vm = col.valid
+    dt = col.dtype
+    narrow_i64 = 0
+    if dt == DT_I8 or dt == DT_I16 or dt == DT_I32:
+        narrow_i64 = 1
+    if dt == DT_U8 or dt == DT_U16 or dt == DT_U32 or dt == DT_U64:
+        narrow_i64 = 1
+    if dt == DT_DT64:
+        narrow_i64 = 1
+    if narrow_i64 == 1:
+        r = Series(nm, dt, vm)
+        r.f64s = []
+        r.i64s = col.i64s
+        r.bools = []
+        r.strings = []
+        return r
+    if dt == DT_F32:
+        r2 = Series(nm, dt, vm)
+        r2.f64s = col.f64s
+        r2.i64s = []
+        r2.bools = []
+        r2.strings = []
+        return r2
     if vm != None and vm.pop_count() < vm.n:
-        if col.dtype == DT_I64:
+        if dt == DT_I64:
             return make_series_i64_with_mask(nm, col.i64s, vm)
-        if col.dtype == DT_BOOL:
+        if dt == DT_BOOL:
             return make_series_bool_with_mask(nm, col.bools, vm)
-        if col.dtype == DT_F64:
+        if dt == DT_F64:
             return make_series_f64_with_mask(nm, col.f64s, vm)
-    if col.dtype == DT_I64:
+    if dt == DT_I64:
         return make_series_i64(nm, col.i64s)
-    if col.dtype == DT_BOOL:
+    if dt == DT_BOOL:
         return make_series_bool(nm, col.bools)
     return make_series_f64(nm, col.f64s)
 

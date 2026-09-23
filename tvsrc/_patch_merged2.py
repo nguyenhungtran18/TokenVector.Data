@@ -56,6 +56,8 @@ MODS = [
      'tokenvector_pandas'),
     ('tvsrc/tokenvector_read_json.tkv',
      'tokenvector_read_json'),
+    ('tvsrc/tokenvector_dtype.tkv',
+     'tokenvector_dtype'),
 ]
 
 # ---------------------------------------------------------------- all
@@ -82,7 +84,8 @@ for path, name in MODS:
         print('spliced vao all:', name)
 for path, name in MODS:
     banner = ('# Module Pandas parity closure' if name == 'tokenvector_pandas'
-              else '# Module JSON native')
+              else ('# Module JSON native' if name == 'tokenvector_read_json'
+                    else '# TokenVector.Data - Module dtype hep'))
     if contains(all_lines, banner):
         print('skip (da co trong all):', name)
     else:
