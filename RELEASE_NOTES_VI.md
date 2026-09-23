@@ -2,6 +2,30 @@
 
 [ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
+## ⚡ Phiên Bản 1.0.6-dev (23/09/2026) - pandas-100 closure (tvsrc v1.9)
+
+**Thư viện tvsrc v1.9** (compiler tkvc không đổi).
+
+### ✨ Module mới
+* **`tokenvector_p100.tkv` (21 hàm)** — đóng nốt nhóm "tiện ích nhỏ còn sót":
+  * Missing data: `df_empty/df_notna`, `df_fillna_rows`, `df_dropna_rows_any/all`, `df_ffill_cols`, `series_fillna`, `series_shift` (periods âm, rebuild theo dtype, giữ tag hẹp).
+  * GroupBy extras: `groupby_rolling` (window trong nhóm), `groupby_resample` (bucket thời gian × nhóm, freq `D/h/m/s/ms`).
+  * Index/merge: `df_set_index`, `df_reindex` (union, key thiếu → null), `merge_on_index` (inner/left/right, gộp key bằng nhau).
+  * CSV extras: `csv_write_ex` với `date_format` (chỉ áp cho cột datetime64) và `quote_all`.
+  * JSON extras: `json_write_values/split/index` (ghi + đọc lại).
+* Core: `Series.get_i64` tự route float-storage về int truncation (đường widen tag hẹp).
+
+### ✅ Kiểm chứng
+* `p100_check` **73/73**, `p2_check` **154/154**, **18/18** suite cũ xanh.
+* DLL rebuild + smoke reflection **44/44** symbol (v1.7+v1.8+v1.9).
+* `TokenVector.Data.1.0.6-dev.nupkg` đóng gói.
+
+### 📌 Còn lại (sổ cái trung thực)
+* Parquet/Feather, read_sql, Excel — **blocked-by-compiler** (thiếu bitwise R5 + binary file IO).
+* MultiIndex / labeled-index alignment — loại trừ có chủ đích (mô hình position-based).
+
+---
+
 ---
 
 ## ⚡ Phiên Bản 1.0.5-dev (23/09/2026) - Dtype hẹp + sort_index + groupby iteration (tvsrc v1.8)
@@ -92,7 +116,8 @@
 * **`asof_join` O(n log m)** — frame phải được sort 1 lần theo thời gian (merge sort ổn định `_ms_ts`), mỗi dòng trái được khớp bằng binary search; **hỗ trợ frame phải chưa sort**; khi bằng thời gian, chọn mốc sớm nhất thỏa điều kiện.
 * **Rolling O(n)** — `win_rolling_std` viết lại theo công thức truy hồi sum/sum² một lượt quét (trước là O(n·window) 2 lượt); `win_rolling_mean` dựng mask validity ngay trong vòng chính.
 * **Fast-path all-valid cho vector math (19/09/2026, vòng 2)** — `vec_add`, `vec_sub`, `vec_mul`, `vec_div`, `vec_add_scalar`, `vec_mul_scalar`, `vec_abs`, `vec_sqrt`, `vec_exp`, `vec_log`, `vec_pow` cùng 12 phép so sánh (`vec_gt/ge/lt/le/eq/ne[_scalar]`) quét validity mask đúng 1 lần (có cache qua `Mask.all1()`), kéo nhánh dtype/null ra ngoài vòng lặp; mask kết quả dựng bằng khởi tạo sẵn thay vì `set()` từng phần tử. Đo ở 5M rows: chuỗi `vec_add_scalar`+`vec_mul` **~286 ms → ~182 ms (−36%)**; B1 500k 20.4→17,7 ms. Phần chênh còn lại với numpy là chi phí append output (~10 ns/phần tử) — cần compiler hỗ trợ pre-allocation/SIMD để thu hẹp tiếp.
-* **CSV reader single-pass v2 (20/09/2026)** — `csv_read_string` split mỗi dòng đúng 1 lần thẳng vào grid phẳng (bỏ vòng round-trip join → split qua ký tự US), bỏ `` theo từng dòng thay vì replace cả dòng, infer dtype có short-circuit (cell pure-digit bỏ qua check float/bool; fail int thì phân loại float/bool ngay trong bước đó), parse int bằng builtin `int()` thay vòng per-character thủ công. Probe riêng: 100k×3 **409 → 208 ms (−49%)**; trong bench B5 363 → 292 ms.
+* **CSV reader single-pass v2 (20/09/2026)** — `csv_read_string` split mỗi dòng đúng 1 lần thẳng vào grid phẳng (bỏ vòng round-trip join → split qua ký tự US), bỏ `
+` theo từng dòng thay vì replace cả dòng, infer dtype có short-circuit (cell pure-digit bỏ qua check float/bool; fail int thì phân loại float/bool ngay trong bước đó), parse int bằng builtin `int()` thay vòng per-character thủ công. Probe riêng: 100k×3 **409 → 208 ms (−49%)**; trong bench B5 363 → 292 ms.
 * **Sửa `make_series` mất null-mask (20/09/2026)** — wrapper Col→Series trước đây làm rơi validity mask nên mọi cột số/bool đọc từ CSV/JSON đều im lặng thành all-valid; giờ wrapper bảo toàn mask khi có null.
 * **`sort_by` so sánh inline (20/09/2026)** — `_ms_rows` so sánh field của `RowKey` trực tiếp thay vì gọi `_rk_before` per-compare (~1,7 triệu call ở n=100k); đo được **trung tính** (123 → 122 ms) vì hằng số copy record của merge là chủ đạo — bước thắng tiếp cần key dạng value-kind hoặc hỗ trợ compiler.
 * **Fast-path materialize join (20/09/2026)** — `_materialize_joined` đi đường copy branchless từng cell khi join không sinh row unmatched (quét `-1` một lượt O(total)) và cột nguồn all-valid (cache `Mask.all1()`); mask kết quả tạo all-valid O(1) thay vì `set()` từng phần tử. Áp dụng cho mọi loại join (inner/left/right/full/multi/asof) với fallback đúng: left/right/full/asof giữ slow path 2 nhánh đầy đủ ngữ nghĩa null. B4 (100k×100k inner → 10M rows × 4 cột): **1.789 → ~1.660 ms (−7%)**.

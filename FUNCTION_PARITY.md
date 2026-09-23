@@ -14,7 +14,7 @@
 | I/O (CSV/JSON) | ✅ | 🟡 | CSV v1.6.x + dtype hẹp v1.8, chunks streaming, parse_dates, encoding. JSON: đọc + ghi orient=records + JSONL (v1.7). Thiếu: Excel/Parquet thực (blocked-by-compiler), orient khác |
 | Vec math + so sánh | ✅ | 🟡 | ~40 op (arith/compare/scalar + rounding v1.5, isin, interpolate/where/mask v1.4) nhưng **không chaining/method API** |
 | Filter / boolean | ✅ | ✅ | Đủ (and/or/evaluate/take) |
-| GroupBy / agg | ✅ | 🟡 | v1.5/v1.8: + `groupby_size/transform/filter/apply/head/tail/nth`, prod/sem/mad/mode, iterating groups. Còn: `groupby().resample/rolling`, agg nội tuyến |
+| GroupBy / agg | ✅ | 🟡 | v1.5–v1.9: + `groupby_size/transform/filter/apply/head/tail/nth`, prod/sem/mad/mode, iterating groups, `groupby_rolling`, `groupby_resample` |
 | Join / AsOf / pivot / melt | ✅ | 🟡 | v1.5: + `crosstab`, `explode`, `pivot_table` (agg mean/sum/min/max/count). Thiếu: `merge_on_index` |
 | Sort | ✅ | ✅ (v1.1) | `sort_by_multi` multi-key stable (multi-pass, hỗ trợ key str), `nlargest/nsmallest` |
 | Window / rolling | ✅ | ✅ (v1.4) | + `win_apply(f)` (rolling.apply — **func(list[f64])**, min_periods), expanding sum/mean/min/max/std, `win_ewm_mean` (khớp pandas adjust=True/False, verify từng chữ số), `win_pct_change`, `win_cumprod/cummax/cummin` |
@@ -26,7 +26,7 @@
 | I/O Arrow thực (Parquet/Feather) | ✅ | 🟡 | `ARROW1` stream format **tự chế**, không tương thích Arrow thật; OOC có |
 | Thống kê đa luồng | ✅ (bản 3.x) | ❌ (engine) | Engine 1T; nhưng ngôn ngữ TKV đã có thread 8T output thật |
 | Index alignment (set_index, reindex) | ✅ | ❌ | Không có khái niệm index — chỉ vị trí |
-| Missing data nâng cao | ✅ | 🟡 | + `series_interpolate` (linear/ffill/bfill), `series_where` (pandas `Series.where`), `series_mask`; còn thiếu missing-joins, isna trên DF |
+| Missing data nâng cao | ✅ | 🟡 | v1.9 đã đủ: `df_isna/notna/empty`, `df_fillna_rows`, `df_dropna_rows_any/all`, `df_ffill_cols`, `series_fillna/interpolate/where/mask`; missing-join nắm trong `merge_on_index` (null cells) |
 | Interop (NumPy/tensor) | ✅ | ✅ | Mat zero-copy bridge — điểm mạnh riêng, pandas không có sẵn |
 
 ---
@@ -114,7 +114,8 @@
 | `groupby().filter` | `groupby_filter` | ✅ (v1.5) |
 | `groupby().size / nunique` | `groupby_size`; nunique qua `AGG_NUNIQUE` | ✅ (v1.1/v1.5) |
 | `groupby().head/tail` | `groupby_head / groupby_tail` (v1.7) | ✅ |
-| `groupby().resample` (thời gian) | ❌ (compose `resample` + `groupby_agg` được) | Tiện — không phải năng lực |
+| `groupby().resample` (thời gian) | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms` (v1.9) | ✅ |
+| `groupby().rolling` (window trong nhóm) | `groupby_rolling(df, key, col, win, agg)` (v1.9) | ✅ |
 | Iterating groups | `groupby_group_keys(df, keys)` + `groupby_group(df, keys, key)` (v1.8 — loop `for i in range(len(keys))`) | ✅ |
 
 ### 2.7 Join / Reshape (tokenvector_relational.tkv)
@@ -222,9 +223,9 @@ tiện ích nhỏ liệt kê dưới.
 String nốt + first/last/nth/mad + factorize + stack/unstack + merge_ordered +
 head/tail + df.query đã đóng (v1.7, 2026-09-23).** Gap còn lại:
 
-1. **Parquet/Feather thật** nếu cần trao đổi với hệ sinh thái Python.
-2. `sort_index`, `groupby().resample` (compose được), iterating groups.
-3. Dtype nền tảng: i32/u8/f32/datetime64 dtype riêng.
+1. **Parquet/Feather thật** nếu cần trao đổi với hệ sinh thái Python — blocked-by-compiler (bitwise R5 + binary file IO).
+2. (v1.9 đã đóng nốt) sort_index, `groupby().resample/rolling`, iterating groups, missing-data DF, reindex/merge-on-index, CSV date_format/quoting, JSON orient values/split/index.
+3. Dtype nền tảng đã có dạng tag hẹp trên storage chuẩn (v1.8).
 
 
 **Không nên làm (đánh đổi không đáng):** MultiIndex (chỉ pandas dùng tốt),
@@ -357,6 +358,25 @@ Sự thật compiler bắt được (v1.8): **typeflow merge biến cùng tên g
 khác kiểu trong 1 hàm** — biến `v` gán `get_f64()` ở nhánh bool rồi `get_i64()` ở
 nhánh sau → `v` bị ép f64, append vào `list[i64]` ra 0. Khắc phục: đặt tên biến
 riêng từng nhánh (`vb`, `vi`) — cùng bản chất với bài học `vals_b/i/f/s` v1.7.
+
+## 3i. v1.9 (1.0.6-dev) — pandas-100 closure: missing data / index / merge-on-index / CSV/JSON extras (`tokenvector_p100.tkv`, 21 hàm)
+
+| pandas | TKV | Ghi chú |
+| :--- | :--- | :--- |
+| `df.empty / df.notna() / df.isna()` | `df_empty / df_notna / df_isna` (v1.9) | ✅ |
+| `df.fillna(value)` | `df_fillna_rows(df, v)` + `df_ffill_cols(df)` (ffill theo cột) | ✅ |
+| `df.dropna(how=any/all)` | `df_dropna_rows_any / df_dropna_rows_all` | ✅ |
+| `Series.fillna` | `series_fillna(s, fill, last_valid)` | ✅ |
+| `Series.shift(periods)` | `series_shift(s, periods)` — âm/dương, rebuild theo dtype, giữ tag hẹp | ✅ |
+| `groupby().rolling` | `groupby_rolling(df, key, col, win, agg)` | ✅ |
+| `groupby().resample` | `groupby_resample(df, key, tcol, freq, col, agg)` — freq `D/h/m/s/ms` | ✅ |
+| `df.set_index` (positional) | `df_set_index` (vị trí dòng giữ nguyên — TKV position-based) | ✅ |
+| `df.reindex(new_index)` | `df_reindex(df, keys)` — union, key thiếu → null cells | ✅ |
+| `merge(left, right, left_index=True, right_index=True)` | `merge_on_index(left, right, kcol, how)` — inner/left/right coalesce key bằng nhau | ✅ |
+| `to_csv(date_format=, quoting=QUOTE_ALL)` | `csv_write_ex(..., date_format, quote_all)` — chỉ áp date_format cho cột datetime64 | ✅ |
+| `to_json(orient=values/split/index/columns)` | `json_write_values/split/index` + đọc lại `json_read_object`/`json_read_string` | ✅ (records có từ v1.7) |
+
+Suite: `p100_check` 73/73.
 
 ## 4. Cách kiểm chứng lại
 

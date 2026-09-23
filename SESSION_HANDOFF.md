@@ -8,6 +8,37 @@ verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b20
 
 ---
 
+## 0d. PHIÊN 2026-09-23 (tiếp nữa) — v1.9 pandas-100 closure (XONG ✅)
+
+Yêu cầu "phải đạt 100%". Đóng nốt nhóm "tiện ích nhỏ còn sót" — module
+`tokenvector_p100.tkv` (21 hàm): missing data DF/Series, groupby_rolling/
+groupby_resample, df_set_index/df_reindex/merge_on_index, csv_write_ex
+(date_format/quote_all), json_write_values/split/index.
+
+- Suite mới `p100_check` **73/73**; regression **18/18**; merged (all+lib)
+  build xanh; DLL rebuild + smoke **44/44**; nupkg **1.0.6-dev**.
+- Docs: FUNCTION_PARITY §3i + các row overview cập nhật; RELEASE_NOTES EN/VI.
+
+**Bài học compiler mới (quan trọng):**
+1. **`__strtmp` không khai báo** — string-concat dài sinh temp không khai báo,
+   có lúc emit im lặng → exe hỏng → BadImageFormatException lúc JIT. Workaround
+   tầng thư viện: tách concat dài sang helper riêng, hàm chính ngắn lại.
+2. **Byte điều khiển thô (0x01/0x02) trong string literal** → IL vỡ im lặng.
+   Phải dùng escape (`""` 4 ký tự, như relational đã làm).
+3. **`Series.take` với index −1** crash (physical index) — dựng tay theo dtype
+   (pattern `series_shift`) thay vì take.
+4. **Typeflow merge biến cùng tên 2 nhánh khác kiểu** (đã biết v1.8) — lặp lại
+   ở `series_astype`; luôn đặt tên biến theo nhánh (`vals_b/i/f/s`).
+
+**Còn lại thật sự (ledger trung thực):** Parquet/Feather/read_sql/Excel =
+blocked-by-compiler (bitwise R5 + binary IO); MultiIndex = loại trừ có chủ đích
+(mô hình position-based). Phần "đóng được ở tầng thư viện" = **0**.
+
+**Toolchain:** tkvc dist compiler tree vẫn hỏng — dùng
+`/d/TokenVector._head_wt/3.code/dist/tkvc.exe`. Worktree giữ nguyên.
+
+---
+
 ## 0c. PHIÊN 2026-09-23 (tiếp) — v1.8 dtype hẹp + sort_index + groupby iteration (XONG ✅)
 
 Yêu cầu "làm tiếp nhóm chủ đích hoãn". Kết quả:
