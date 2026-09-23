@@ -11,7 +11,7 @@
 #   7. JSON orient values/split/index (write).
 # Không đụng core; dùng Series.take/col_at nên giữ null-mask + dtype tag.
 # =============================================================================
-__tkv_import__ = ["tokenvector_data", "tokenvector_compute", "tokenvector_datetime", "tokenvector_relational", "tokenvector_pandas", "tokenvector_read_json"]
+__tkv_import__ = ["tokenvector_dtype", "tokenvector_data", "tokenvector_compute", "tokenvector_datetime", "tokenvector_relational", "tokenvector_pandas", "tokenvector_read_json"]
 
 # ============================ 1. Missing data (DF) ============================
 
@@ -254,72 +254,124 @@ def groupby_rolling(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
                     val_col: "str", window: "i32", agg: "str") -> "DataFrame":
     # pandas df.groupby(key).rolling(window, on=ts): window theo HANG trong moi
     # nhom (sau khi sort theo ts). agg: "mean"/"sum"/"min"/"max"/"count".
-    # Cach lam: group gom tung key (giu thu tu xuat hien), sort dong trong nhom
-    # theo ts, tinh rolling, ghep ket qua theo dung thu tu nhom.
-    keys = groupby_group_keys(df, key_cols)
-    out_names = []
-    for k in range(len(key_cols)):
-        out_names.append(key_cols[k])
-    out_names.append(ts_col)
-    out_names.append(val_col + "_r")
+    # Kernel nhanh (v1.10): 1 pass gan group-id (dtype module) + cursor fill
+    # order[] theo nhom, sort tung doan bang merge sort mang phang O(n log n),
+    # roi doc TRUC TIEP cot gia tri qua row-id — khong sub-DF, khong take,
+    # khong list trung gian per-window (nguyen nhan C3 cham 2.1s o 500k).
+    n = df.row_count()
+    kmap = {}
+    row_group = []
+    gcount = _dt_group_ids(df, key_cols, kmap, row_group)
+    counts = []
+    for g in range(gcount):
+        counts.append(0)
+    for i in range(n):
+        counts[row_group[i]] = counts[row_group[i]] + 1
+    starts = []
+    acc = 0
+    for g in range(gcount):
+        starts.append(acc)
+        acc = acc + counts[g]
+    cursor = []
+    for g in range(gcount):
+        cursor.append(starts[g])
+    order = []
+    for i in range(n):
+        order.append(0)
+    for i in range(n):
+        g = row_group[i]
+        order[cursor[g]] = i
+        cursor[g] = cursor[g] + 1
+    tc = df.col_by_name(ts_col)
+    vc = df.col_by_name(val_col)
     out_key = []
     out_ts = []
     out_v = []
-    for gi in range(len(keys)):
-        sub = groupby_group(df, key_cols, keys[gi])
-        n = sub.row_count()
-        # sort trong nhom theo ts: dung merge sort O(n log n) cua sort_by
-        # (selection sort cu la O(n^2) -> 500k rows x 3 nhom treo hon 10 phut).
-        ssub = sub.sort_by(ts_col, 1)
-        tc = ssub.col_by_name(ts_col)
-        vc = ssub.col_by_name(val_col)
-        kcols_in = []
-        for k in range(len(key_cols)):
-            kcols_in.append(ssub.col_by_name(key_cols[k]))
-        for pos in range(n):
-            # window [pos - window + 1, pos] trong thu tu da sort
-            vals = []
-            start = pos - window + 1
+    for g in range(gcount):
+        s0 = starts[g]
+        e0 = s0 + counts[g]
+        seg_vals = []
+        seg_rows = []
+        for j in range(s0, e0):
+            seg_vals.append(float(tc.get_i64(order[j])))
+            seg_rows.append(order[j])
+        seg_order = []
+        seg_buf = []
+        for j in range(e0 - s0):
+            seg_order.append(j)
+            seg_buf.append(0)
+        _rk_merge_sort_order(seg_vals, seg_rows, seg_order, seg_buf)
+        for j in range(e0 - s0):
+            rj = seg_order[j]
+            r = seg_rows[rj]
+            gk = _p_group_key(df, key_cols, r)
+            out_key.append(gk)
+            tval = tc.get_i64(r)
+            out_ts.append(tval)
+            start = j - window + 1
             if start < 0:
                 start = 0
-            for j in range(start, pos + 1):
-                if vc.is_null(j) == 0:
-                    vals.append(vc.get_f64(j))
-            for k in range(len(key_cols)):
-                out_key.append(kcols_in[k].get_string(pos))
-            out_ts.append(tc.get_i64(pos))
-            if len(vals) == 0:
-                out_v.append(0.0)
-            elif agg == "sum":
-                sv = 0.0
-                for j in range(len(vals)):
-                    sv = sv + vals[j]
-                out_v.append(sv)
+            # window agg doc truc tiep cot goc (khong list trung gian)
+            cnt = 0
+            sm = 0.0
+            mn = 0.0
+            mx = 0.0
+            w0 = start
+            while w0 <= j:
+                wj = seg_order[w0]
+                wr = seg_rows[wj]
+                if vc.is_null(wr) == 0:
+                    x = vc.get_f64(wr)
+                    if cnt == 0:
+                        mn = x
+                        mx = x
+                    else:
+                        if x < mn:
+                            mn = x
+                        if x > mx:
+                            mx = x
+                    sm = sm + x
+                    cnt = cnt + 1
+                w0 = w0 + 1
+            if agg == "sum":
+                out_v.append(sm)
             elif agg == "min":
-                mv = vals[0]
-                for j in range(1, len(vals)):
-                    if vals[j] < mv:
-                        mv = vals[j]
-                out_v.append(mv)
+                if cnt == 0:
+                    out_v.append(0.0)
+                else:
+                    out_v.append(mn)
             elif agg == "max":
-                mv2 = vals[0]
-                for j in range(1, len(vals)):
-                    if vals[j] > mv2:
-                        mv2 = vals[j]
-                out_v.append(mv2)
+                if cnt == 0:
+                    out_v.append(0.0)
+                else:
+                    out_v.append(mx)
             elif agg == "count":
-                out_v.append(float(len(vals)))
+                fv = float(cnt)
+                out_v.append(fv)
             else:
-                sv2 = 0.0
-                for j in range(len(vals)):
-                    sv2 = sv2 + vals[j]
-                out_v.append(sv2 / float(len(vals)))
-    kcols = []
-    for k in range(len(key_cols)):
-        kcols.append(make_series_str(key_cols[k], out_key))
-    kcols.append(make_series_i64(ts_col, out_ts))
-    kcols.append(make_series_f64(val_col + "_r", out_v))
-    return make_df(kcols)
+                if cnt == 0:
+                    out_v.append(0.0)
+                else:
+                    mv = sm / float(cnt)
+                    out_v.append(mv)
+    return _p_roll_out(key_cols, ts_col, val_col, out_key, out_ts, out_v)
+
+
+def _p_roll_out(key_cols: "list[str]", ts_col: "str", val_col: "str",
+                out_key: "list[str]", out_ts: "list[i64]",
+                out_v: "list[f64]") -> "DataFrame":
+    # DF ket qua rolling: cot key (ghep bang 1, ta rot ra thanh tung cot),
+    # moc ts, gia tri agg. Dung _p_key_part giong resample.
+    nk = len(key_cols)
+    out_cols = []
+    for k in range(nk):
+        col_vals = []
+        for g in range(len(out_key)):
+            col_vals.append(_p_key_part(out_key[g], k))
+        out_cols.append(make_series_str(key_cols[k], col_vals))
+    out_cols.append(make_series_i64(ts_col, out_ts))
+    out_cols.append(make_series_f64(val_col + "_r", out_v))
+    return make_df(out_cols)
 
 # ============================ 3. groupby_resample =============================
 
@@ -363,20 +415,81 @@ def groupby_resample(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
     # pandas df.groupby(key).resample(freq)[val].agg(): moi (key, bucket) 1
     # dong. freq giong resample: "D","W","H","T"/"min","S","M","Y" co so
     # ("3H","15T","2M"...). agg: sum/mean/min/max/count.
-    # NOTE: thanh phan chinh duoc tach thanh cac helper nho de tranh loi
-    # __strtmp chua khai bao cua il_codegen khi 1 method co nhieu string-concat
-    # (build that bai hoac emit IL loi -> BadImageFormatException luc chay).
+    # Kernel nhanh (v1.10): sort (gid, bucket) bang merge sort mang phang roi
+    # quet run tuyen tinh — thay dict 300k key-string cua ban cu (C4 675ms).
     unit = freq[len(freq) - 1]
     num = 1
     if len(freq) > 1 and freq[0] >= "0" and freq[0] <= "9":
         num = int(freq[0:len(freq) - 1])
+    n = df.row_count()
+    kmap = {}
+    row_group = []
+    gcount = _dt_group_ids(df, key_cols, kmap, row_group)
+    tc = df.col_by_name(ts_col)
+    gvals = []
+    bkeys = []
+    bstart_i64 = []
+    for i in range(n):
+        gvals.append(float(row_group[i]))
+        bk = _p_bucket_start(tc.get_i64(i), unit, num)
+        bkeys.append(bk)
+        bstart_i64.append(bk)
+    order = []
+    buf = []
+    for i in range(n):
+        order.append(i)
+        buf.append(0)
+    _rk_merge_sort_order(gvals, bkeys, order, buf)
+    first_row = []
+    for g in range(gcount):
+        first_row.append(0 - 1)
+    for i in range(n):
+        g = row_group[i]
+        if first_row[g] < 0:
+            first_row[g] = i
     names = []
     bstarts = []
     sums = []
     cnts = []
     mins = []
     maxs = []
-    _p_resample_scan(df, key_cols, ts_col, val_col, unit, num, names, bstarts, sums, cnts, mins, maxs)
+    vc = df.col_by_name(val_col)
+    j = 0
+    while j < n:
+        r0 = order[j]
+        g0 = row_group[r0]
+        b0 = bstart_i64[r0]
+        sm = 0.0
+        cn = 0
+        mn = 0.0
+        mx = 0.0
+        k2 = j
+        while k2 < n:
+            r2 = order[k2]
+            g2 = row_group[r2]
+            b2v = bstart_i64[r2]
+            if g2 != g0 or b2v != b0:
+                break
+            if vc.is_null(r2) == 0:
+                x = vc.get_f64(r2)
+                if cn == 0:
+                    mn = x
+                    mx = x
+                else:
+                    if x < mn:
+                        mn = x
+                    if x > mx:
+                        mx = x
+                sm = sm + x
+                cn = cn + 1
+            k2 = k2 + 1
+        names.append(_p_group_key(df, key_cols, first_row[g0]))
+        bstarts.append(b0)
+        sums.append(sm)
+        cnts.append(cn)
+        mins.append(mn)
+        maxs.append(mx)
+        j = k2
     out_v = _p_resample_agg(names, sums, cnts, mins, maxs, agg)
     return _p_resample_out(df, key_cols, ts_col, val_col, names, bstarts, out_v)
 
@@ -387,50 +500,6 @@ def _p_group_key(df: "DataFrame", key_cols: "list[str]", i: "i32") -> "str":
     for k in range(1, len(key_cols)):
         key = key + "" + df.col_by_name(key_cols[k]).get_string(i)
     return key
-
-
-def _p_bucket_key(key: "str", b: "i64") -> "str":
-    # key + moc bucket (phan cach bang )
-    return key + "" + str(b)
-
-
-def _p_resample_scan(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
-                     val_col: "str", unit: "str", num: "i32", names: "list[str]",
-                     bstarts: "list[i64]", sums: "list[f64]", cnts: "list[i64]",
-                     mins: "list[f64]", maxs: "list[f64]") -> "i32":
-    # quet tung dong: tim (key, bucket); tong hop sum/count/min/max
-    kmap = {}
-    n = df.row_count()
-    vc = df.col_by_name(val_col)
-    tc = df.col_by_name(ts_col)
-    for i in range(n):
-        key = _p_group_key(df, key_cols, i)
-        b = _p_bucket_start(tc.get_i64(i), unit, num)
-        pk = _p_bucket_key(key, b)
-        g = kmap.get(pk, 0 - 1)
-        if g < 0:
-            g = len(names)
-            kmap[pk] = g
-            names.append(key)
-            bstarts.append(b)
-            sums.append(0.0)
-            cnts.append(0)
-            mins.append(0.0)
-            maxs.append(0.0)
-        if vc.is_null(i) == 1:
-            continue
-        x = vc.get_f64(i)
-        sums[g] = sums[g] + x
-        cnts[g] = cnts[g] + 1
-        if cnts[g] == 1:
-            mins[g] = x
-            maxs[g] = x
-        else:
-            if x < mins[g]:
-                mins[g] = x
-            if x > maxs[g]:
-                maxs[g] = x
-    return 0
 
 
 def _p_resample_out(df: "DataFrame", key_cols: "list[str]", ts_col: "str",
@@ -604,45 +673,92 @@ def _p_take_with_null(col: "Series", rows: "list[i32]", m: "i32") -> "Series":
 
 def merge_on_index(left: "DataFrame", right: "DataFrame", index_col: "str",
                    how: "str") -> "DataFrame":
-    # pandas join(on index): merge 2 DF da sort theo index_col (position-based
-    # vi TKV khong co index). how = "inner"/"outer"/"left".
+    # pandas join(on index). Fast path: CA 2 ben da sort theo index ->
+    # two-pointer merge (nhanh nhat — bench C6 thang pandas). Fallback: hash
+    # dict — bo rang buoc sort (inner giu thu tu left; left giu left; right
+    # giu right; outer = left-truoc roi right-thieu).
     ln = left.row_count()
     rn = right.row_count()
     lc = left.col_by_name(index_col)
     rc = right.col_by_name(index_col)
-    li = 0
-    ri = 0
+    sorted_ok = 1
+    for i in range(1, ln):
+        if lc.get_string(i) < lc.get_string(i - 1):
+            sorted_ok = 0
+            break
+    if sorted_ok == 1:
+        for j in range(1, rn):
+            if rc.get_string(j) < rc.get_string(j - 1):
+                sorted_ok = 0
+                break
     pick_l = []
     pick_r = []
-    # chi them dong khi index giong nhau o ca 2 ben (inner), hoac khi 1 ben co
-    # (outer/left); dieu kien while chu dong theo tung ben
-    while li < ln and ri < rn:
-        lv = lc.get_string(li)
-        rv = rc.get_string(ri)
-        if lv == rv:
-            pick_l.append(li)
-            pick_r.append(ri)
-            li = li + 1
-            ri = ri + 1
-        elif lv < rv:
-            if how != "inner":
+    if sorted_ok == 1:
+        li = 0
+        ri = 0
+        while li < ln and ri < rn:
+            lv = lc.get_string(li)
+            rv = rc.get_string(ri)
+            if lv == rv:
+                pick_l.append(li)
+                pick_r.append(ri)
+                li = li + 1
+                ri = ri + 1
+            elif lv < rv:
+                if how != "inner":
+                    pick_l.append(li)
+                    pick_r.append(0 - 1)
+                li = li + 1
+            else:
+                if how == "outer":
+                    pick_l.append(0 - 1)
+                    pick_r.append(ri)
+                ri = ri + 1
+        if how != "inner":
+            while li < ln:
                 pick_l.append(li)
                 pick_r.append(0 - 1)
-            li = li + 1
-        else:
-            if how == "outer":
+                li = li + 1
+            while ri < rn:
                 pick_l.append(0 - 1)
                 pick_r.append(ri)
-            ri = ri + 1
-    if how != "inner":
-        while li < ln:
-            pick_l.append(li)
-            pick_r.append(0 - 1)
-            li = li + 1
-        while ri < rn:
-            pick_l.append(0 - 1)
-            pick_r.append(ri)
-            ri = ri + 1
+                ri = ri + 1
+    else:
+        if how == "right":
+            lmap = {}
+            for i in range(ln):
+                lmap[lc.get_string(i)] = i
+            for j in range(rn):
+                i2 = lmap.get(rc.get_string(j), 0 - 1)
+                if i2 >= 0:
+                    pick_l.append(i2)
+                    pick_r.append(j)
+                else:
+                    pick_l.append(0 - 1)
+                    pick_r.append(j)
+        else:
+            rmap = {}
+            for j in range(rn):
+                rmap[rc.get_string(j)] = j
+            matched = []
+            if how == "outer":
+                for j in range(rn):
+                    matched.append(0)
+            for i in range(ln):
+                j = rmap.get(lc.get_string(i), 0 - 1)
+                if j >= 0:
+                    pick_l.append(i)
+                    pick_r.append(j)
+                    if how == "outer":
+                        matched[j] = 1
+                elif how != "inner":
+                    pick_l.append(i)
+                    pick_r.append(0 - 1)
+            if how == "outer":
+                for j in range(rn):
+                    if matched[j] == 0:
+                        pick_l.append(0 - 1)
+                        pick_r.append(j)
     total = len(pick_l)
     out_cols = []
     lnames = left.column_names()
@@ -859,3 +975,78 @@ def _p_json_cell(col: "Series", r: "i32") -> "str":
     if dt == DT_F64 or dt == DT_F32:
         return str(col.get_f64(r))
     return str(col.get_i64(r))
+
+# ============================ 8. Kernel nhanh (v1.10) =========================
+
+# ============================ 8. Kernel nhanh (v1.10) =========================
+
+def _rk_merge_sort_order(vals: "list[f64]", keys: "list[i64]", order: "list[i32]",
+                         buf: "list[i32]") -> "i32":
+    # Bottom-up merge sort O(n log n) sap xep TANG DAN theo (vals, keys),
+    # stable; ghi de order[]. Mang phang, khong record, khong double-subscript.
+    n = len(vals)
+    if n == 0:
+        return 0
+    src = []
+    for i in range(n):
+        oi = order[i]
+        src.append(oi)
+    width = 1
+    while width < n:
+        i = 0
+        while i < n:
+            lo = i
+            mid = i + width
+            hi = i + width * 2
+            if mid > n:
+                mid = n
+            if hi > n:
+                hi = n
+            a = lo
+            b2 = mid
+            p = lo
+            while a < mid and b2 < hi:
+                sa = src[a]
+                sb = src[b2]
+                av = vals[sa]
+                bv = vals[sb]
+                take_a = 0
+                if av < bv:
+                    take_a = 1
+                if av == bv:
+                    ka = keys[sa]
+                    kb = keys[sb]
+                    if ka <= kb:
+                        take_a = 1
+                if take_a == 1:
+                    buf[p] = sa
+                    a = a + 1
+                else:
+                    buf[p] = sb
+                    b2 = b2 + 1
+                p = p + 1
+            while a < mid:
+                sa2 = src[a]
+                buf[p] = sa2
+                a = a + 1
+                p = p + 1
+            while b2 < hi:
+                sb2 = src[b2]
+                buf[p] = sb2
+                b2 = b2 + 1
+                p = p + 1
+            i = i + width * 2
+        # copy nguyen mang buf -> src (khong hoan doi tham chieu list:
+        # pattern tmp=src;src=dst;dst=tmp lam il_codegen cu sinh IL loi
+        # InvalidProgramException).
+        j2 = 0
+        while j2 < n:
+            sv = buf[j2]
+            src[j2] = sv
+            j2 = j2 + 1
+        width = width * 2
+    for i2 in range(n):
+        oi2 = src[i2]
+        order[i2] = oi2
+    return 0
+
