@@ -1,14 +1,14 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>TokenVector.Data</id>
-    <version>1.0.5-dev</version>
+    <version>1.0.6-dev</version>
     <title>TokenVector.Data - High-Performance Columnar DataFrame &amp; Tabular Engine (TokenVector Language)</title>
     <authors>TokenVector Project Team</authors>
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
-    <releaseNotes>1.0.5-dev: narrow dtype system (v1.8). series_astype/series_to_narrow for i8/i16/i32/u8/u16/u32/u64 (clamp semantics), f32, datetime64 (epoch-ms tag); core Series/Col auto-widen via get_i64/get_f64/get_string, clone/slice/take preserve the narrow tag; csv_read_ex dtypes_spec accepts i8/i16/i32/u8/u16/u32/u64/f32/datetime64 (datetime64 parses ISO via dt_parse, null-safe masks). New df_sort_index_cols (axis=1), groupby_group_keys/groupby_group (iterating groups, single or multi key). Parquet/Feather documented as blocked-by-compiler (no bitwise R5, no binary file IO primitive). Suites: p2_check 154/154, 17/17 legacy green, DLL smoke 28/28 symbols.</releaseNotes>
+    <releaseNotes>1.0.6-dev: pandas-100 closure (v1.9). Missing data: df_empty/df_notna/df_fillna_rows/df_dropna_rows_any/df_ffill_cols/series_fillna/series_shift (dtype-rebuild, negative periods). GroupBy extras: groupby_rolling (per-group window), groupby_resample (time-bucket x group, freq "D"/"h"/"m"/"s"/"ms"). Index/merge: df_set_index/df_reindex (union, missing keys -> null cells), merge_on_index (inner/left/right coalesce). CSV extras: csv_write_ex date_format/quoting all. JSON extras: json_write_values/split/index (write+read back). Suites: p100_check 73/73, p2_check 154/154, 18/18 regression green, DLL smoke 44/44 symbols.</releaseNotes>
     <description>High-performance columnar DataFrame and tabular data processing library, natively implemented in the TokenVector language (tkv) and compiled to a .NET CIL DLL: schema, columns, series, vector math, filter, group-by, joins (incl. AsOf), pivot/melt, CSV/JSON IO, Arrow IPC stream and out-of-core batches, zero-copy Mat bridge for numerics.</description>
     <tags>dataframe columnar arrow feather csv json timeseries asofjoin tokenvector data</tags>
     <dependencies>

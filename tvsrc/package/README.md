@@ -1,126 +1,188 @@
-# TokenVector.Data
+# TokenVector.Data - Release Notes
 
-[ 🇬🇧 English ](README.md) | [ 🇻🇳 Tiếng Việt ](README_VI.md)
-
-[![Language](https://img.shields.io/badge/Language-TokenVector%20(tkv)-purple.svg)]()
-[![Target](https://img.shields.io/badge/Target-.NET%20CIL%20DLL-blue.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Checks-51%2F51%20Passed-brightgreen.svg)]()
-
-**TokenVector.Data** is a high-performance columnar DataFrame and tabular data processing library **natively implemented in the TokenVector programming language (tkv)** and compiled to a .NET CIL assembly (`TokenVector.Data.dll`) via `tkvc` + `ilasm`.
-
-Version **1.0.1** marks the complete migration of the library from C# to the TokenVector language: all 22 C# source files were ported to 6 native `.tkv` modules, and all 51 unit tests were re-mapped as native tkv checks — **51/51 passing**.
+[ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
 ---
 
-## 📦 Modules
+## ⚡ Version 1.0.5-dev (2026-09-23) - Narrow dtypes + sort_index + groupby iteration (tvsrc v1.8)
 
-| Module (tkv) | Contents |
-| :--- | :--- |
-| `tokenvector_data.tkv` | `DataTypes`, `Schema`, `Mask` (null bitmap), `Col`, `StrCol`, `Series`, `DataFrame`, `ChunkedArray` helpers |
-| `tokenvector_compute.tkv` | `VectorMath` (add/sub/mul/div, exp, log, abs, scalar ops), `FilterEngine`, `Aggregations` (sum/mean/min/max/std/var/quantile), `WindowFunctions` (rolling, shift, diff, cumsum, rank) |
-| `tokenvector_relational.tkv` | `GroupByEngine` (multi-key, multi-agg), `JoinEngine` (Inner/Left/Right/Full/Cross + financial `AsOfJoin`), `ReshapeEngine` (Pivot, Melt, Concat vertical/horizontal) |
-| `tokenvector_io.tkv` | `FastCsvReader/Writer` (quoted fields, schema inference), `FastJsonReader` (NDJSON streaming + JSON array) |
-| `tokenvector_numerics.tkv` | `NumericsInterop` — `Series`/`DataFrame` ⇄ `Mat` (NDArray/Tensor model) bridge with **zero-copy** f64 view and `requires_grad` flag |
-| `tokenvector_arrow.tkv` | `ArrowIpcEngine` (ARROW1 stream round-trip preserving null masks) + `OutOfCoreDataFrame` (persist / open / read batch) |
+**Internal tvsrc library version v1.8** (compiler tkvc unchanged — clean HEAD toolchain).
 
----
+### ✨ New module + core changes
+* **`tokenvector_dtype.tkv` (17 functions)**:
+  * Narrow dtypes: `series_astype(s, dt)` / `series_to_narrow(s, spec)` — i8/i16/i32/u8/u16/u32/u64 (range clamp; pandas wraps overflow), f32, datetime64 (epoch-ms tag).
+  * `dt_is_narrow`, `dt_parse_spec` (spec string -> DT_*).
+  * `df_sort_index_cols` (sort_index axis=1); axis=0 is identity (TKV preserves row order).
+  * `groupby_group_keys` / `groupby_group` — iterating groups (single or multi key).
+* **Core `tokenvector_data.tkv`**: Series/Col gained `_is_narrow_i64()`; `length/get_f64/get_i64/get_string` auto-widen narrow dtypes; `slice_series/take/clone_*/slice_col` preserve the tag; `make_series` preserves narrow Col tags.
+* **`tokenvector_io.tkv`**: `csv_read_ex`/`csv_read_chunks*` accept new `dtypes_spec` values `"i8"…"u64", "f32", "datetime64"` (ISO -> epoch ms via dt_parse, full null masks) via `_csv_narrow_spec`.
 
-## ✨ Highlights
+### 🔎 Runtime facts (probed)
+* **Typeflow merges same-named variables across differently-typed branches in one function**: assigning `get_f64()` to `v` in the bool branch then `get_i64()` in a later branch coerced `v` to f64; appending to `list[i64]` produced zeros. Fix: per-branch variable names (`vb`, `vi`) — same root cause as v1.7's `vals_b/i/f/s` lesson.
+* `float(raw)` with raw = `"2026-01-02"` does **not raise** (returns a junk value) — datetime64 columns take the `dt_parse` branch before any numeric parse.
 
-* **Pure TokenVector implementation** — no C# sources remain; the whole engine lives in 6 `.tkv` modules (~116 KB source).
-* **Familiar DataFrame API** — Series/DataFrame with schema, per-column null masks, group-by aggregations, 5 join kinds, AsOf time-series join, pivot/melt.
-* **Robust I/O** — CSV with quotes & type inference, NDJSON and JSON-array readers, writer round-trips, file and string based.
-* **Arrow-style interchange** — `ARROW1`-framed stream format that survives null masks (validity bitmaps) through serialization.
-* **Numerics bridge** — convert numeric columns to a 1D/2D `Mat` (flat f64 buffer + shape + `requires_grad`); f64 columns with no nulls are wrapped **zero-copy** (mutations through the Mat are visible in the Series).
-* **.NET interop** — compiled to a plain CIL DLL; callable from any .NET language via reflection or direct references to the `TKVApp` class.
+### ✅ Verification
+* `p2_check` extended: **154/154 PASS** (+44 dtype/sort_index/groups checks).
+* 17/17 legacy suites green after the core patch. DLL rebuilt + smoke **28/28 symbols** (20 v1.7 + 8 v1.8). Package `TokenVector.Data.1.0.5-dev.nupkg` created.
 
----
-
-## 🧪 Verification & Quality Assurance
-
-The original C# test suite (51 `[Fact]`s) has been fully re-mapped to native tkv check programs. Regression status — all green:
-
-```text
-base_check   (DataTypes/Schema/Mask/Column/StringColumn)   SUCCESS
-comp_check   (VectorMath/Filter/Agg/Window)                SUCCESS
-core_check   (Series/DataFrame/ChunkedArray)               SUCCESS
-rel_check    (GroupBy/Join/AsOf/Pivot/Melt/Concat)         SUCCESS
-io_check     (CSV/NDJSON/JSON array/TSV/file IO)           SUCCESS
-num_check    (NumericsInterop: 4 checks)                   ALL PASS
-arr_check    (ArrowIpc/OutOfCore: 2 checks)                ALL PASS
-```
+### 📊 Parquet/Feather — decided blocked
+* Requires bitwise ops (compiler gap R5) for varint/RLE/thrift plus a binary file I/O primitive (today only text `f.readline()`). Once the compiler closes both, Parquet can be built inside the library with no core changes.
 
 ---
 
-## 🚀 Quick Start (TokenVector language)
+## ⚡ Version 1.0.4-dev (2026-09-23) - Pandas parity closure (tvsrc v1.7)
 
-```tokenvector
-__tkv_import__ = ["tokenvector_data", "tokenvector_relational"]
+**Internal tvsrc library version v1.7** (compiler tkvc unchanged — built with a clean HEAD toolchain).
 
-def run() -> "i32":
-    # 1. Create a DataFrame
-    df = make_df([
-        make_series_i64("user_id", [1, 2, 3, 4, 5]),
-        make_series_str("dept", ["IT", "HR", "IT", "Sales", "HR"]),
-        make_series_f64("salary", [75000.0, 52000.0, 88000.0, 61000.0, 58000.0]),
-    ])
+### ✨ New modules
+* **`tokenvector_pandas.tkv` (36 functions)** — closes the remaining pandas gaps from FUNCTION_PARITY §2:
+  * Series.str: `slice_replace` (Python-style negative bounds), `fullmatch`, `extractall` (→ DataFrame of matches), `cat`.
+  * Aggregations: `series_first` / `series_last` / `series_nth` / `series_mad` (median absolute deviation, null-skipping).
+  * Category emulation: `series_factorize` (+ `series_factorize_uniques`), `series_category_codes`.
+  * GroupBy: `groupby_first` / `groupby_last` / `groupby_nth` (dropna option), `groupby_head` / `groupby_tail` (row order preserved).
+  * Reshape: `stack` / `unstack` (long↔wide via value name), `merge_ordered` (outer merge that coalesces equal keys into one row, optional `ffill`).
+  * Datetime tz: `dt_utc_offset` (seconds), `dt_tz_convert`, `dt_tz_to_utc` — US Eastern DST rules post-2007, other zones fixed offsets (approximate, no tz database).
+  * Expression engine: `df_eval` / `df_query` — shunting-yard evaluator with comparisons, `+ - * / % // **`, `and/or/not`, string equality, unary minus (`df.query("x > 5 and name == 'te'")`).
+* **`tokenvector_read_json.tkv` (16 functions)** — native JSON:
+  * `json_read_string` / `json_read_file` (orient=records; per-column dtype normalization bool>i64>f64>str, explicit JSON `null` is null-safe), `json_read_records` (coerce listed numeric/time columns to i64 epoch-ms), `jsonl_read_string` / `jsonl_read_file` (garbage lines skipped), `json_read_object` (single object → 1-row DF), `json_write_string` / `json_write_file` (records orientation, proper escaping).
 
-    # 2. GroupBy & aggregation
-    report = groupby_agg(df, ["dept"], [
-        make_agg("salary", AGG_COUNT, "headcount"),
-        make_agg("salary", AGG_MEAN, "avg_salary"),
-        make_agg("salary", AGG_MAX, "max_salary"),
-    ])
+### 🔎 Runtime facts (probed, not guessed)
+* **Severe runtime bug found:** appending a list into a nested list through another function's parameter hangs forever (inline append is fine). The new groupby helpers therefore group via flat i64 arrays + boundary offsets — faster and safe.
+* Compiler rules confirmed: `while True:` banned, `None` against records banned (use sentinel objects), no `ord()`/`chr()` builtins, module-level constants must be literals, two-level attribute chains banned, nested functions may not take record-typed params, `1e-9`-style literals rejected.
+* The tkvc.exe in the compiler repo's dist was built from a dirty tree and regressed cross-module constants; a clean HEAD worktree toolchain was used for all builds this session.
 
-    # 3. Join kinds
-    joined = join_frames(df, bonuses, "user_id", "user_id", JOIN_INNER)
+### ✅ Verification
+* New acceptance suite `p2_check.tkv`: **110/110 PASS** (string, factorize, agg, groupby, stack, merge_ordered, tz, query, JSON incl. roundtrip + escapes).
+* All 17 existing suites re-run green (apply/arr/base/comp/core/csv2/dt/feat/io/num/pd/rel/stat/stats/strings/v15/vec).
+* Merged sources refreshed idempotently (`tvsrc/_patch_merged2.py`); both `tokenvector_data_all.tkv` and `_libbuild.tkv` build clean.
+* DLL rebuilt through tkvc → IL → library-IL conversion (`_mk_dll.py`) → ilasm; C# reflection smoke passes with **20/20 new v1.7 symbols** callable. Package `TokenVector.Data.1.0.4-dev.nupkg` created.
 
-    # 4. CSV I/O
-    df2 = csv_read_string(csv_text, ",", 1, "")
-    out = csv_write_string(df2, ",", 1, "")
-    return 0
-```
-
----
-
-## 💻 Quick Start (.NET side via reflection)
-
-```powershell
-$asm  = [System.Reflection.Assembly]::LoadFrom("TokenVector.Data.dll")
-$app  = $asm.GetType("TKVApp")
-
-$csv = "id,name,score`n1,Alice,95.5`n2,Bob,88.0"
-$df  = $app.GetMethod("csv_read_string").Invoke($null,
-         @([string]$csv, [string]",", [int]1, [string]""))
-$df.GetType().GetMethod("row_count").Invoke($df, @())   # -> 2
-```
-
-All engine functions are static methods of the `TKVApp` class (records such as `DataFrame`, `Series`, `Mask` are public classes usable as .NET types).
+### 📊 Parity
+* FUNCTION_PARITY.md updated: coverage **~80% → ~95%** of pandas for tabular/OLAP workloads. Remaining: Parquet/Feather, sort_index, groupby().resample (composable today), dtype system (i32/u8/f32/datetime64), MultiIndex (intentionally excluded).
 
 ---
 
-## 🔧 Build from source
+## ⚡ Version 1.0.3-dev (2026-09-22) - CSV datetime & encoding (tvsrc v1.6.3)
 
-Requirements: TokenVector compiler (`tkvc.exe`) and .NET Framework `ilasm.exe`.
+**Internal tvsrc library version v1.6.3** (compiler tkvc unchanged; DLL rebuild pending).
 
-```bash
-# 1. Merge the 6 modules into one library source (see tvsrc/build scripts)
-tkvc.exe build --entry run tokenvector_data_all.tkv   # emits .exe + tokenvector_data_all.il
+### ✨ New APIs
+* **`parse_dates` on all CSV readers** — `csv_read_ex`, `csv_read_chunks`, `csv_read_chunks_file` now take a trailing `parse_dates: "list[str]"`; listed string columns are converted to i64 epoch-ms via `series_dt_parse` (module datetime) with the column name preserved; unknown names are skipped safely (pandas-like). Signature change: callers must append `[]` when no date columns.
+* **`csv_read_chunks_file_enc(..., encoding, parse_dates)`** — encoding-aware chunked CSV read: `"latin-1"`/`"latin1"` reads the whole file byte-per-char via `_read_all_enc` then delegates to `csv_read_chunks`; `"utf-8"`/`""`/other stream for real (chunksize+1 lines in RAM). UTF-8 BOM (EF BB BF) is stripped automatically by the runtime file-open layer (probed for all three open modes).
 
-# 2. Convert IL: rename module/assembly to TokenVector.Data, remove .entrypoint
+### 🔎 Runtime facts (probed, not guessed)
+* TKV strings are byte-per-char: a raw U+FEFF literal in source reads as 3 chars, and `write_file` double-encodes it — real-BOM fixtures cannot be built from string APIs; BOM handling therefore lives in the file-open layer.
+* `f.readline()` returns lines WITHOUT the trailing `
+` (unlike Python); `_read_all_enc` re-joins lines with `
+` (caught by the new suite as a real bug).
+* The compiler rejects passing file handles into helper functions (untyped params) and method calls on direct function results — both shaped the final design.
 
-# 3. Assemble the DLL
-ilasm.exe /nologo /quiet /dll /output:TokenVector.Data.dll TokenVector.Data.il
-
-# 4. Package
-nuget.exe pack TokenVector.Data.nuspec
-```
-
-Prebuilt artifacts: `tvsrc/TokenVector.Data.dll` and `packages/TokenVector.Data.1.0.3.nupkg`.
+### 🧪 Verification
+* New `pd_check.tkv` suite (15 checks: parse_dates across ex/chunks/file/enc, name preservation, epoch correctness, latin-1/default encoding, unknown-column tolerance) — `FAILS= 0`.
+* Full regression green: base, vec, comp, apply, strings, rel, core, num, arr, feat, stat, stats, v15, io, dt, csv2.
 
 ---
 
-## 📄 License
+## ⚡ Version 1.0.2 (2026-09-19) - Performance & Feature Upgrade
 
-MIT — see [LICENSE](LICENSE).
+**`TokenVector.Data`** v1.0.2 focuses on algorithmic upgrades and data-hygiene APIs, all verified by **11/11 green check suites**.
+
+### 🚀 Performance Upgrades
+* **`DataFrame.sort_by` O(n log n)** — stable merge sort (`_ms_rows`) replaces the O(n²) insertion sort; 100k rows now sort in a fraction of the previous time.
+* **`asof_join` O(n log m)** — the right frame is sorted once by timestamp (stable merge sort `_ms_ts`), then each left row is matched by binary search; **unsorted right input is now supported**; ties resolve to the earliest qualifying timestamp.
+* **Rolling O(n)** — `win_rolling_std` rewritten as a single-pass rolling sum/sum² recurrence (was O(n·window) two-pass); `win_rolling_mean` builds its validity mask inline (was a second O(n·window) pass).
+* **All-valid fast paths for vector math (2026-09-19, second pass)** — `vec_add`, `vec_sub`, `vec_mul`, `vec_div`, `vec_add_scalar`, `vec_mul_scalar`, `vec_abs`, `vec_sqrt`, `vec_exp`, `vec_log`, `vec_pow` and the 12 comparison ops (`vec_gt/ge/lt/le/eq/ne[_scalar]`) now scan the validity mask once (cached in `Mask.all1()`) and hoist dtype/null branches out of the loop; the output mask is built by pre-sized init instead of per-element `set()`. Measured at 5M rows: `vec_add_scalar`+`vec_mul` chain **~286 ms → ~182 ms (−36%)**; B1 500k 20.4→17.7 ms. Remaining gap to numpy is the output-append cost (~10 ns/elt) — needs compiler pre-allocation/SIMD to close further.
+* **CSV reader single-pass v2 (2026-09-20)** — `csv_read_string` splits each line exactly once straight into the flat grid (drops the US-join → US-split round-trip), strips `` per line without a full-line `replace`, infers dtypes with short-circuiting (a pure-digit cell skips the float/bool re-checks; a failed int check classifies float/bool in the same step), and parses ints via the `int()` builtin instead of the manual per-character loop. Standalone probe: 100k×3 **409 → 208 ms (−49%)**; in-bench B5 363 → 292 ms.
+* **`make_series` null-mask fix (2026-09-20)** — the Col→Series wrapper previously dropped the validity mask, so every CSV/JSON-parsed numeric/bool column was silently all-valid; the wrapper now preserves the mask when it contains nulls.
+* **`sort_by` inline compare (2026-09-20)** — `_ms_rows` compares `RowKey` fields inline instead of calling `_rk_before` per comparison (~1.7M calls at n=100k); measured **neutral** (123 → 122 ms) since record-copy constants dominate — next win needs value-kind keys or compiler support.
+* **Join materialization fast path (2026-09-20)** — `_materialize_joined` takes a branchless per-cell copy path when the join produced no unmatched rows (single O(total) `-1` scan) and the source column is all-valid (`Mask.all1()` cache); the output mask is created all-valid in O(1) instead of per-element `set()`. Applies to every join flavor (inner/left/right/full/multi/asof) with correct fallback: left/right/full/asof keep the two-branch slow path with full null semantics. B4 (100k×100k inner → 10M rows × 4 cols): **1,789 → ~1,660 ms (−7%)**.
+* **Arrow mask elision (2026-09-20)** — `arrow_write_string` emits a single `-1` sentinel instead of one stream line per validity bit for all-valid numeric/bool columns; `arrow_read_string` recognizes the sentinel while remaining backward-compatible with explicit-bit files. B6 write+read 100k: **403 → ~330 ms (−18%)**.
+* **B3 warm measurement (2026-09-20)** — `groupby_agg` (3 exprs, 500k rows, 3 groups) re-runs at **~36 ms warm** vs pandas 33.4 ms — effectively on par; `_compute_agg` already had an all-valid fast path (probe: the agg loop is ~1 ms of the 36 ms), and the dict-hash grouping phase (~40 ms) is the language runtime floor.
+* **Join pairs-list refactor — deliberately skipped (2026-09-20)** — the 2×10M pair-build measures ~126 ms and the per-element append floor dominates afterwards; touching 6 call sites (each with its own suffix/skip/null semantics) was judged not worth the risk for the remaining ~7%. Revisit once compiler-side pre-allocation exists.
+* **Statistics single-pass Welford (2026-09-20)** — `series_variance` and `agg_variance` rewritten as one-pass Welford (previously 2–3 passes: a mean pass plus a squared-deviation pass through per-element `is_null`/`get_f64` calls); `series_sum`/`series_min`/`series_max` read typed buffers directly with dtype/null branches hoisted and the non-null count taken from the cached mask pop-count; `_compute_agg` MIN/MAX no longer pay a dead SUM pass, and the with-null f64/i64 branches compute SUM/MEAN/MIN/MAX/FIRST/LAST/STD in one fused pass instead of materializing an intermediate valid-values list. Measured at 5M rows: `series_variance` **~115 → ~52 ms per call (−55%)**, `agg_variance` **~133 → ~50 ms (−62%)**. New `stat_check.tkv` suite (22 checks incl. Welford vs two-pass parity, null semantics, i64/bool targets, groupby STD).
+* New `Mask.all1()` — O(1) when the pop-count cache is valid, otherwise a single early-exit scan that caches its result (`set()`/`set_all()` invalidate).
+
+### 🛡️ Null Propagation (VectorMath)
+* `vec_add`, `vec_sub`, `vec_mul`, `vec_div`, `vec_add_scalar`, `vec_mul_scalar`, `vec_abs`, `vec_sqrt`, `vec_exp`, `vec_log`, `vec_pow` now propagate nulls: any null input row produces a null output row (null in → null out).
+
+### ✨ New APIs
+* **Series** — `ffill`, `bfill`, `str_map_contains`, `str_map_startswith`, `str_map_endswith`, `str_map_upper`, `str_map_lower`, `str_map_replace`, `between(lo, hi, inclusive)`, `is_in_f64(candidates)`, `is_in_str(candidates)`.
+* **DataFrame** — `drop_duplicates(subset)`, `duplicated_mask(subset)`, `value_counts(name)` (sorted by count desc, stable).
+* Helpers — `str_startswith`, `str_endswith`.
+
+### 🧪 Verification
+* New `feat_check.tkv` suite covering all v1.0.2 features including null propagation.
+* New `csv2_check.tkv` suite: i64/f64/bool inference, quoted fields with embedded delimiter and doubled quotes, null preservation (end-to-end through `make_series`), CRLF handling, no-header mode, and a 100k-row perf probe.
+* New `_fastcheck.tkv`-style coverage retained as part of the compute suite: fast-path vs slow-path (null-preserving) parity for the rewritten vec ops, i64/f64, plus filter-through-mask integration (37 checks).
+* `join_multi` multi-key and `groupby_agg` multi-key use composite string keys via O(1) dict lookup (nested dicts are not codegen-compatible in multi-module builds; note: the DLL build merges all modules into one, so this limitation only applies to standalone `.tkv` module compiles).
+* All suites green: `base_check`, `comp_check`, `core_check`, `rel_check`, `io_check`, `num_check`, `arr_check`, `feat_check`, `vec_check`, `csv2_check`, `stat_check` (+ bench run).
+
+### 📦 Artifacts
+* `TokenVector.Data.dll` — rebuilt from `tokenvector_data_all.tkv` (tkvc → IL → ilasm), verified via reflection smoke test.
+* `TokenVector.Data.1.0.2.nupkg` — version bumped, release notes updated.
+
+---
+
+## 🚀 Version 1.0.0 (2026-09-13) - Initial Production Release
+
+**`TokenVector.Data`** v1.0.0 is the foundational release of the ultra-high-performance columnar DataFrame and tabular data processing library, engineered specifically for the **TokenVector** programming language ecosystem and .NET 8 LTS CIL AOT compiler.
+
+---
+
+### 🌟 Key Highlights & Architectural Features
+
+#### 1. Columnar Memory Storage (Apache Arrow-Aligned)
+* **Typed Contiguous Columns (`Column<T>`):** Flat unmanaged memory vectors for numeric and boolean primitives maximizing CPU L1/L2/L3 cache locality.
+* **Arrow UTF-8 Variable-Length Binary Layout (`StringColumn`):** Flat contiguous `byte[]` buffer + monotonically increasing `int[]` offset vectors, eliminating GC heap fragmentation.
+* **Multi-Chunk Memory Arrays (`ChunkedArray`):** Zero-allocation concatenation and streaming data batching.
+
+#### 2. 64-bit Bitboard Validity Tracking (`BitmapMask`)
+* Word-aligned 64-bit bitboard representation for null tracking (bit `1` = valid, bit `0` = null).
+* Hardware-accelerated bit counting via POPCNT (`BitOperations.PopCount`) and bitwise operations (`&`, `|`, `^`, `~`).
+* Fast $O(N)$ set-bit extraction (`ToIndices()`) with bit-skipping trailing-zeros optimization.
+
+#### 3. True No-GIL Parallelism & Hardware SIMD Acceleration
+* **SIMD Vector Math (`VectorMath`):** Vectorized arithmetic (`+`, `-`, `*`, `/`, `%`, `Pow`), unary functions (`Abs`, `Sqrt`, `Exp`, `Log`), and comparisons (`>`, `>=`, `<`, `<=`, `==`, `!=`).
+* **High-Throughput Window Functions (`WindowFunctions`):** Multi-threaded rolling mean, rolling sum, rolling std, lag/lead (`Shift`), discrete differences (`Diff`), cumulative sum (`CumSum`), and numerical ranking (`Rank`).
+* **Statistical Aggregations (`Aggregations`):** Vectorized `Sum`, `Mean`, `Min`, `Max`, `Median`, `Std`, `Variance`, `Quantile` with zero-allocation null skipping.
+
+#### 4. Advanced Relational & Reshaping Engines
+* **Parallel Radix Hash Join (`JoinEngine`):** Multi-key joins supporting `Inner`, `Left`, `Right`, `FullOuter`, and `Cross` joins.
+* **High-Frequency Financial `AsOfJoin`:** Fast inexact time-series matching supporting `Backward`, `Forward`, and `Nearest` directions with configurable timestamp tolerance and group-by partitions.
+* **Multi-Column Parallel GroupBy (`GroupByEngine`):** Hash-partitioned grouping with multi-expression parallel aggregations (`Agg.Sum`, `Agg.Mean`, `Agg.Count`, `Agg.Min`, `Agg.Max`, `Agg.Std`, `Agg.First`, `Agg.Last`).
+* **Tabular Reshaping (`ReshapeEngine`):** Fast multi-threaded `Pivot` (long-to-wide), `Melt` (wide-to-long), `ConcatVertical`, and `ConcatHorizontal`.
+
+#### 5. High-Throughput I/O & Out-Of-Core Processing
+* **Multi-Threaded CSV Reader (`FastCsvReader`):** Chunk-based parallel worker threads scanning line breaks, RFC 4180 quotes, and automatic schema inference.
+* **Buffered CSV Writer (`FastCsvWriter`):** Stream writer with UTF-8 byte buffering and automatic RFC 4180 escaping.
+* **Streaming NDJSON / JSON Lines Reader (`FastJsonReader`):** Memory-efficient parsing of newline-delimited JSON and JSON tabular records.
+* **Apache Arrow IPC Feather Engine (`ArrowIpcEngine`):** Zero-copy binary serialization and deserialization conforming to Arrow IPC Stream and Feather standards.
+* **Out-Of-Core Storage (`OutOfCoreDataFrame`):** Memory-Mapped File (MMF) storage engine for querying datasets exceeding physical RAM capacity.
+
+#### 6. Zero-Copy Bridge to `TokenVector.Numerics`
+* Instant zero-copy extraction from 1D `Series` and 2D numeric `DataFrame` to `TokenVector.Numerics.Core.NDArray<T>`.
+* Direct conversion to dynamic computational graph `TokenVector.Numerics.Autograd.Tensor<T>` for deep learning and autograd pipelines.
+* Bi-directional factory methods `DataFrame.FromNDArray<T>` and `DataFrame.FromTensor<T>`.
+
+#### 7. Pure TokenVector Language Module & Syntax Specification
+* Native TokenVector module (`tv_data.tkv`) providing `import tv.data as td`, `td.DataFrame`, `td.Series`, `td.read_csv`, `td.read_feather`, and `td.concat`.
+* Formal syntax specifications: `TOKENVECTOR_SYNTAX_SPEC.md` and `TOKENVECTOR_SYNTAX_SPEC_VI.md`.
+
+---
+
+### 🧪 Verification & Test Suite
+
+* **Total Automated Tests:** 51
+* **Passed:** 51 (100% Green)
+* **Failed:** 0
+* **Skipped:** 0
+* **Execution Duration:** 47 ms on .NET 8.0 LTS Release build.
+
+---
+
+### 📦 Artifacts & Distribution Packages
+
+* `TokenVector.Data.dll` (.NET 8.0 LTS AOT-compatible assembly)
+* `TokenVector.Data.1.0.0.nupkg` (Standard NuGet package)
+* `TokenVector.Data.1.0.0.snupkg` (Symbol NuGet package)
+* `TokenVector.Data-v1.0.0-Release.zip` (Complete release distribution archive)

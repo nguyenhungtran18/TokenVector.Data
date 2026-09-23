@@ -14,7 +14,7 @@ import sys
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-SRC = 'tokenvector_data_all.il'
+SRC = sys.argv[1] if len(sys.argv) > 1 else 'tokenvector_data_all.il'
 DST = 'TokenVector.Data.il'
 
 lines = io.open(SRC, encoding='utf-8', newline='').readlines()

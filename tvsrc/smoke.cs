@@ -39,7 +39,17 @@ class Smoke
             else Console.WriteLine("MISSING18: " + fn);
         }
         Console.WriteLine("v18Fns=" + ok18 + "/" + v18Fns.Length);
-        if (okNew != newFns.Length || ok18 != v18Fns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
+        // v1.9: pandas 100% closure (missing-data/index/merge/csv/json extras)
+        string[] v19Fns = new string[] { "df_empty", "df_notna", "df_fillna_rows", "df_dropna_rows_any", "df_ffill_cols", "series_fillna", "series_shift", "groupby_rolling", "groupby_resample", "df_set_index", "df_reindex", "merge_on_index", "csv_write_ex", "json_write_values", "json_write_split", "json_write_index" };
+        int ok19 = 0;
+        foreach (var fn in v19Fns)
+        {
+            bool have = t.GetMethod(fn) != null;
+            if (have) ok19++;
+            else Console.WriteLine("MISSING19: " + fn);
+        }
+        Console.WriteLine("v19Fns=" + ok19 + "/" + v19Fns.Length);
+        if (okNew != newFns.Length || ok18 != v18Fns.Length || ok19 != v19Fns.Length) { Console.WriteLine("SMOKE FAIL"); return 1; }
         Console.WriteLine("SMOKE OK");
         return 0;
     }
