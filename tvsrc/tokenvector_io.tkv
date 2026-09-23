@@ -3,9 +3,24 @@
 
 Q = "\""
 
+# Chunk globals cho csv_read_par (worker top-level khong param -> cau hinh
+# qua global co kieu, mau g_nth): 8 manh text + so cot + delimiter.
+g_cp0: "str" = ""
+g_cp1: "str" = ""
+g_cp2: "str" = ""
+g_cp3: "str" = ""
+g_cp4: "str" = ""
+g_cp5: "str" = ""
+g_cp6: "str" = ""
+g_cp7: "str" = ""
+g_cpn: "i32" = 0
+g_cpd: "str" = ","
+
 
 # ------------------------------ CSV parsing -----------------------------------
-def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+def _split_csv_line_slow(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+    # Goc per-char (giu lam fallback cho dong LOI: quote giua field,
+    # thieu quote dong...). Quy uoc toggle/double-quote giong het ban cu.
     fields = []
     cur = ""
     in_quotes = 0
@@ -33,6 +48,67 @@ def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
             cur = cur + ch
         i = i + 1
     fields.append(cur)
+    return fields
+
+
+def _split_csv_line(line: "str", delimiter: "str", quote: "str") -> "list[str]":
+    # Slice-based (nhanh): find C-speed + cat lat field, khong noi tung ky tu.
+    # Chi nhan CSV CHUAN (quote o dau field, doubled "" trong field, dong/delim
+    # sau quote dong); gap quote lac (giua field), thieu quote dong, rac sau
+    # quote dong -> tra ve _split_csv_line_slow (hanh vi cu, dam bao 1-1).
+    if len(delimiter) != 1 or len(quote) != 1:
+        return _split_csv_line_slow(line, delimiter, quote)
+    qq = quote + quote
+    fields = []
+    n = len(line)
+    pos = 0
+    need = 1
+    while need == 1 or pos < n:
+        need = 0
+        if pos >= n:
+            fields.append("")
+            break
+        if line[pos] == quote:
+            q = line.find(quote, pos + 1)
+            if q < 0:
+                return _split_csv_line_slow(line, delimiter, quote)
+            bad = 0
+            while bad == 0:
+                if q + 1 < n and line[q + 1] == quote:
+                    q2 = line.find(quote, q + 2)
+                    if q2 < 0:
+                        return _split_csv_line_slow(line, delimiter, quote)
+                    q = q2
+                else:
+                    bad = 1
+            inner = line[pos + 1:q]
+            if inner.find(qq) >= 0:
+                inner = inner.replace(qq, quote)
+            pos = q + 1
+            if pos >= n:
+                fields.append(inner)
+                break
+            if line[pos] == delimiter:
+                pos = pos + 1
+                fields.append(inner)
+                if pos >= n:
+                    fields.append("")
+                    break
+            else:
+                return _split_csv_line_slow(line, delimiter, quote)
+        else:
+            dd = line.find(delimiter, pos)
+            dq = line.find(quote, pos)
+            if dq >= 0 and (dd < 0 or dq < dd):
+                return _split_csv_line_slow(line, delimiter, quote)
+            if dd < 0:
+                fields.append(line[pos:n])
+                break
+            fields.append(line[pos:dd])
+            pos = dd + 1
+            if pos >= n:
+                fields.append("")
+                break
     return fields
 
 
@@ -191,6 +267,37 @@ def csv_infer_dtypes(rows: "list[str]", data_start: "i32", n_cols: "i32", null_v
     return dtypes
 
 
+def _csv_infer_col(grid: "list[str]", col: "i32", n_cols: "i32", total_data: "i32", null_value: "str") -> "i32":
+    # Nhu _infer_dtypes_grid nhung doc stride truc tiep tren grid (khong copy
+    # subcol): tiet kiem total_data append + alloc moi cot (csv_read_ex/par).
+    is_int = 1
+    is_float = 1
+    is_bool = 1
+    tested = 0
+    for r in range(total_data):
+        val = grid[r * n_cols + col].strip()
+        if val == "" or val == null_value:
+            continue
+        tested = tested + 1
+        if is_int == 1 and _is_int(val) == 0:
+            is_int = 0
+            if _is_float(val) == 0:
+                is_float = 0
+            if _is_bool(val) == 0:
+                is_bool = 0
+        elif is_int == 1:
+            is_bool = 0
+    if tested == 0:
+        return DT_STR
+    if is_bool == 1:
+        return DT_BOOL
+    if is_int == 1:
+        return DT_I64
+    if is_float == 1:
+        return DT_F64
+    return DT_STR
+
+
 def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null_value: "str") -> "list[i32]":
     dtypes = []
     for c in range(n_cols):
@@ -235,87 +342,12 @@ def _infer_dtypes_grid(grid: "list[str]", n_cols: "i32", total_data: "i32", null
 # - na_values: list chuoi coi la null (them vao "" va null_value mac dinh)
 # - skiprows: bo N dong dau text (tren toan bo text, giong pandas skiprows=N)
 # Tra ve DataFrame voi null-mask dung cho o rong / o == na_values.
-def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
-    if csv_text == "":
-        return empty_df()
-    if skiprows > 0:
-        all_lines = csv_text.split("\n")
-        if skiprows >= len(all_lines):
-            return empty_df()
-        kept = []
-        for i in range(skiprows, len(all_lines)):
-            kept.append(all_lines[i])
-        csv_text = kept[0]
-        for i in range(1, len(kept)):
-            csv_text = csv_text + "\n" + kept[i]
-    lines = csv_text.split("\n")
-    n_lines = len(lines)
-    column_names = []
-    data_start = 0
-    use_names = 0
-    if names != None:
-        if len(names) > 0:
-            use_names = 1
-    if use_names == 0:
-        if has_header == 1:
-            header_line = lines[0]
-            hl = len(header_line)
-            if hl > 0 and header_line[hl - 1] == "\r":
-                header_line = header_line[0:hl - 1]
-            header_fields = _split_csv_line(header_line, delimiter, "\"")
-            for f in range(len(header_fields)):
-                column_names.append(header_fields[f])
-            data_start = 1
-        else:
-            if n_lines > 0:
-                first_line = lines[0]
-                fl = len(first_line)
-                if fl > 0 and first_line[fl - 1] == "\r":
-                    first_line = first_line[0:fl - 1]
-                first_fields = _split_csv_line(first_line, delimiter, "\"")
-                n_first = len(first_fields)
-                for i in range(n_first):
-                    column_names.append("column_" + str(i))
-            else:
-                column_names.append("column_0")
-    else:
-        # names override: header=1 -> bo qua dong header; header=0 -> data tu dong 0
-        for i in range(len(names)):
-            column_names.append(names[i])
-        if has_header == 1:
-            data_start = 1
+def _csv_grid_to_df(column_names: "list[str]", grid: "list[str]", total_data: "i32",
+                        null_value: "str", na_values: "list[str]", n_na: "i32",
+                        dtypes_spec: "list[str]", n_spec: "i32", parse_dates: "list[str]") -> "DataFrame":
+    # Chung cho csv_read_ex (serial) va csv_read_par (song song):
+    # grid phang (total_data x n_cols) -> DataFrame (infer/build + parse_dates).
     n_cols = len(column_names)
-    n_spec = 0
-    if dtypes_spec != None:
-        n_spec = len(dtypes_spec)
-    n_na = 0
-    if na_values != None:
-        n_na = len(na_values)
-    if data_start >= n_lines:
-        result_cols = []
-        for c in range(n_cols):
-            result_cols.append(make_series_str(column_names[c], []))
-        return make_df(result_cols)
-    grid = []
-    total_data = 0
-    for i in range(data_start, n_lines):
-        line = lines[i]
-        ln = len(line)
-        if ln > 0 and line[ln - 1] == "\r":
-            line = line[0:ln - 1]
-        if line == "" and i == n_lines - 1:
-            break
-        if line.find("\"") == 0 - 1:
-            fields = line.split(delimiter)
-        else:
-            fields = _split_csv_line(line, delimiter, "\"")
-        nf = len(fields)
-        for c in range(n_cols):
-            if c < nf:
-                grid.append(fields[c])
-            else:
-                grid.append("")
-        total_data = total_data + 1
     if total_data == 0:
         result_cols = []
         for c in range(n_cols):
@@ -338,8 +370,7 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
                 # v1.8: dtype hep qua dt_parse_spec (i32/u8/f32/datetime64...)
                 dt = _csv_narrow_spec(spec)
         if dt == 0 - 1:
-            sub = _csv_grid_subcol(grid, c, n_cols, total_data)
-            dt = _infer_dtypes_grid(sub, 1, total_data, null_value)[0]
+            dt = _csv_infer_col(grid, c, n_cols, total_data, null_value)
         if dt >= 1 and dt <= 13 and dt != DT_I64 and dt != DT_F64 and dt != DT_BOOL and dt != DT_STR:
             # v1.8: dtype hep - doc nhu i64/f64 roi dat lai tag
             is_f = 0
@@ -440,6 +471,96 @@ def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value
     return make_df(result_cols)
 
 
+def csv_read_ex(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
+    if csv_text == "":
+        return empty_df()
+    if skiprows > 0:
+        all_lines = csv_text.split("\n")
+        if skiprows >= len(all_lines):
+            return empty_df()
+        kept = []
+        for i in range(skiprows, len(all_lines)):
+            kept.append(all_lines[i])
+        csv_text = kept[0]
+        for i in range(1, len(kept)):
+            csv_text = csv_text + "\n" + kept[i]
+    lines = csv_text.split("\n")
+    n_lines = len(lines)
+    column_names = []
+    data_start = 0
+    use_names = 0
+    if names != None:
+        if len(names) > 0:
+            use_names = 1
+    if use_names == 0:
+        if has_header == 1:
+            header_line = lines[0]
+            hl = len(header_line)
+            if hl > 0 and header_line[hl - 1] == "\r":
+                header_line = header_line[0:hl - 1]
+            header_fields = _split_csv_line(header_line, delimiter, "\"")
+            for f in range(len(header_fields)):
+                column_names.append(header_fields[f])
+            data_start = 1
+        else:
+            if n_lines > 0:
+                first_line = lines[0]
+                fl = len(first_line)
+                if fl > 0 and first_line[fl - 1] == "\r":
+                    first_line = first_line[0:fl - 1]
+                first_fields = _split_csv_line(first_line, delimiter, "\"")
+                n_first = len(first_fields)
+                for i in range(n_first):
+                    column_names.append("column_" + str(i))
+            else:
+                column_names.append("column_0")
+    else:
+        # names override: header=1 -> bo qua dong header; header=0 -> data tu dong 0
+        for i in range(len(names)):
+            column_names.append(names[i])
+        if has_header == 1:
+            data_start = 1
+    n_cols = len(column_names)
+    n_spec = 0
+    if dtypes_spec != None:
+        n_spec = len(dtypes_spec)
+    n_na = 0
+    if na_values != None:
+        n_na = len(na_values)
+    if data_start >= n_lines:
+        result_cols = []
+        for c in range(n_cols):
+            result_cols.append(make_series_str(column_names[c], []))
+        return make_df(result_cols)
+    grid = []
+    total_data = 0
+    for i in range(data_start, n_lines):
+        line = lines[i]
+        ln = len(line)
+        if ln > 0 and line[ln - 1] == "\r":
+            line = line[0:ln - 1]
+        if line == "" and i == n_lines - 1:
+            break
+        if line.find("\"") == 0 - 1:
+            fields = line.split(delimiter)
+        else:
+            fields = _split_csv_line(line, delimiter, "\"")
+        nf = len(fields)
+        for c in range(n_cols):
+            if c < nf:
+                grid.append(fields[c])
+            else:
+                grid.append("")
+        total_data = total_data + 1
+    if total_data == 0:
+        result_cols = []
+        for c in range(n_cols):
+            result_cols.append(make_series_str(column_names[c], []))
+        return make_df(result_cols)
+    return _csv_grid_to_df(column_names, grid, total_data, null_value, na_values, n_na, dtypes_spec, n_spec, parse_dates)
+
+
+
 def _csv_narrow_spec(spec: "str") -> "i32":
     # v1.8: dtype hep cho dtypes_spec cua CSV - tra ve DT_*, khong.hep -> -1
     if spec == "i32" or spec == "int32":
@@ -492,6 +613,240 @@ def csv_read_string(csv_text: "str", delimiter: "str", has_header: "i32", null_v
 
 def csv_read_file(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str") -> "DataFrame":
     return csv_read_file_ex(file_path, delimiter, has_header, null_value, [], [], [], 0)
+
+
+# ------------------------ parallel read (da luong) ---------------------------
+# csv_read_par: nhu csv_read_ex nhung parse dong+field song song 8 worker
+# (thread_spawn/join, worker top-level qua global). Main giu: skiprows, tach
+# header, tinh 8 offset tai dau dong, ghep grid, infer/build tap trung
+# (_csv_grid_to_df — khong nhan ban logic cot).
+# Nguong: data_text < 240000 char -> serial (spawn overhead khong dang).
+# Gioi han (giong serial): quote xuong dong trong field khong ho tro (split
+# theo \n), file doc 1 lan qua read_file (handle khong truyen vao ham duoc).
+def _csv_head_names(headline: "str", delimiter: "str", has_header: "i32", names: "list[str]") -> "list[str]":
+    column_names = []
+    use_names = 0
+    if names != None:
+        if len(names) > 0:
+            use_names = 1
+    if use_names == 1:
+        for ni in range(len(names)):
+            column_names.append(names[ni])
+        return column_names
+    hl = headline
+    if len(hl) > 0 and hl[len(hl) - 1] == "\r":
+        hl = hl[0:len(hl) - 1]
+    if has_header == 1:
+        hfields = _split_csv_line(hl, delimiter, "\"")
+        for hf in range(len(hfields)):
+            column_names.append(hfields[hf])
+    else:
+        ffields = _split_csv_line(hl, delimiter, "\"")
+        for fi in range(len(ffields)):
+            column_names.append("column_" + str(fi))
+    return column_names
+
+
+def _csv_line_start(text: "str", guess: "i32") -> "i32":
+    p = text.find("\n", guess)
+    if p < 0:
+        return len(text)
+    return p + 1
+
+
+def _csv_chunk_text(data_text: "str", a: "i32", b: "i32", last: "i32") -> "str":
+    if last == 1:
+        if a >= len(data_text):
+            return ""
+        return data_text[a:len(data_text)]
+    e = b - 1
+    if e <= a:
+        return ""
+    return data_text[a:e]
+
+
+def _csv_chunk_cells(text: "str", drop_trailing: "i32") -> "list[str]":
+    global g_cpn
+    global g_cpd
+    out = []
+    if text == "":
+        return out
+    clines = text.split("\n")
+    nl = len(clines)
+    if drop_trailing == 1 and nl > 0 and clines[nl - 1] == "":
+        clines.pop()
+        nl = nl - 1
+    ncols = g_cpn
+    delim = g_cpd
+    for li in range(nl):
+        line = clines[li]
+        ln = len(line)
+        if ln > 0 and line[ln - 1] == "\r":
+            line = line[0:ln - 1]
+        if line.find("\"") == 0 - 1:
+            flds = line.split(delim)
+        else:
+            flds = _split_csv_line(line, delim, "\"")
+        nf = len(flds)
+        for cc in range(ncols):
+            if cc < nf:
+                out.append(flds[cc])
+            else:
+                out.append("")
+    return out
+
+
+def _cp_w0() -> "list[str]":
+    global g_cp0
+    return _csv_chunk_cells(g_cp0, 0)
+
+
+def _cp_w1() -> "list[str]":
+    global g_cp1
+    return _csv_chunk_cells(g_cp1, 0)
+
+
+def _cp_w2() -> "list[str]":
+    global g_cp2
+    return _csv_chunk_cells(g_cp2, 0)
+
+
+def _cp_w3() -> "list[str]":
+    global g_cp3
+    return _csv_chunk_cells(g_cp3, 0)
+
+
+def _cp_w4() -> "list[str]":
+    global g_cp4
+    return _csv_chunk_cells(g_cp4, 0)
+
+
+def _cp_w5() -> "list[str]":
+    global g_cp5
+    return _csv_chunk_cells(g_cp5, 0)
+
+
+def _cp_w6() -> "list[str]":
+    global g_cp6
+    return _csv_chunk_cells(g_cp6, 0)
+
+
+def _cp_w7() -> "list[str]":
+    global g_cp7
+    return _csv_chunk_cells(g_cp7, 1)
+
+
+def csv_read_par(csv_text: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
+    if csv_text == "":
+        return empty_df()
+    body = csv_text
+    if skiprows > 0:
+        p = 0
+        sr = 0
+        while sr < skiprows:
+            q = body.find("\n", p)
+            if q < 0:
+                return empty_df()
+            p = q + 1
+            sr = sr + 1
+        body = body[p:len(body)]
+    headline = ""
+    data_text = ""
+    if has_header == 1:
+        he = body.find("\n")
+        if he < 0:
+            headline = body
+            data_text = ""
+        else:
+            headline = body[0:he]
+            data_text = body[he + 1:len(body)]
+    else:
+        he = body.find("\n")
+        if he < 0:
+            headline = body
+        else:
+            headline = body[0:he]
+        data_text = body
+    column_names = _csv_head_names(headline, delimiter, has_header, names)
+    n_cols = len(column_names)
+    if data_text == "" or len(data_text) < 240000:
+        return csv_read_ex(csv_text, delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, parse_dates)
+    total = len(data_text)
+    o0 = 0
+    o1 = _csv_line_start(data_text, int(total / 8))
+    o2 = _csv_line_start(data_text, int(total * 2 / 8))
+    o3 = _csv_line_start(data_text, int(total * 3 / 8))
+    o4 = _csv_line_start(data_text, int(total * 4 / 8))
+    o5 = _csv_line_start(data_text, int(total * 5 / 8))
+    o6 = _csv_line_start(data_text, int(total * 6 / 8))
+    o7 = _csv_line_start(data_text, int(total * 7 / 8))
+    global g_cp0
+    global g_cp1
+    global g_cp2
+    global g_cp3
+    global g_cp4
+    global g_cp5
+    global g_cp6
+    global g_cp7
+    global g_cpn
+    global g_cpd
+    g_cpn = n_cols
+    g_cpd = delimiter
+    g_cp0 = _csv_chunk_text(data_text, o0, o1, 0)
+    g_cp1 = _csv_chunk_text(data_text, o1, o2, 0)
+    g_cp2 = _csv_chunk_text(data_text, o2, o3, 0)
+    g_cp3 = _csv_chunk_text(data_text, o3, o4, 0)
+    g_cp4 = _csv_chunk_text(data_text, o4, o5, 0)
+    g_cp5 = _csv_chunk_text(data_text, o5, o6, 0)
+    g_cp6 = _csv_chunk_text(data_text, o6, o7, 0)
+    g_cp7 = _csv_chunk_text(data_text, o7, 0, 1)
+    h0 = thread_spawn(_cp_w0)
+    h1 = thread_spawn(_cp_w1)
+    h2 = thread_spawn(_cp_w2)
+    h3 = thread_spawn(_cp_w3)
+    h4 = thread_spawn(_cp_w4)
+    h5 = thread_spawn(_cp_w5)
+    h6 = thread_spawn(_cp_w6)
+    h7 = thread_spawn(_cp_w7)
+    r0 = thread_join(h0)
+    r1 = thread_join(h1)
+    r2 = thread_join(h2)
+    r3 = thread_join(h3)
+    r4 = thread_join(h4)
+    r5 = thread_join(h5)
+    r6 = thread_join(h6)
+    r7 = thread_join(h7)
+    grid = []
+    for xi in range(len(r0)):
+        grid.append(r0[xi])
+    for xi in range(len(r1)):
+        grid.append(r1[xi])
+    for xi in range(len(r2)):
+        grid.append(r2[xi])
+    for xi in range(len(r3)):
+        grid.append(r3[xi])
+    for xi in range(len(r4)):
+        grid.append(r4[xi])
+    for xi in range(len(r5)):
+        grid.append(r5[xi])
+    for xi in range(len(r6)):
+        grid.append(r6[xi])
+    for xi in range(len(r7)):
+        grid.append(r7[xi])
+    total_data = int(len(grid) / n_cols)
+    n_spec = 0
+    if dtypes_spec != None:
+        n_spec = len(dtypes_spec)
+    n_na = 0
+    if na_values != None:
+        n_na = len(na_values)
+    return _csv_grid_to_df(column_names, grid, total_data, null_value, na_values, n_na, dtypes_spec, n_spec, parse_dates)
+
+
+def csv_read_file_par(file_path: "str", delimiter: "str", has_header: "i32", null_value: "str", names: "list[str]", dtypes_spec: "list[str]", na_values: "list[str]", skiprows: "i32", parse_dates: "list[str]") -> "DataFrame":
+    if file_exists(file_path) == 0:
+        raise ValueError("File not found: " + file_path)
+    return csv_read_par(read_file(file_path), delimiter, has_header, null_value, names, dtypes_spec, na_values, skiprows, parse_dates)
 
 
 # ------------------------ chunked read (pandas chunksize) --------------------

@@ -265,6 +265,61 @@ def main() -> "i32":
         print("t8 FAIL val")
     if fails == 0:
         print("t8 stream chunks OK")
+    # t9: csv_read_par (song song 8 worker) == csv_read_ex (serial)
+    # 15000 dong ~250KB > nguong 240000 char -> chay duong thread that
+    t9_parts = []
+    t9_i = 0
+    while t9_i < 15000:
+        if t9_i % 3 == 0:
+            t9_nm = "\"N, " + str(t9_i) + "\""
+        else:
+            t9_nm = "n" + str(t9_i)
+        if t9_i % 7 == 0:
+            t9_sc = ""
+        else:
+            t9_sc = str(50.0 + float(t9_i % 50))
+        t9_parts.append(str(t9_i) + "," + t9_nm + "," + t9_sc)
+        t9_i = t9_i + 1
+    t9_body = "id,name,score"
+    t9_k = 0
+    while t9_k < len(t9_parts):
+        t9_body = t9_body + "\n" + t9_parts[t9_k]
+        t9_k = t9_k + 1
+    t9_body = t9_body + "\n"
+    t9_a = csv_read_ex(t9_body, ",", 1, "", [], [], [], 0, [])
+    t9_b = csv_read_par(t9_body, ",", 1, "", [], [], [], 0, [])
+    if t9_a.row_count() != 15000 or t9_b.row_count() != 15000:
+        fails = fails + 1
+        print("t9 FAIL rows")
+    t9_m = 1
+    for t9_c in range(t9_a.column_count()):
+        t9_ca = t9_a.col_at(t9_c)
+        t9_cb = t9_b.col_at(t9_c)
+        if t9_ca.dtype != t9_cb.dtype:
+            t9_m = 0
+        for t9_r in range(t9_a.row_count()):
+            if t9_ca.is_null(t9_r) != t9_cb.is_null(t9_r):
+                t9_m = 0
+            if t9_ca.is_null(t9_r) == 0 and t9_ca.get_string(t9_r) != t9_cb.get_string(t9_r):
+                t9_m = 0
+    if t9_m == 0:
+        fails = fails + 1
+        print("t9 FAIL mismatch")
+    t9_s = csv_read_par(t9_body, ",", 1, "", [], ["i64", "str", "f64"], ["n1"], 0, [])
+    if t9_s.row_count() != 15000:
+        fails = fails + 1
+        print("t9 FAIL spec rows")
+    t9_nc = t9_s.col_by_name("name")
+    if t9_nc.is_null(1) != 1:
+        fails = fails + 1
+        print("t9 FAIL spec na")
+    write_file("_t9par.csv", t9_body)
+    t9_f = csv_read_file_par("_t9par.csv", ",", 1, "", [], [], [], 0, [])
+    if t9_f.row_count() != 15000:
+        fails = fails + 1
+        print("t9 FAIL file rows")
+    if fails == 0:
+        print("t9 parallel csv OK")
     if fails == 0:
         print("ALL CSV TESTS PASS")
     else:

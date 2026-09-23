@@ -29,10 +29,18 @@ p_all = 'tvsrc/tokenvector_data_all.tkv'
 all_lines = read(p_all)
 i = None
 for idx, l in enumerate(all_lines):
-    if l.startswith('# -*- coding') and idx + 1 < len(all_lines) and all_lines[idx + 1].startswith('# tokenvector_io.tkv'):
+    if l.startswith('# tokenvector_io.tkv'):
         i = idx
         break
 assert i is not None, 'io header not found in all'
+# lui qua dong trong (splice banner nam giua) de thay tu dau khoi io
+while i > 0 and all_lines[i - 1].strip() == '':
+    i = i - 1
+# neu co banner '====' ngay truoc khoi trong -> giu banner, thay tu header io
+if i > 0 and all_lines[i - 1].startswith('# ===================='):
+    i = i + 1
+    while i < len(all_lines) and all_lines[i].strip() == '':
+        i = i + 1
 k = None
 for idx, l in enumerate(all_lines):
     if l.startswith('def run()') and idx > i:
