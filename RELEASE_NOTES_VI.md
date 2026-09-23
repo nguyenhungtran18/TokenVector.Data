@@ -4,6 +4,38 @@
 
 ---
 
+## ⚡ Phiên Bản 1.0.4-dev (23/09/2026) - Đóng nốt gap pandas (tvsrc v1.7)
+
+**Thư viện tvsrc v1.7** (compiler tkvc không đổi — build bằng toolchain HEAD sạch).
+
+### ✨ Module mới
+* **`tokenvector_pandas.tkv` (36 hàm)** — đóng các gap pandas còn lại (FUNCTION_PARITY §2):
+  * Series.str: `slice_replace` (biên âm kiểu Python), `fullmatch`, `extractall` (→ DataFrame các match), `cat`.
+  * Aggregation: `series_first/last/nth/mad` (MAD = trung vị |x − trung vị|, bỏ null).
+  * Giả lập category: `series_factorize` (+ `_uniques`), `series_category_codes`.
+  * GroupBy: `groupby_first/last/nth` (tùy chọn dropna), `groupby_head/tail` (giữ thứ tự dòng).
+  * Reshape: `stack`/`unstack` (long↔wide), `merge_ordered` (outer gộp key bằng nhau thành 1 dòng, ffill tùy chọn).
+  * Datetime múi giờ: `dt_utc_offset` (giây), `dt_tz_convert`, `dt_tz_to_utc` — DST US Eastern post-2007, mũi khác fixed (gần đúng, không tz database).
+  * Expression engine: `df_eval`/`df_query` — shunting-yard: so sánh, `+ - * / % // **`, `and/or/not`, so sánh chuỗi, minus đơn (`df.query("x > 5 and name == 'te'")`).
+* **`tokenvector_read_json.tkv` (16 hàm)** — JSON native:
+  * `json_read_string/file` (orient=records; chuẩn hóa dtype per-cột bool>i64>f64>str, `null` tường minh an toàn), `json_read_records` (cột số/thời gian → i64 epoch ms), `jsonl_read_string/file` (bỏ dòng rác), `json_read_object` (object đơn → DF 1 dòng), `json_write_string/file` (orient=records, escape đúng).
+
+### 🔎 Sự thật runtime (probe, không đoán)
+* **Bug runtime nghiêm trọng:** append một list vào list-lồng qua param của hàm khác treo vĩnh viễn (append inline thì ổn). Các hàm groupby mới gom nhóm bằng flat array i64 + mốc ranh giới — vừa né vừa nhanh hơn.
+* Quy tắc compiler xác nhận: cấm `while True:`, cấm `None` với record (dùng sentinel), không có `ord()/chr()`, hằng module phải literal, cấm chain thuộc tính 2 cấp, nested func không nhận param record, cấm literal kiểu `1e-9`.
+* tkvc.exe trong dist của compiler repo là bản build từ tree dirty (regression hằng cross-module); toàn bộ build phiên này dùng toolchain HEAD sạch trong worktree riêng.
+
+### ✅ Kiểm chứng
+* Suite acceptance mới `p2_check.tkv`: **110/110 PASS** (string, factorize, agg, groupby, stack, merge_ordered, tz, query, JSON gồm roundtrip + escape).
+* 17 suite cũ chạy lại đều xanh (apply/arr/base/comp/core/csv2/dt/feat/io/num/pd/rel/stat/stats/strings/v15/vec).
+* Merged làm tươi idempotent (`tvsrc/_patch_merged2.py`); cả `tokenvector_data_all.tkv` lẫn `_libbuild.tkv` build sạch.
+* DLL rebuild qua tkvc → IL → chuyển library-IL (`_mk_dll.py`) → ilasm; smoke reflection C# pass **20/20 symbol mới v1.7**. Đã đóng gói `TokenVector.Data.1.0.4-dev.nupkg`.
+
+### 📊 Parity
+* FUNCTION_PARITY.md cập nhật: coverage **~80% → ~95%** pandas cho workload tabular/OLAP. Còn lại: Parquet/Feather, sort_index, groupby().resample (compose được hôm nay), dtype system (i32/u8/f32/datetime64), MultiIndex (loại trừ có chủ đích).
+
+---
+
 ## ⚡ Phiên Bản 1.0.3-dev (22/09/2026) - CSV datetime & encoding (tvsrc v1.6.3)
 
 **Phiên bản thư viện tvsrc v1.6.3** (compiler tkvc không đổi; DLL chưa rebuild).

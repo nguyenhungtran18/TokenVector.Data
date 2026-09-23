@@ -4,6 +4,38 @@
 
 ---
 
+## ⚡ Version 1.0.4-dev (2026-09-23) - Pandas parity closure (tvsrc v1.7)
+
+**Internal tvsrc library version v1.7** (compiler tkvc unchanged — built with a clean HEAD toolchain).
+
+### ✨ New modules
+* **`tokenvector_pandas.tkv` (36 functions)** — closes the remaining pandas gaps from FUNCTION_PARITY §2:
+  * Series.str: `slice_replace` (Python-style negative bounds), `fullmatch`, `extractall` (→ DataFrame of matches), `cat`.
+  * Aggregations: `series_first` / `series_last` / `series_nth` / `series_mad` (median absolute deviation, null-skipping).
+  * Category emulation: `series_factorize` (+ `series_factorize_uniques`), `series_category_codes`.
+  * GroupBy: `groupby_first` / `groupby_last` / `groupby_nth` (dropna option), `groupby_head` / `groupby_tail` (row order preserved).
+  * Reshape: `stack` / `unstack` (long↔wide via value name), `merge_ordered` (outer merge that coalesces equal keys into one row, optional `ffill`).
+  * Datetime tz: `dt_utc_offset` (seconds), `dt_tz_convert`, `dt_tz_to_utc` — US Eastern DST rules post-2007, other zones fixed offsets (approximate, no tz database).
+  * Expression engine: `df_eval` / `df_query` — shunting-yard evaluator with comparisons, `+ - * / % // **`, `and/or/not`, string equality, unary minus (`df.query("x > 5 and name == 'te'")`).
+* **`tokenvector_read_json.tkv` (16 functions)** — native JSON:
+  * `json_read_string` / `json_read_file` (orient=records; per-column dtype normalization bool>i64>f64>str, explicit JSON `null` is null-safe), `json_read_records` (coerce listed numeric/time columns to i64 epoch-ms), `jsonl_read_string` / `jsonl_read_file` (garbage lines skipped), `json_read_object` (single object → 1-row DF), `json_write_string` / `json_write_file` (records orientation, proper escaping).
+
+### 🔎 Runtime facts (probed, not guessed)
+* **Severe runtime bug found:** appending a list into a nested list through another function's parameter hangs forever (inline append is fine). The new groupby helpers therefore group via flat i64 arrays + boundary offsets — faster and safe.
+* Compiler rules confirmed: `while True:` banned, `None` against records banned (use sentinel objects), no `ord()`/`chr()` builtins, module-level constants must be literals, two-level attribute chains banned, nested functions may not take record-typed params, `1e-9`-style literals rejected.
+* The tkvc.exe in the compiler repo's dist was built from a dirty tree and regressed cross-module constants; a clean HEAD worktree toolchain was used for all builds this session.
+
+### ✅ Verification
+* New acceptance suite `p2_check.tkv`: **110/110 PASS** (string, factorize, agg, groupby, stack, merge_ordered, tz, query, JSON incl. roundtrip + escapes).
+* All 17 existing suites re-run green (apply/arr/base/comp/core/csv2/dt/feat/io/num/pd/rel/stat/stats/strings/v15/vec).
+* Merged sources refreshed idempotently (`tvsrc/_patch_merged2.py`); both `tokenvector_data_all.tkv` and `_libbuild.tkv` build clean.
+* DLL rebuilt through tkvc → IL → library-IL conversion (`_mk_dll.py`) → ilasm; C# reflection smoke passes with **20/20 new v1.7 symbols** callable. Package `TokenVector.Data.1.0.4-dev.nupkg` created.
+
+### 📊 Parity
+* FUNCTION_PARITY.md updated: coverage **~80% → ~95%** of pandas for tabular/OLAP workloads. Remaining: Parquet/Feather, sort_index, groupby().resample (composable today), dtype system (i32/u8/f32/datetime64), MultiIndex (intentionally excluded).
+
+---
+
 ## ⚡ Version 1.0.3-dev (2026-09-22) - CSV datetime & encoding (tvsrc v1.6.3)
 
 **Internal tvsrc library version v1.6.3** (compiler tkvc unchanged; DLL rebuild pending).

@@ -1,11 +1,86 @@
-# SESSION HANDOFF — 2026-09-22 (đọc file này trước khi làm tiếp)
+# SESSION HANDOFF — 2026-09-23 (đọc file này trước khi làm tiếp)
 
-## Trạng thái: ĐÃ COMMIT (user yêu cầu) — Data repo: 7476d63 feat io v1.6.3,
-b205bb9 build DLL/nupkg 1.0.3, 35f7aab docs, 40f1be9 smoke harness. Compiler
-repo: c5bd63e feat encoding on with-open + sync tkvc.exe, 18deb7d dọn 102 .pyc
-tracked. Chưa commit ở compiler (không phải của phiên io): media player
-untracked + images/preview.png + submodule tokenvector-grammar dirty. Chưa
-push (đợi user).
+## Trạng thái: **PHIÊN MỚI (0b) ĐANG DỞ — parity ~100%, 2 module mới chưa build
+pass. Compiler tree (D:\TokenVector) ĐANG DIRTY bởi phiên khác + tkvc.exe dist
+HỎNG — dùng tkvc worktree `/d/TokenVector._head_wt/3.code/dist/tkvc.exe` (đã
+verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b205bb9/
+35f7aab/40f1be9/741a937; compiler c5bd63e/18deb7d. Chưa push (đợi user).
+
+---
+
+## 0b. PHIÊN 2026-09-23 (đêm) — pandas parity ~100% (XONG ✅ — kết quả cuối)
+
+**KẾT QUẢ CUỐI (2026-09-23 sáng):** p2_check **110/110 PASS**; 17/17 suite cũ xanh;
+merged splice idempotent xong (`tvsrc/_patch_merged2.py`, idempotent theo banner);
+DLL rebuild qua tkvc→IL→`_mk_dll.py`→ilasm, smoke reflection **20/20 symbol v1.7**;
+nupkg `TokenVector.Data.1.0.4-dev.nupkg` trong `packages/`;
+FUNCTION_PARITY coverage ~80%→~95% (§3g v1.7); RELEASE_NOTES EN/VI 1.0.4-dev.
+Lịch sử phiên (2 lỗi handoff + bug treo nested-append) giữ nguyên bên dưới để tham khảo.
+
+Mục tiêu user: "làm tiếp đạt phủ 100%" — đóng các gap pandas còn lại trong
+FUNCTION_PARITY.md §2.x (trừ nhóm loại trừ có chủ đích: Parquet/Excel thật,
+dtype system, MultiIndex, index alignment).
+
+### File mới (chưa commit, chưa build pass hết):
+- `tvsrc/tokenvector_pandas.tkv` — 34 defs: slice_replace/fullmatch/extractall/cat,
+  factorize, first/last/nth/mad, groupby_first/last/nth/head/tail, stack/unstack,
+  merge_ordered(ffill), dt_utc_offset/dt_tz_convert/dt_tz_to_utc (DST US
+  post-2007), df_eval/df_query (shunting-yard: + - * / % // ** so sánh and/or/not;
+  CHƯA hỗ trợ `in [...]` — tokenizer nhận nhưng chưa apply).
+- `tvsrc/tokenvector_read_json.tkv` — 14 defs: json_read_string/file (chuan hóa
+  dtype per-cột bool>i64>f64>str, sai loại→null), json_read_records(num_cols,
+  time_cols→epoch ms), json_write_string/file (orient=records), jsonl_read_*,
+  json_read_object. Parser tự viết (\uXXXX bỏ qua như io._json_parse_string).
+- `tvsrc/p2_check.tkv` — suite acceptance 9 nhóm (~60 checks), entry `run`.
+- Probe tạm `_b1/_b2/_b3.tkv` — GIỮ để debug nốt (xóa sau khi xong).
+
+### ⚠️ tkvc.exe trong D:\TokenVector\3.code\dist đang HỎNG (đừng dùng!)
+Build 22:14 từ tree dirty của phiên compiler R4/R6 dở (24 file modified:
+il_codegen, tkv_compile, operators, list_type, control_flow…) — kể cả suite
+cũ `comp_check.tkv` cũng fail `DT_I64 chua duoc khai bao`. **KHÔNG đụng tree
+compiler đó.** Bản TỐT đã build từ HEAD worktree:
+`/d/TokenVector._head_wt/3.code/dist/tkvc.exe` (HEAD=18deb7d, đã verify
+`comp_check --entry run` SUCCESS). Xóa worktree khi xong phiên.
+
+### Bắt được 2 lỗi cuối (sửa ĐẦU TIÊN sáng mai):
+1. `_b2` (read_json): `literal '0' khong dung voi dtype 'str'` tại
+   list_type.codegen_list_append — biến `vals` dùng chung 4 nhánh dtype với
+   literal khác loại (0 / 0.0 / "") làm typeflow xung đột → **đổi tên riêng
+   mỗi nhánh** (vals_b/vals_i/vals_f/vals_s).
+2. `_b3` (pandas): `Ky vong dtype ..., gap 'DataFrame'` tại
+   typed_dsl_parser.parse_param — nested def với param record
+   (`_nth_fn(sub: "DataFrame")`) parser không nhận (mặc dù nonlocal đã đúng;
+   v1.3 chỉ mở `func(DataFrame)->DataFrame` ở param hàm TOP-LEVEL) → **hoist
+   nested func lên top-level + cấu hình qua biến global có kiểu**
+   (`g_nth: "i32" = 0` style, compiler CÓ hỗ trợ global có kiểu), rồi
+   `groupby_apply(df, keys, _pd_nth_fn, 1)`.
+
+### Sự thật compiler mới bắt được phiên này (ghi nhớ cho code TKV):
+- CẤM `while True:` → dùng `more = 1 / while more == 1`.
+- CẤM `None` với record → sentinel object (kind 0) từ factory `_jt_new(0)`.
+- Không có `ord()`/`chr()` builtin (gap R9) → hex digit = bảng if-chain.
+- Hằng module-level phải literal (không gọi hàm lúc khai báo).
+- CẤM chain 2 cấp `s.valid.bits` → gán biến trung gian.
+- Mask không có is_valid/take → đọc `.bits[i]` qua biến trung gian.
+- Nested func BẮT BUỘC dòng đầu `nonlocal <bien bat>, ...` (đã probe từ trước,
+  phiên này xác nhận lại); param record của nested func CHƯA qua được parser.
+- Linter: cấm `1e-9` (special number) → viết `0.000000001`.
+- build entry suite là `--entry run` (không phải main).
+
+### Checklist sáng mai (theo thứ tự):
+1. Sửa 2 lỗi trên → build `_b2`, `_b3` xanh với tkvc của worktree.
+2. Build + chạy `p2_check` (`--entry run`) → sửa tới khi P2OK (FAILS= 0).
+3. Extend `tvsrc/_patch_merged.py` (idempotent) splice thêm
+   tokenvector_pandas + tokenvector_read_json vào 2 file merged.
+4. Regression toàn bộ 16 suite cũ + pd_check + p2_check (đều phải xanh).
+5. Rebuild DLL/nupkg 1.0.4-dev (quy trình+MSYS_NO_PATHCONV=1 như mục 0,
+   smoke.cs reflection — nhớ chọn tkvc TỐT: rebuild compiler khi tree
+   compiler đã sạch, hoặc dùng tkvc worktree).
+6. Docs: FUNCTION_PARITY (§1 các row + section 3g v1.7 + coverage mới —
+   sau đợt này ước ~90–95%, còn lại Parquet/Excel/dtype/MultiIndex/index),
+   RELEASE_NOTES EN/VI, handoff mục này thành "XONG".
+7. Commit Data repo (3 commit: feat modules+suite / build merged+DLL / docs).
+   Xóa `_b*`, worktree `D:\TokenVector._head_wt`.
 
 ---
 

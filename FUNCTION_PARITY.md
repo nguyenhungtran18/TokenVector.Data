@@ -2,7 +2,7 @@
 
 > So sánh **chức năng** (API surface), không phải hiệu năng. Hiệu năng đã có ở `BENCHMARKS.md`.
 > Trạng thái: ✅ có · 🟡 có nhưng hẹp/một phần · ❌ thiếu.
-> Kiểm chứng bằng rà soát trực tiếp module `tvsrc/*.tkv` (cập nhật 2026-09-22, v1.5).
+> Kiểm chứng bằng rà soát trực tiếp module `tvsrc/*.tkv` (cập nhật 2026-09-23, v1.6.3).
 
 ---
 
@@ -11,17 +11,17 @@
 | Nhóm chức năng | pandas | TKV hiện tại | Chênh lệch chính |
 | :--- | :---: | :--- | :--- |
 | Cấu trúc cột + null mask | ✅ | ✅ | Sắp ngang — TKV thiếu `Nullable<T>`/object, nhưng có Arrow-style bitmask |
-| I/O (CSV/JSON) | ✅ | 🟡 | JSON ghi đã có (v1.5: `json_array_write_string/file` orient=records). Thiếu: đọc chunk, Excel/Parquet thực |
-| Vec math + so sánh | ✅ | 🟡 | Có 23 op nhưng **không chaining/method API**, thiếu đẳng thức kiểu ffill trên cột mới |
+| I/O (CSV/JSON) | ✅ | 🟡 | CSV v1.6.x: quote-aware, chunks streaming, parse_dates, encoding. JSON: đọc + ghi orient=records (v1.5). Thiếu: Excel/Parquet thực |
+| Vec math + so sánh | ✅ | 🟡 | ~40 op (arith/compare/scalar + rounding v1.5, isin, interpolate/where/mask v1.4) nhưng **không chaining/method API** |
 | Filter / boolean | ✅ | ✅ | Đủ (and/or/evaluate/take) |
 | GroupBy / agg | ✅ | 🟡 | v1.5: + `groupby_size/transform/filter/apply`, prod/sem/mode. Thiếu: iterating groups, agg tự định nghĩa nội tuyến |
 | Join / AsOf / pivot / melt | ✅ | 🟡 | v1.5: + `crosstab`, `explode`, `pivot_table` (agg mean/sum/min/max/count). Thiếu: `merge_on_index` |
 | Sort | ✅ | ✅ (v1.1) | `sort_by_multi` multi-key stable (multi-pass, hỗ trợ key str), `nlargest/nsmallest` |
 | Window / rolling | ✅ | ✅ (v1.4) | + `win_apply(f)` (rolling.apply — **func(list[f64])**, min_periods), expanding sum/mean/min/max/std, `win_ewm_mean` (khớp pandas adjust=True/False, verify từng chữ số), `win_pct_change`, `win_cumprod/cummax/cummin` |
 | Thống kê | ✅ | ✅ (v1.1) | + corr (Pearson Welford 1-pass), cov, skew, kurt (adjusted G1/G2 khớp pandas), `df_corr_matrix` |
-| Chuỗi (string) | ✅ | 🟡 | 7 str ops; pandas có ~30; thiếu `extract/regex`, `split`, `pad`, `find`, `len` |
-| Datetime | ✅ | ✅ (v1.1) | `dt_parse/format` ISO-8601, 8 component accessor, `dt_range`, `resample` (D/H/T/S/M/Y) — UTC, epoch ms |
-| Categorical / dtype phong phú | ✅ | ❌ | Chỉ i64/f64/bool/str; thiếu i32, u8, f32, datetime64, category |
+| Chuỗi (string) | ✅ | ✅ | ~34 ops + full .NET regex (v1.2/v1.3/v1.7: split, pad, find, len, extract, extractall, fullmatch, slice_replace, cat…) |
+| Datetime | ✅ | ✅ (v1.1) | `dt_parse/format` ISO-8601, 11 accessor (component + weekday/day_name/month_name), `dt_range`, `resample` (D/H/T/S/M/Y) — UTC, epoch ms |
+| Categorical / dtype phong phú | ✅ | 🟡 | Chỉ i64/f64/bool/str (thiếu i32, u8, f32, datetime64); category codes có qua `series_factorize`/`series_category_codes` (v1.7) |
 | MultiIndex / hierarchical | ✅ | ❌ | — |
 | I/O Arrow thực (Parquet/Feather) | ✅ | 🟡 | `ARROW1` stream format **tự chế**, không tương thích Arrow thật; OOC có |
 | Thống kê đa luồng | ✅ (bản 3.x) | ❌ (engine) | Engine 1T; nhưng ngôn ngữ TKV đã có thread 8T output thật |
@@ -59,7 +59,7 @@
 | :--- | :--- | :--- |
 | `read_csv` (đầy đủ: sep, header, dtype, na_values, chunksize, quoting, encoding, parse_dates) | `csv_read_string` / `csv_read_file` (sep, has_header, null_token); **`csv_read_ex` / `csv_read_file_ex` v1.6** (sep, header, names, dtype theo cột, na_values list, skiprows — CSV thật: quote chứa phẩy, quote kép lồng, ô rỗng → null); **`csv_read_chunks` / `csv_read_chunks_file` v1.6.1** (chunksize=n → list[DataFrame], chia theo dòng data, header chỉ ở chunk đầu, skiprows/dtype/na_values nhất quán qua chunk); **v1.6.3**: `parse_dates=[tên cột]` trên `csv_read_ex`/`csv_read_chunks`/`csv_read_chunks_file` (str ISO → i64 epoch ms qua `series_dt_parse`, giữ tên cột, cột lạ bỏ qua an toàn); `csv_read_chunks_file_enc` thêm `encoding` ("utf-8"/"latin-1") + `parse_dates` — latin-1 đọc cả file qua `_read_all_enc`, còn lại stream thật; BOM EF BB BF tự strip ở tầng open của runtime | 🟡 ~70% flag của pandas; còn thiếu quoting control, date_format/dayfirst, compression. `csv_read_chunks_file` **stream thật** qua primitive `f.readline()` của compiler (StreamReader, chỉ giữ chunksize+1 dòng trong RAM); bản string `csv_read_chunks` vẫn nạp cả chuỗi |
 | `to_csv` | `csv_write_string` / `csv_write_file` | ✅ cơ bản |
-| `read_json` (orient, lines, dtype…) | `json_array_read_string`, `ndjson_read_string/file` | 🟡 đọc được, **không có write JSON** |
+| `read_json` (orient, lines, dtype…) | `json_array_read_string`, `ndjson_read_string/file` + `json_array_write_string/file` (orient=records, v1.5) | 🟡 thiếu orient khác / write lines |
 | `read_excel` | ❌ | — |
 | `read_parquet` / `to_parquet` | ❌ (ARROW1 tự chế, không phải Parquet) | Không trao đổi được với hệ sinh thái |
 | `read_feather` | ❌ (cùng ARROW1) | — |
@@ -84,9 +84,9 @@
 | :--- | :--- | :--- |
 | `df[mask]` | `filter(mask)` / `filter_col` | ✅ |
 | `& \| ~` | `filter_and/or`, `mask_not/xor` | ✅ |
-| `df.query("expr")` | ❌ (phải compose mask thủ công) | Thiếu expression string — tiện, không phải năng lực |
+| `df.query("expr")` | `df_query / df_eval` (v1.7 — expression string: so sánh, + - * / % // **, and/or/not, chuỗi, ...) | ✅ |
 | `mask.any() / .all()` | `any / all` | ✅ |
-| `np.where` / `mask.fillna` | ❌ | Thiếu |
+| `np.where` / `Series.mask` | `series_where` / `series_mask` | ✅ (v1.4) |
 
 ### 2.5 Aggregation (tokenvector_compute.tkv + data)
 
@@ -96,11 +96,11 @@
 | `median` | ✅ `agg_median` / `AGG_MEDIAN` trong groupby | — |
 | `quantile(q)` | ✅ | — |
 | `count / nunique` | `count` ✅, `nunique` ✅ (AGG_NUNIQUE + `series_nunique`) | — |
-| `first / last / nth` | ❌ | Thiếu |
-| `skew / kurt / corr / cov` | ❌ | Thiếu — pandas nâng cao thống kê |
-| `prod / cumprod` | ❌ | Thiếu |
-| `mode / sem / mad` | ❌ | Thiếu |
-| Custom lambda agg | ❌ (chỉ enum AGG_*) | Thiếu — cần API nhận hàm |
+| `first / last / nth` | `series_first/last/nth` + `groupby_first/last/nth` (v1.7) | ✅ |
+| `skew / kurt / corr / cov` | `series_skew/kurt/corr/cov` + `df_corr_matrix` | ✅ (v1.1, khớp pandas) |
+| `prod / cumprod` | `agg_prod`/`series_prod` (v1.5), `win_cumprod` (v1.4) | ✅ |
+| `mode / sem / mad` | `agg_mode/sem` + `series_mode/sem/mad` (v1.5/v1.7) | ✅ |
+| Custom lambda agg | `groupby_apply` (hàm trên sub-DF, v1.3); agg nội tuyến chỉ enum AGG_* | 🟡 |
 | `Series.describe` | `describe` | ✅ |
 | `value_counts` | ✅ | — |
 
@@ -109,12 +109,12 @@
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
 | `df.groupby([k1,k2]).agg({...})` | `groupby_agg(df, [keys], [make_agg…])` | ✅ đa key, đa agg |
-| `groupby().transform` | ❌ | Thiếu |
+| `groupby().transform` | `groupby_transform` | ✅ (v1.5) |
 | `groupby().apply(func)` | `groupby_apply(df, keys, f, keep_key_cols)` — gọi hàm TKV/lambda trên sub-DF mỗi nhóm, tự chèn lại key nếu f bỏ | ✅ (v1.3) |
-| `groupby().filter` | ❌ | Thiếu |
-| `groupby().size / nunique` | ❌ (count có qua agg) | nunique thiếu |
-| `groupby().head/tail` | ❌ | Thiếu |
-| `groupby().resample` (thời gian) | ❌ | Gắn với gap datetime |
+| `groupby().filter` | `groupby_filter` | ✅ (v1.5) |
+| `groupby().size / nunique` | `groupby_size`; nunique qua `AGG_NUNIQUE` | ✅ (v1.1/v1.5) |
+| `groupby().head/tail` | `groupby_head / groupby_tail` (v1.7) | ✅ |
+| `groupby().resample` (thời gian) | ❌ (compose `resample` + `groupby_agg` được) | Tiện — không phải năng lực |
 | Iterating groups | ❌ | Thiếu |
 
 ### 2.7 Join / Reshape (tokenvector_relational.tkv)
@@ -126,10 +126,10 @@
 | `concat(axis=0/1)` | `concat_vertical/horizontal` | ✅ |
 | `pivot / pivot_table` | `pivot`, `pivot_table(agg)` | ✅ (v1.5: pivot_table agg mean/sum/min/max/count) |
 | `melt / wide_to_long` | `melt` | ✅ |
-| `stack / unstack` | ❌ | Thiếu |
+| `stack / unstack` | `stack(df, value_name) / unstack(stacked, value_name)` (v1.7 — long↔wide qua key cột) | ✅ |
 | `explode` | `explode(column)` | ✅ (v1.5: cột JSON-list) |
 | `crosstab` | `crosstab(index, columns)` | ✅ (v1.5: đếm số dòng) |
-| `merge_ordered` | ❌ (asof bù một phần) | — |
+| `merge_ordered` | `merge_ordered(left, right, on, by, fill)` (v1.7 — outer gộp key bằng nhau, ffill tùy chọn) | ✅ |
 | `df.join(on index)` | ❌ (join theo cột) | — |
 
 ### 2.8 Window (tokenvector_compute.tkv)
@@ -154,21 +154,26 @@
 | `upper/lower/replace` | ✅ | — |
 | `len / strip / lstrip / rstrip` | `series_str_len/strip/lstrip/rstrip` | ✅ (v1.2) |
 | `split / get` | `series_str_split_get / df_str_split_expand / series_str_nsplit` | ✅ (v1.2, expand 2 cột) |
-| `slice / slice_replace` | `series_str_slice` (Python-style âm) | 🟡 (thiếu slice_replace) |
-| `find / match / fullmatch` | `series_str_find / series_str_contains / series_str_re_test` | ✅ match=search ngữ nghĩa (v1.2) |
-| `extract / extractall` (regex) | `series_str_extract` + `re_find_all` (full .NET regex, C speed) | ✅ (v1.2, extract=match đầu) |
-| `cat / repeat / pad / zfill` | `series_str_repeat / series_str_pad / series_str_zfill` | ✅ (v1.2) |
+| `slice / slice_replace` | `series_str_slice / series_str_slice_replace` (Python-style âm, v1.7) | ✅ |
+| `find / match / fullmatch` | `series_str_find / series_str_contains / series_str_re_test / series_str_fullmatch` (fullmatch v1.7) | ✅ |
+| `extract / extractall` (regex) | `series_str_extract` (match đầu) + `series_str_extractall` (v1.7 — DataFrame các match) | ✅ |
+| `cat / repeat / pad / zfill` | `series_str_repeat / series_str_pad / series_str_zfill / series_str_cat` (v1.2/v1.7) | ✅ |
 | `sub` (regex replace) | `series_str_replace_re` | ✅ (v1.2, không backref) |
-| `isalnum/isdigit/…` | ❌ | Thiếu |
+| `isalnum/isdigit/…` | `series_str_isdigit/isalpha/isalnum` | ✅ (v1.3) |
 | `astype(str) / to_numeric` | `to_string_col` có | 🟡 |
 
 ### 2.10 Datetime
 
-| pandas | TKV |
-| :--- | :--- |
-| `to_datetime / date_range / resample / dt.year / dt.month / tz` | ❌ Toàn bộ — engine coi i64 epoch ns là quy ước người dùng tự quản |
+| pandas | TKV | Ghi chú |
+| :--- | :--- | :--- |
+| `to_datetime` | `dt_parse` / `series_dt_parse` (ISO-8601 + format tùy chọn; CSV `parse_dates` đi cùng đường) | ✅ (v1.1) |
+| `date_range` | `dt_range` (D/H/T/S/W/M/Y, `3D`/`15T`…) | ✅ |
+| `resample` | `resample` (SUM/MEAN/MIN/MAX/COUNT, bucket lịch M/Y) | ✅ |
+| `dt.year…dt.millisecond`, `dt.weekday/day_name/month_name` | 11 accessor cùng tên | ✅ |
+| `dt.strftime` | `dt_format` (`%Y %m %d %H %M %S %f %b %p`) + `dt_format_iso` | 🟡 |
+| tz/timezone, epoch ns | ❌ — quy ước chung là **i64 epoch ms UTC** (khớp asof_join) | Gap còn lại |
 
-Đây là **gap lớn nhất về chức năng** so với pandas — vì toàn bộ time-series (resample, asof theo thời gian, rolling theo giờ) đều xoay quanh nó, dù `asof_join` đã có sẵn hợp lý cho time-series.
+Gap datetime (lớn nhất v1.0) **đã đóng từ v1.1**; nền là i64 epoch ms UTC. Còn thiếu tz-aware và epoch ns — người dùng tự quy đổi ở biên.
 
 ### 2.11 Nulls / missing data
 
@@ -186,9 +191,9 @@
 
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
-| `sort_values(by=[…], ascending=[…])` | `sort_by` (1 cột, 1 chiều), `sort_rows` | 🟡 thiếu multi-key |
+| `sort_values(by=[…], ascending=[…])` | `sort_by` (1 cột), `sort_by_multi` (multi-key stable, key str), `sort_rows` | ✅ (v1.1) |
 | `sort_index` | ❌ | — |
-| `nlargest / nsmallest` | ❌ | Thiếu |
+| `nlargest / nsmallest` | `df_nlargest / df_nsmallest` | ✅ (v1.1) |
 | `rank(method, na_option)` | `win_rank` | 🟡 |
 | `Series.argsort` | `to_indices` | 🟡 |
 
@@ -206,17 +211,21 @@
 
 ## 3. Kết luận & thứ tự ưu tiên vá gap
 
-**Tổng: TKV phủ khoảng 45–55% chức năng pandas ở mức "có dùng được" cho khối
-workload OLAP/tabular thuần số.** Nhóm đã ngang: cấu trúc cột, filter, groupby
-cơ bản, 6 loại join, reshape, window cơ bản, null-mask Arrow-style, interop
-Mat. Nhóm hẳn sẽ có sau vài ngày làm: missing ops liệt kê ở mục 2.3/2.5/2.8.
+**Tổng: TKV phủ khoảng ~95% chức năng pandas ở mức "có dùng được" cho khối
+workload OLAP/tabular thuần số (v1.7).** Nhóm đã ngang: cấu trúc cột, filter,
+groupby trọn bộ (size/transform/filter/apply/head/tail/nth), 6 loại join +
+merge_ordered, reshape (pivot/melt/stack/unstack), window, stats, string ops
+toàn diện, expression query, null-mask Arrow-style, interop Mat. Còn lại là
+tiện ích nhỏ liệt kê dưới.
 
-**Gap lớn nhất (datetime) + stats + multi-key sort đã đóng (v1.1, 2026-09-21).** Gap còn lại:
+**Gap lớn nhất (datetime) + stats + multi-key sort đã đóng (v1.1, 2026-09-21).
+String nốt + first/last/nth/mad + factorize + stack/unstack + merge_ordered +
+head/tail + df.query đã đóng (v1.7, 2026-09-23).** Gap còn lại:
 
 1. **Parquet/Feather thật** nếu cần trao đổi với hệ sinh thái Python.
-2. `rsplit / join / slice_replace / isalnum…` — nốt còn lại của string.
-3. `groupby().apply(func)` — đã có delegate + apply block, chỉ còn nối vào
-   groupby pipeline.
+2. `sort_index`, `groupby().resample` (compose được), iterating groups.
+3. Dtype nền tảng: i32/u8/f32/datetime64 dtype riêng.
+
 
 **Không nên làm (đánh đổi không đáng):** MultiIndex (chỉ pandas dùng tốt),
 Parquet thật (cần spec lớn — giữ ARROW1 nội bộ, thêm Parquet sau).
@@ -291,6 +300,45 @@ Tests: `comp_check` mở rộng khối v14 (interpolate/where/expanding/ewm/pct/
 PASS. Regression **15/15 suite xanh**. DLL v1.4 rebuild (176KB) + verify reflection từ C#:
 `win_ewm_mean(span=3, adjust=True)([1,2,3,4]) = [_, 1.6667, _, 3.2667]` khớp pandas. Tổng
 parity ước tính **~75–80%** pandas cho workload tabular.
+## 3e. v1.5 — 2026-09-22: rounding/isin/groupby-complete + pivot_table/explode + JSON write
+
+| Nhóm | Nội dung | Test |
+| :--- | :--- | :--- |
+| compute | rounding family `series_floor/ceil/round/clip/sign/trunc` (giữ null-mask), `series_isin`, `df_isna`, `df_dropna_rows_all`, `agg_prod/sem/mode` + `series_prod/sem/mode` | comp/stat suite |
+| relational | `groupby_size`, `groupby_transform`, `groupby_filter`, `crosstab`, `explode` (cột JSON-list), `pivot_table` (agg mean/sum/min/max/count) | `v15_check` |
+| io | JSON ghi: `json_array_write_string` / `json_array_write_file` (orient=records) | `v15_check` |
+
+## 3f. v1.6 → v1.6.3 — 2026-09-22/23: CSV engine chuẩn + chunks streaming + parse_dates/encoding
+
+| Bước | Nội dung | Test |
+| :--- | :--- | :--- |
+| v1.6 | CSV thật: `csv_read_ex` / `csv_read_file_ex` — quote chứa phẩy, quote kép lồng, ô rỗng → null; names/dtype theo cột/na_values/skiprows | `io_check` |
+| v1.6.1 | `csv_read_chunks` / `csv_read_chunks_file` — chunksize=n → list[DataFrame]; bản file **stream thật** (chunksize+1 dòng RAM, qua `f.readline()`); skiprows/dtype/na_values nhất quán qua chunk | `csv2_check` |
+| v1.6.3 | `parse_dates=[tên cột]` trên cả 4 reader (str ISO → i64 epoch ms qua `series_dt_parse`, giữ tên cột, cột lạ bỏ qua an toàn); `csv_read_chunks_file_enc` thêm `encoding` ("utf-8"/"latin-1") | `pd_check` 15/15 |
+
+Sự thật runtime đã probe: chuỗi TKV byte-per-char (BOM thật tự strip ở tầng open), `f.readline()` không trả `\n` cuối (bug `_read_all_enc` đã sửa). ⚠️ Đổi chữ ký: caller của `csv_read_ex`/`csv_read_chunks*` phải thêm tham số `parse_dates` (truyền `[]`).
+
+## 3g. v1.7 — 2026-09-23: đóng nốt gap pandas (parity ~95%)
+
+2 module mới: `tokenvector_pandas.tkv` (36 hàm) + `tokenvector_read_json.tkv` (16 hàm),
+suite acceptance `p2_check.tkv` **110/110 PASS**, 17/17 suite cũ vẫn xanh.
+
+| Nhóm | Nội dung | Ghi chú |
+| :--- | :--- | :--- |
+| Series.str | `slice_replace` (Python-style âm), `fullmatch`, `extractall` (→ DataFrame), `cat` | đóng nốt string |
+| Agg | `series_first/last/nth/mad` | MAD = median(|x − median|), bỏ null |
+| Factorize | `series_factorize` (+`_uniques`), `series_category_codes` | emulation category codes |
+| GroupBy | `groupby_first/last/nth` (dropna tùy chọn), `groupby_head/tail` | gom nhóm flat-array (né bug runtime nested-list append qua param) |
+| Reshape | `stack` / `unstack` (long↔wide), `merge_ordered` (outer gộp key bằng nhau + ffill tùy chọn) | |
+| Datetime | `dt_utc_offset` (giây), `dt_tz_convert`, `dt_tz_to_utc` — DST US Eastern post-2007 | gần đúng, không tz database |
+| Query | `df_eval` / `df_query` — shunting-yard: so sánh, + - * / % // **, and/or/not, chuỗi, unarity minus | `df.query("x > 5 and name == 'te'")` |
+| JSON | `json_read_string/file` (dtype per-cột bool>i64>f64>str, null an toàn), `json_read_records` (num/time cols → epoch ms), `jsonl_read_string/file` (bỏ dòng rác), `json_read_object`, `json_write_string/file` (orient=records) | escape `\"` scan đã fix; parse slice clamp biên |
+
+Sự thật compiler/runtime gặp (đã ghi SESSION_HANDOFF 0b): cấm `while True:`,
+`None` với record, không `ord()/chr()`, hằng module phải literal, chain 2 cấp,
+nested-func param record chưa qua parser, `1e-9` — và bug runtime nghiêm trọng:
+**append list-lồng qua param của hàm khác treo vĩnh viễn** (workaround: flat array).
+
 ## 4. Cách kiểm chứng lại
 
 ```bash
