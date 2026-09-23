@@ -24,6 +24,42 @@ Current release: **1.0.8-dev**. Status: 21/21 test suites green.
 
 ---
 
+## What this repo does for the TokenVector language
+
+TokenVector.Data is not just *an app written in* TokenVector — it is the
+language's **tabular standard library**, and its heaviest workout.
+
+**If you write TokenVector programs, this repo gives you:**
+- File and text I/O you can trust — CSV (quotes, encodings, chunks, 8-thread
+  parallel), JSON/NDJSON, Excel. One import and you read real-world files:
+  `__tkv_import__ = ["tokenvector_io", "tokenvector_excel"]`.
+- A question layer over your data — SQL (`sql_query`), group-by, 4-way joins
+  + AsOf, window functions — so business logic reads like questions, not loops.
+- .NET for free — the same `.tkv` sources compile to `TokenVector.Data.dll`,
+  so tables built in TokenVector work directly from C#/F# with no Python
+  runtime. Your language just grew an ecosystem bridge.
+
+**If you hack on the TokenVector compiler, this repo is your gym:** every
+feature below is load-tested here, and its failures caught real compiler bugs
+(logged in `SESSION_HANDOFF.md`):
+
+| Language feature | Where this repo leans on it |
+| :--- | :--- |
+| `thread_spawn` / `thread_join` returning `list[T]` | 8-thread CSV parse, 8-thread output sweep |
+| First-class `func` + lambdas as arguments | `series_apply`, `win_apply(f)`, `groupby_apply(f)` |
+| Records, `list[T]`, `dict` | `DataFrame` / `Series` / `Mask`, group hash maps |
+| Strings (`find` / `split` / `slice` / regex) | CSV, XML and JSON parsers from scratch; 34 string ops |
+| File primitives (`read_file`, `write_file`, `f.readline`) | All I/O, true-streaming chunk reads |
+| `datetime()` / `datetime_ticks` | Benchmarks, the datetime module, resampling |
+| Typed globals | Configuring no-argument thread workers |
+
+Known language ceilings this library has hit (all filed for the compiler):
+no binary file write (hence no real Parquet/xlsx), no bitwise ops, thread
+workers take no arguments, no `.dtype` on complex expressions. Practical
+workarounds live in `AGENTS.md`.
+
+---
+
 ## Show me in 30 seconds
 
 ```tokenvector

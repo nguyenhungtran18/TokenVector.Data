@@ -25,6 +25,42 @@ Bản hiện tại: **1.0.8-dev**. Trạng thái: 21/21 suite test xanh.
 
 ---
 
+## Repo này làm gì cho ngôn ngữ TokenVector
+
+TokenVector.Data không chỉ là *app viết bằng* TokenVector — nó là **thư viện
+chuẩn dạng bảng** của ngôn ngữ, đồng thời là bài tập nặng nhất của compiler.
+
+**Nếu bạn viết chương trình TokenVector, repo này cho bạn:**
+- Đọc/ghi file và chuỗi đáng tin — CSV (quote, encoding, chunk, song song 8
+  luồng), JSON/NDJSON, Excel. Một dòng import là đọc được file thực tế:
+  `__tkv_import__ = ["tokenvector_io", "tokenvector_excel"]`.
+- Lớp truy vấn trên dữ liệu — SQL (`sql_query`), group-by, join 4 kiểu +
+  AsOf, hàm cửa sổ — để logic nghiệp vụ đọc như câu hỏi, không phải vòng lặp.
+- .NET miễn phí — cùng mã `.tkv` biên dịch ra `TokenVector.Data.dll`, nên
+  bảng dựng bằng TokenVector xài trực tiếp từ C#/F# mà không cần Python.
+  Ngôn ngữ của bạn vừa có thêm cầu sang hệ sinh thái.
+
+**Nếu bạn phát triển compiler TokenVector, repo này là phòng gym:** tính năng
+nào dưới đây cũng bị bào hàng ngày, và chỗ gãy của nó từng lòi ra bug
+compiler thật (ghi trong `SESSION_HANDOFF.md`):
+
+| Tính năng ngôn ngữ | Repo này dùng ở đâu |
+| :--- | :--- |
+| `thread_spawn` / `thread_join` trả về `list[T]` | Parse CSV 8 luồng, sweep output 8T |
+| `func` hạng nhất + lambda làm tham số | `series_apply`, `win_apply(f)`, `groupby_apply(f)` |
+| Record, `list[T]`, `dict` | `DataFrame` / `Series` / `Mask`, map băm gom nhóm |
+| Chuỗi (`find` / `split` / `slice` / regex) | Parser CSV, XML, JSON viết tay; 34 phép chuỗi |
+| Primitive file (`read_file`, `write_file`, `f.readline`) | Mọi I/O, đọc chunk streaming thật |
+| `datetime()` / `datetime_ticks` | Benchmark, module datetime, resample |
+| Global có kiểu | Cấu hình worker thread không tham số |
+
+Trần ngôn ngữ mà thư viện đã đụng (đã ghi cho compiler): chưa ghi file
+nhị phân (nên chưa có Parquet/xlsx thật), chưa có bitwise, worker thread
+không nhận tham số, không `.dtype` trên biểu thức phức tạp. Mẹo vòng qua nằm
+trong `AGENTS.md`.
+
+---
+
 ## Xem trong 30 giây
 
 ```tokenvector
