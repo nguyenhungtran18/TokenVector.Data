@@ -4,6 +4,32 @@
 
 ---
 
+## ⚡ Version 1.0.5-dev (2026-09-23) - Narrow dtypes + sort_index + groupby iteration (tvsrc v1.8)
+
+**Internal tvsrc library version v1.8** (compiler tkvc unchanged — clean HEAD toolchain).
+
+### ✨ New module + core changes
+* **`tokenvector_dtype.tkv` (17 functions)**:
+  * Narrow dtypes: `series_astype(s, dt)` / `series_to_narrow(s, spec)` — i8/i16/i32/u8/u16/u32/u64 (range clamp; pandas wraps overflow), f32, datetime64 (epoch-ms tag).
+  * `dt_is_narrow`, `dt_parse_spec` (spec string -> DT_*).
+  * `df_sort_index_cols` (sort_index axis=1); axis=0 is identity (TKV preserves row order).
+  * `groupby_group_keys` / `groupby_group` — iterating groups (single or multi key).
+* **Core `tokenvector_data.tkv`**: Series/Col gained `_is_narrow_i64()`; `length/get_f64/get_i64/get_string` auto-widen narrow dtypes; `slice_series/take/clone_*/slice_col` preserve the tag; `make_series` preserves narrow Col tags.
+* **`tokenvector_io.tkv`**: `csv_read_ex`/`csv_read_chunks*` accept new `dtypes_spec` values `"i8"…"u64", "f32", "datetime64"` (ISO -> epoch ms via dt_parse, full null masks) via `_csv_narrow_spec`.
+
+### 🔎 Runtime facts (probed)
+* **Typeflow merges same-named variables across differently-typed branches in one function**: assigning `get_f64()` to `v` in the bool branch then `get_i64()` in a later branch coerced `v` to f64; appending to `list[i64]` produced zeros. Fix: per-branch variable names (`vb`, `vi`) — same root cause as v1.7's `vals_b/i/f/s` lesson.
+* `float(raw)` with raw = `"2026-01-02"` does **not raise** (returns a junk value) — datetime64 columns take the `dt_parse` branch before any numeric parse.
+
+### ✅ Verification
+* `p2_check` extended: **154/154 PASS** (+44 dtype/sort_index/groups checks).
+* 17/17 legacy suites green after the core patch. DLL rebuilt + smoke **28/28 symbols** (20 v1.7 + 8 v1.8). Package `TokenVector.Data.1.0.5-dev.nupkg` created.
+
+### 📊 Parquet/Feather — decided blocked
+* Requires bitwise ops (compiler gap R5) for varint/RLE/thrift plus a binary file I/O primitive (today only text `f.readline()`). Once the compiler closes both, Parquet can be built inside the library with no core changes.
+
+---
+
 ## ⚡ Version 1.0.4-dev (2026-09-23) - Pandas parity closure (tvsrc v1.7)
 
 **Internal tvsrc library version v1.7** (compiler tkvc unchanged — built with a clean HEAD toolchain).

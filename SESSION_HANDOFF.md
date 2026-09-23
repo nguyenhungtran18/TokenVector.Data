@@ -8,6 +8,26 @@ verify tốt).** Phiên trước (io v1.6.3) đã commit hết: Data 7476d63/b20
 
 ---
 
+## 0c. PHIÊN 2026-09-23 (tiếp) — v1.8 dtype hẹp + sort_index + groupby iteration (XONG ✅)
+
+Yêu cầu "làm tiếp nhóm chủ đích hoãn". Kết quả:
+- **Dtype hẹp** (i8/i16/i32/u8/u16/u32/u64/f32/datetime64): tag trên storage chuẩn;
+  module `tokenvector_dtype.tkv` (17 hàm) + vá core Series/Col (`_is_narrow_i64`,
+  get_* tự widen, slice/take/clone giữ tag, make_series giữ tag).
+- **CSV dtypes_spec mới**: "i8"…"u64", "f32", "datetime64" (`_csv_narrow_spec`).
+- **sort_index**: `df_sort_index_cols` (axis=1); axis=0 identity.
+- **Iterating groups**: `groupby_group_keys` + `groupby_group`.
+- **Parquet/Feather**: CHỐT blocked-by-compiler (bitwise R5 + binary file IO).
+  Khi R5 xong làm được trong thư viện.
+- **Bug compiler mới ghi nhận**: typeflow merge biến cùng tên giữa các nhánh khác
+  kiểu trong 1 hàm (v=get_f64 ở nhánh bool → v=get_i64 sau đó bị ép f64 → append
+  list[i64] ra 0). Fix: tên biến riêng từng nhánh (vb/vi).
+- p2_check **154/154**; 17/17 suite cũ xanh; DLL+smoke **28/28**; nupkg
+  `TokenVector.Data.1.0.5-dev.nupkg`; FUNCTION_PARITY ~97% (§3h), RELEASE_NOTES 1.0.5-dev.
+- Lưu ý quy trình: khi splice merged — reset `tokenvector_data_all.tkv` về HEAD
+  TRƯỚC khi chạy `_patch_merged2.py` (tránh nhân đôi như 0b); kiểm tra
+  `grep -c "class _QTok"` phải = 1 sau splice.
+
 ## 0b. PHIÊN 2026-09-23 (đêm) — pandas parity ~100% (XONG ✅ — kết quả cuối)
 
 **KẾT QUẢ CUỐI (2026-09-23 sáng):** p2_check **110/110 PASS**; 17/17 suite cũ xanh;

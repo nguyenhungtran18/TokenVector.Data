@@ -4,6 +4,32 @@
 
 ---
 
+## ⚡ Phiên Bản 1.0.5-dev (23/09/2026) - Dtype hẹp + sort_index + groupby iteration (tvsrc v1.8)
+
+**Thư viện tvsrc v1.8** (compiler tkvc không đổi — toolchain HEAD sạch).
+
+### ✨ Module mới + core
+* **`tokenvector_dtype.tkv` (17 hàm)**:
+  * Dtype hẹp: `series_astype(s, dt)` / `series_to_narrow(s, spec)` — i8/i16/i32/u8/u16/u32/u64 (clamp theo range; pandas wrap-overflow), f32, datetime64 (tag epoch-ms).
+  * `dt_is_narrow`, `dt_parse_spec` (spec string → DT_*).
+  * `df_sort_index_cols` (sort_index axis=1); axis=0 là identity (TKV giữ thứ tự dòng).
+  * `groupby_group_keys` / `groupby_group` — iterating groups (đơn/nhiều key).
+* **Core `tokenvector_data.tkv`**: Series/Col thêm `_is_narrow_i64()`; `length/get_f64/get_i64/get_string` tự widen dtype hẹp; `slice_series/take/clone_*/slice_col` giữ nguyên tag; `make_series` giữ tag của narrow Col.
+* **`tokenvector_io.tkv`**: `csv_read_ex`/`csv_read_chunks*` nhận `dtypes_spec` mới `"i8"…"u64", "f32", "datetime64"` (ISO → epoch ms, null-mask đầy đủ) qua `_csv_narrow_spec`.
+
+### 🔎 Sự thật runtime (probe)
+* **Typeflow merge biến cùng tên giữa các nhánh khác kiểu trong 1 hàm**: biến `v` gán `get_f64()` ở nhánh bool rồi `get_i64()` ở nhánh sau → `v` ép thành f64, `append` vào `list[i64]` ra 0. Fix: tên biến riêng từng nhánh (`vb`, `vi`) — cùng bản chất `vals_b/i/f/s` v1.7.
+* `float(raw)` với raw = `"2026-01-02"` **không raise** (trả về giá trị lạ) — cột datetime64 phải đi nhánh `dt_parse` riêng trước nhánh số.
+
+### ✅ Kiểm chứng
+* `p2_check` mở rộng: **154/154 PASS** (+44 checks dtype/sort_index/groups).
+* 17/17 suite cũ xanh sau khi vá core. DLL rebuild + smoke **28/28 symbol** (20 v1.7 + 8 v1.8). Nupkg `TokenVector.Data.1.0.5-dev.nupkg`.
+
+### 📊 Parquet/Feather — chốtblocked
+* Cần bitwise (gap R5) cho varint/RLE/thrift + primitive binary file I/O (hiện chỉ text). Khi compiler đóng 2 gap này, Parquet làm được ngay trong thư viện.
+
+---
+
 ## ⚡ Phiên Bản 1.0.4-dev (23/09/2026) - Đóng nốt gap pandas (tvsrc v1.7)
 
 **Thư viện tvsrc v1.7** (compiler tkvc không đổi — build bằng toolchain HEAD sạch).

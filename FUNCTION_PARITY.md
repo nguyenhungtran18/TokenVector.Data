@@ -21,7 +21,7 @@
 | Thống kê | ✅ | ✅ (v1.1) | + corr (Pearson Welford 1-pass), cov, skew, kurt (adjusted G1/G2 khớp pandas), `df_corr_matrix` |
 | Chuỗi (string) | ✅ | ✅ | ~34 ops + full .NET regex (v1.2/v1.3/v1.7: split, pad, find, len, extract, extractall, fullmatch, slice_replace, cat…) |
 | Datetime | ✅ | ✅ (v1.1) | `dt_parse/format` ISO-8601, 11 accessor (component + weekday/day_name/month_name), `dt_range`, `resample` (D/H/T/S/M/Y) — UTC, epoch ms |
-| Categorical / dtype phong phú | ✅ | 🟡 | Chỉ i64/f64/bool/str (thiếu i32, u8, f32, datetime64); category codes có qua `series_factorize`/`series_category_codes` (v1.7) |
+| Categorical / dtype phong phú | ✅ | ✅ (v1.8, narrow-emulation) | `series_astype`/`series_to_narrow`: i8/i16/i32/u8/u16/u32/u64 (clamp), f32, datetime64 (tag trên storage i64/f64, get_* tự widen); category codes qua `series_factorize` (v1.7). Khác pandas: không có storage thật 1/2/4 byte (tiết kiệm RAM chưa làm được) |
 | MultiIndex / hierarchical | ✅ | ❌ | — |
 | I/O Arrow thực (Parquet/Feather) | ✅ | 🟡 | `ARROW1` stream format **tự chế**, không tương thích Arrow thật; OOC có |
 | Thống kê đa luồng | ✅ (bản 3.x) | ❌ (engine) | Engine 1T; nhưng ngôn ngữ TKV đã có thread 8T output thật |
@@ -115,7 +115,7 @@
 | `groupby().size / nunique` | `groupby_size`; nunique qua `AGG_NUNIQUE` | ✅ (v1.1/v1.5) |
 | `groupby().head/tail` | `groupby_head / groupby_tail` (v1.7) | ✅ |
 | `groupby().resample` (thời gian) | ❌ (compose `resample` + `groupby_agg` được) | Tiện — không phải năng lực |
-| Iterating groups | ❌ | Thiếu |
+| Iterating groups | `groupby_group_keys(df, keys)` + `groupby_group(df, keys, key)` (v1.8 — loop `for i in range(len(keys))`) | ✅ |
 
 ### 2.7 Join / Reshape (tokenvector_relational.tkv)
 
@@ -192,7 +192,7 @@ Gap datetime (lớn nhất v1.0) **đã đóng từ v1.1**; nền là i64 epoch 
 | pandas | TKV | Ghi chú |
 | :--- | :--- | :--- |
 | `sort_values(by=[…], ascending=[…])` | `sort_by` (1 cột), `sort_by_multi` (multi-key stable, key str), `sort_rows` | ✅ (v1.1) |
-| `sort_index` | ❌ | — |
+| `sort_index` | `df_sort_index_cols` (axis=1), axis=0 = identity (TKV giữ thứ tự dòng như RangeIndex) | ✅ (v1.8) |
 | `nlargest / nsmallest` | `df_nlargest / df_nsmallest` | ✅ (v1.1) |
 | `rank(method, na_option)` | `win_rank` | 🟡 |
 | `Series.argsort` | `to_indices` | 🟡 |
@@ -338,6 +338,25 @@ Sự thật compiler/runtime gặp (đã ghi SESSION_HANDOFF 0b): cấm `while T
 `None` với record, không `ord()/chr()`, hằng module phải literal, chain 2 cấp,
 nested-func param record chưa qua parser, `1e-9` — và bug runtime nghiêm trọng:
 **append list-lồng qua param của hàm khác treo vĩnh viễn** (workaround: flat array).
+
+## 3h. v1.8 — 2026-09-23: dtype hẹp + sort_index + iterating groups
+
+Module mới `tokenvector_dtype.tkv` (17 hàm) + vá core `tokenvector_data.tkv`
+(Series/Col thêm `_is_narrow_i64`, `length/get_f64/get_i64/get_string` tự widen,
+`slice/take/clone` giữ tag, `make_series` giữ tag của narrow Col).
+Suite `p2_check` mở rộng thêm **44 checks** → **154/154 PASS**, 17/17 suite cũ xanh.
+
+| Nhóm | Nội dung | Ghi chú |
+| :--- | :--- | :--- |
+| Dtype hẹp | `series_astype(s, dt)` / `series_to_narrow(s, "u8")` — i8/i16/i32/u8/u16/u32/u64 (CLAMP theo range, pandas wrap-overflow), f32, datetime64 (epoch-ms tag) | storage vẫn i64s/f64s; mọi consumer đi qua `get_*` hoạt động đúng |
+| CSV dtype | `csv_read_ex`/`csv_read_chunks*` nhận `dtypes_spec` mới: "i8"…"u64", "f32", "datetime64" (ISO → epoch ms qua `dt_parse`), null-mask đầy đủ | `_csv_narrow_spec` |
+| sort_index | `df_sort_index_cols` (axis=1, selection sort theo tên cột); axis=0 identity | |
+| Iterating groups | `groupby_group_keys` (list key theo thứ tự xuất hiện) + `groupby_group` (sub-DF theo key, multi-key join \x01) | dùng `Series.take` nên giữ null-mask + dtype tag |
+
+Sự thật compiler bắt được (v1.8): **typeflow merge biến cùng tên giữa các nhánh
+khác kiểu trong 1 hàm** — biến `v` gán `get_f64()` ở nhánh bool rồi `get_i64()` ở
+nhánh sau → `v` bị ép f64, append vào `list[i64]` ra 0. Khắc phục: đặt tên biến
+riêng từng nhánh (`vb`, `vi`) — cùng bản chất với bài học `vals_b/i/f/s` v1.7.
 
 ## 4. Cách kiểm chứng lại
 
