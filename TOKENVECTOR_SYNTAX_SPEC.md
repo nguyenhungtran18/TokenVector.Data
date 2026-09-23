@@ -5,6 +5,11 @@
 **Document Code:** TKV-SPEC-DATA-2026-V1  
 **Target:** Formal native tabular processing, columnar DataFrame, and time-series syntax specification for the **TokenVector** programming language (`tv.data` / `tokenvector.data`).
 
+> **Note 2026-09-24:** this is an aspirational language-design sketch —
+> method chaining (`df["x"]/100`) and `tv.data` imports do not exist yet.
+> The shipped library uses free functions (`series_*`, `groupby_*`, …);
+> see `README.md` for the real API.
+
 ---
 
 ## 1. Namespaces & Module Imports

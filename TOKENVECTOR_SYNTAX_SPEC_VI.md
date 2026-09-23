@@ -5,6 +5,11 @@
 **Mã tài liệu:** TKV-SPEC-DATA-2026-V1  
 **Mục tiêu:** Đặc tả chuẩn hóa cú pháp xử lý dữ liệu dạng bảng, Columnar DataFrame, và chuỗi thời gian cho ngôn ngữ lập trình **TokenVector** (`tv.data` / `tokenvector.data`).
 
+> **Ghi chú 2026-09-24:** đây là phác thảo thiết kế ngôn ngữ (aspirational) —
+> chain-method (`df["x"]/100`) và import `tv.data` chưa tồn tại. Thư viện hiện
+> tại dùng hàm tự do (`series_*`, `groupby_*`, …); xem `README_VI.md` để biết
+> API thật.
+
 ---
 
 ## 1. Không Gian Tên & Nhập Module

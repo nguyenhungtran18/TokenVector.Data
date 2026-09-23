@@ -1,5 +1,9 @@
 # KernelLab — Thí nghiệm: mượn kernel của TokenVector.Numerics cho TokenVector.Data?
 
+> **Ghi chú 2026-09-24:** code thí nghiệm (`bench_kernel_lab/`) đã gỡ khỏi
+> repo (bản C# cũ); giữ lại ghi chép vì rào cản net40/net8.0 vẫn đúng với
+> toolchain hiện tại. Kết luận thực nghiệm mới nhất xem `BENCHMARKS.md`.
+
 > **Câu hỏi:** Có thể "mượn tạm" `SIMDKernels` (AVX2, net8.0) từ **TokenVector.Numerics** để giúp **TokenVector.Data** đánh bại pandas không?
 >
 > **Phạm vi:** thí nghiệm đo trên máy hiện tại (28 logical cores, AVX2 + FMA = true), pandas 2.3.3, runtime TKV v1.0.2, dotnet SDK 9.0.318. Thư viện Numerics được tham chiếu **chỉ để đo** — không có thay đổi nào trong repo Numerics.

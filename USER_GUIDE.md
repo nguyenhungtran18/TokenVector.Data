@@ -4,6 +4,11 @@
 
 This guide provides deep architectural details, API references, and practical code examples for developing with **`TokenVector.Data`**.
 
+> **Note 2026-09-24:** parts of this guide still describe the removed C#
+> implementation (`Column<T>`, bitboards). The current engine is pure tkv —
+> see `README.md` (modules, quick starts) and `FUNCTION_PARITY.md` (exact API
+> coverage) as the source of truth.
+
 ---
 
 ## 1. Columnar Memory Architecture

@@ -223,3 +223,27 @@ co quote (346KB). Phuong phap: `_bench_par.tkv` (DIST tkvc) vs pandas/polars.
 Ket luan trung thuc: tran tang thu vien dat ~1.1–1.8x. Build theo cot khong
 song song duoc vi worker khong nhan param (BUG-4/BUG-5 compiler) — can
 bulk-convert primitives hoac worker co param de tien tiep (xem SESSION_HANDOFF 0g).
+
+
+---
+
+## Competitor comparison (2026-09-24, same machine, best-of-3)
+
+Fixture: 500k rows x 3 cols (`id`, `cat` x 10 groups, `v`, 8.6MB); Excel 20k
+rows. TKV via `_cmp.tkv` (DIST tkvc); rivals via pandas 2.3.3 / polars 1.44.2 /
+duckdb 1.5.5 / openpyxl 3.1.5 / pyarrow 25.0.1. TKV Excel output cross-checked
+cell-by-cell against source (20k rows exact); TKV SQL numbers verified against
+pandas in `sql_check` (43/43).
+
+| Workload | TKV v2.1 | pandas | Polars | DuckDB | Notes |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| CSV read 500k | 1127 ms | 209 ms | **6.8 ms** | 205 ms | duckdb = scan+count; TKV parser is per-char TKV loops (SIMD + threading would need compiler work) |
+| SQL/groupby SUM/COUNT/AVG | 383 ms | 31.8 ms | **6.1 ms** | 12.7 ms | TKV planner + per-row eval, single-threaded; exact numbers |
+| HAVING + ORDER + LIMIT | 466 ms | 31.2 ms | **4.6 ms** | 12.8 ms | same as above |
+| Excel write 20k | **61 ms** (XML 3.08 MB) | 1476 ms (xlsx 363 KB) | — | — | TKV wins ~24x (plain XML, no ZIP); file ~8.5x bigger |
+| Excel read 20k | **267 ms** | 1531 ms | — | — | TKV wins ~6x |
+| Parquet 500k w/r | blocked | 228 / 69 ms | yes | yes | TKV needs compiler binary write (honest ledger) |
+
+Reading: TKV wins Excel (plain-XML bridge) and .NET embedding (only engine
+shipping as one dependency-free DLL); Polars/DuckDB dominate raw speed and
+lazy SQL; pandas owns ecosystem compatibility.

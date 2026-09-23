@@ -149,3 +149,27 @@ cd tvsrc && /d/SkillSpector-TKV/tkvc.exe build --entry run ../benchmarks/bench_t
 ```
 
 Để bổ sung cột **Polars/DuckDB/pyarrow** trên chính máy này: `pip install polars duckdb pyarrow` rồi mở rộng `benchmarks/bench_pandas.py` — cấu trúc script cho phép thêm engine dễ dàng.
+
+
+---
+
+## So sanh doi thu (2026-09-24, cung may, best-of-3)
+
+Fixture: 500k dong x 3 cot (`id`, `cat` x 10 nhom, `v`, 8.6MB); Excel 20k
+dong. TKV chay `_cmp.tkv` (DIST tkvc); doi thu: pandas 2.3.3 / polars 1.44.2 /
+duckdb 1.5.5 / openpyxl 3.1.5 / pyarrow 25.0.1. Output Excel cua TKV doi chieu
+tung o voi du lieu goc (20k dong khop 100%); so lieu SQL cua TKV da verify
+voi pandas trong `sql_check` (43/43).
+
+| Bai do | TKV v2.1 | pandas | Polars | DuckDB | Ghi chu |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| Doc CSV 500k | 1127 ms | 209 ms | **6.8 ms** | 205 ms | duckdb = scan+count; parser TKV lap tung ky tu (SIMD + thread can compiler) |
+| SQL/groupby SUM/COUNT/AVG | 383 ms | 31.8 ms | **6.1 ms** | 12.7 ms | TKV planner + eval tung dong, don luong; so khop 100% |
+| HAVING + ORDER + LIMIT | 466 ms | 31.2 ms | **4.6 ms** | 12.8 ms | nhu tren |
+| Ghi Excel 20k | **61 ms** (XML 3.08 MB) | 1476 ms (xlsx 363 KB) | — | — | TKV thang ~24x (XML thuan, khong ZIP); file to ~8.5x |
+| Doc Excel 20k | **267 ms** | 1531 ms | — | — | TKV thang ~6x |
+| Parquet 500k w/r | blocked | 228 / 69 ms | co | co | TKV can binary write o compiler (ledger trung thuc) |
+
+Ket luan: TKV thang o Excel (cau XML) va nhung .NET (DLL don, khong can
+Python runtime); Polars/DuckDB ap dao toc do thuan va lazy SQL; pandas manh
+nhat he sinh thai.

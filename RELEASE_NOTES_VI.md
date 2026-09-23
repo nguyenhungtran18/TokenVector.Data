@@ -2,6 +2,32 @@
 
 [ 🇬🇧 English ](RELEASE_NOTES.md) | [ 🇻🇳 Tiếng Việt ](RELEASE_NOTES_VI.md)
 
+## ⚡ Phiên Bản 1.0.8-dev (23/09/2026) - SQL engine + Excel SpreadsheetML + Parquet ledger (tvsrc v2.1)
+
+**Thư viện tvsrc v2.1** (compiler tkvc không đổi; DIST tkvc build xanh toàn bộ).
+
+### Module mới
+* **tokenvector_sql.tkv**: SQL SELECT trên DataFrame (kiểu pandasql) - `sql_query` / `sql_query2` (JOIN bảng phụ) / `sql_count`. WHERE (số học, so sánh, AND/OR/NOT, IN số+chuỗi, LIKE), GROUP BY + 10 hàm tổng hợp, HAVING, ORDER BY (số+chuỗi, ASC/DESC), LIMIT/OFFSET, DISTINCT, JOIN INNER/LEFT/RIGHT ... ON, global-agg trên tập rỗng trả 1 dòng. Đối chiếu từng con số với pandas thật.
+* **tokenvector_excel.tkv**: đọc/ghi SpreadsheetML 2003 (text thuần, Excel mở trực tiếp) - `excel_write/read_string/file`. Giữ null-mask, suy dtype, escape XML, output well-formed.
+* **tokenvector_parquet.tkv**: ledger trung thực - chốt API nhưng fail-fast (Parquet thật cần binary write + bitwise R5 ở compiler).
+
+### Kiểm chứng
+* `sql_check` 43/43, `excel_check` 33/33, 21/21 suite xanh trên DIST tkvc.
+* Merged splice idempotent; DLL rebuild + smoke 54/54 symbol + gọi thật từ C# (SMOKEFN OK).
+* Bổ sung v2.2 (cùng gói 1.0.8-dev): tăng tốc CSV tầng thư viện - `_split_csv_line` kiểu slice, `csv_read_par` song song 8 worker (~1.1–1.8x), `csv2_check` t9. DLL 306688 bytes, repack nupkg.
+
+### Còn lại (ledger trung thực)
+* Parquet/xlsx thật (ZIP+DEFLATE+binary) - blocked-by-compiler.
+* MultiIndex - loại trừ có chủ đích.
+
+---
+
+## ⚡ Phiên Bản 1.0.7-dev (23/09/2026) - Kernel nhanh v1.10
+
+Kernel nhanh cho tính năng v1.9: `groupby_rolling` O(n log n) (2.1s → 1.0s @500k), `groupby_resample` sort-based (khớp semantics pandas), `merge_on_index` thêm hash-fallback + `how="right"`. `p100_check` 74/74, regression xanh, smoke 44/44 symbol.
+
+---
+
 ## ⚡ Phiên Bản 1.0.6-dev (23/09/2026) - pandas-100 closure (tvsrc v1.9)
 
 **Thư viện tvsrc v1.9** (compiler tkvc không đổi).

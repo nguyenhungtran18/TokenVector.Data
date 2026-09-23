@@ -4,6 +4,8 @@
 
 Tài liệu này cung cấp chi tiết kiến trúc chuyên sâu, tài liệu tham khảo API và các ví dụ mã nguồn thực tế khi phát triển với thư viện **`TokenVector.Data`**.
 
+> **Ghi chú 2026-09-24:** một số phần vẫn mô tả bản C# cũ đã gỡ (`Column<T>`, bitboard). Engine hiện tại thuần tkv — xem `README_VI.md` và `FUNCTION_PARITY.md` làm chuẩn.
+
 ---
 
 ## 1. Kiến Trúc Bộ Nhớ Dạng Cột (Columnar Memory)
